@@ -28,6 +28,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
             <h1 className="text-3xl font-bold">{klass.name}</h1>
           </div>
           <Link href={`/guru/kelas/${classId}/ai`} className="rounded-xl border border-ink px-4 py-2 font-semibold">{id ? 'Tinjau AI Lab' : 'Review AI Lab'}</Link>
+          <Link href={`/guru/kelas/${classId}/nilai`} className="rounded-xl border border-ink px-4 py-2 font-semibold">{id ? 'Nilai proyek' : 'Mark projects'}</Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <Card><p className="text-sm text-muted">{id ? 'Siswa' : 'Students'}</p><p className="text-3xl font-bold">{rows.length}</p></Card>

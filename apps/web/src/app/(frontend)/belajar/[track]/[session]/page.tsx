@@ -70,6 +70,16 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
             {locale === 'id' ? 'Buka AI Lab' : 'Open the AI Lab'} · {lesson.aiActivity.title}
           </Link>
         )}
+        {lesson?.projectBrief && typeof lesson.projectBrief === 'object' && (
+          <Link href={`/proyek/${lesson.projectBrief.slug}`} className="rounded-xl bg-ink px-5 py-3.5 text-center font-semibold text-paper">
+            {locale === 'id' ? 'Buka brief proyek' : 'Open the project brief'} · {lesson.projectBrief.title}
+          </Link>
+        )}
+        {lesson?.type === 'project' && track.level !== 'smp' && (
+          <Link href="/proyek?jenjang=sma_smk" className="text-center text-sm underline">
+            {locale === 'id' ? 'Siswa SMK: pilih proyek sesuai jurusanmu' : 'SMK students: choose a project for your major'}
+          </Link>
+        )}
         {lesson?.quiz && lesson.quiz.length > 0 && (
           <QuizBlock
             questions={lesson.quiz}

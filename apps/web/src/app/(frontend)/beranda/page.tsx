@@ -67,6 +67,12 @@ export default async function DashboardPage() {
             </ul>
           </Card>
         )}
+        <div className="flex flex-wrap gap-3">
+        <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
+        {user.roles?.some((r) => r === 'rater' || r === 'super_admin') && (
+          <Link href="/penilai" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Antrean penilai' : 'Rating queue'}</Link>
+        )}
+        </div>
         {isTeacher && (
           <Link href="/guru" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Ruang Guru' : 'Teacher space'}</Link>
         )}

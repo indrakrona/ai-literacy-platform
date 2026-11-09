@@ -81,6 +81,13 @@ export const Lessons: CollectionConfig = {
       admin: { condition: (d) => d?.type === 'ai_lab' },
     },
     {
+      name: 'projectBrief',
+      label: 'Project brief',
+      type: 'relationship',
+      relationTo: 'project-briefs',
+      admin: { condition: (d) => d?.type === 'project' },
+    },
+    {
       name: 'simulator',
       type: 'select',
       options: SIMULATOR_OPTIONS.map((o) => ({ value: o.value, label: o.label })),

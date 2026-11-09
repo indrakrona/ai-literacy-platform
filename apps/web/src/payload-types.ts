@@ -82,6 +82,8 @@ export interface Config {
     'ai-activities': AiActivity;
     'ai-conversations': AiConversation;
     assignments: Assignment;
+    'project-briefs': ProjectBrief;
+    submissions: Submission;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -115,6 +117,8 @@ export interface Config {
     'ai-activities': AiActivitiesSelect<false> | AiActivitiesSelect<true>;
     'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
+    'project-briefs': ProjectBriefsSelect<false> | ProjectBriefsSelect<true>;
+    submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -381,6 +385,7 @@ export interface Lesson {
     [k: string]: unknown;
   } | null;
   aiActivity?: (number | null) | AiActivity;
+  projectBrief?: (number | null) | ProjectBrief;
   /**
    * Interactive tool shown in the lesson
    */
@@ -451,6 +456,54 @@ export interface AiActivity {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "project-briefs".
+ */
+export interface ProjectBrief {
+  id: number;
+  title: string;
+  slug: string;
+  level: 'smp' | 'sma_smk';
+  competency:
+    | 'DIS-1'
+    | 'DIS-2'
+    | 'DIS-3'
+    | 'UND-1'
+    | 'UND-2'
+    | 'UND-3'
+    | 'CRE-1'
+    | 'CRE-2'
+    | 'CRE-3'
+    | 'PRO-1'
+    | 'PRO-2'
+    | 'PRO-3'
+    | 'THR-1'
+    | 'THR-2'
+    | 'THR-3';
+  smkMajor?:
+    ('akuntansi' | 'pemasaran' | 'tjkt' | 'pplg' | 'perhotelan' | 'kuliner' | 'otomotif' | 'dkv' | 'kesehatan') | null;
+  /**
+   * e.g. kantin sekolah, UMKM warung makan
+   */
+  client?: string | null;
+  problem: string;
+  deliverables: string;
+  allowTeams?: boolean | null;
+  /**
+   * Each criterion is scored 1–4
+   */
+  rubric: {
+    criterion: string;
+    /**
+     * What a level-4 answer looks like
+     */
+    description?: string | null;
+    id?: string | null;
+  }[];
   updatedAt: string;
   createdAt: string;
 }
@@ -757,6 +810,39 @@ export interface Assignment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "submissions".
+ */
+export interface Submission {
+  id: number;
+  brief: number | ProjectBrief;
+  class: number | Class;
+  members: (number | User)[];
+  text: string;
+  links?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'submitted' | 'graded';
+  submittedAt?: string | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  feedback?: string | null;
+  gradedBy?: (number | null) | User;
+  gradedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -930,6 +1016,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'assignments';
         value: number | Assignment;
+      } | null)
+    | ({
+        relationTo: 'project-briefs';
+        value: number | ProjectBrief;
+      } | null)
+    | ({
+        relationTo: 'submissions';
+        value: number | Submission;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1109,6 +1203,7 @@ export interface LessonsSelect<T extends boolean = true> {
   activity?: T;
   content?: T;
   aiActivity?: T;
+  projectBrief?: T;
   simulator?: T;
   quiz?:
     | T
@@ -1320,6 +1415,54 @@ export interface AssignmentsSelect<T extends boolean = true> {
   dueDate?: T;
   note?: T;
   assignedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "project-briefs_select".
+ */
+export interface ProjectBriefsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  level?: T;
+  competency?: T;
+  smkMajor?: T;
+  client?: T;
+  problem?: T;
+  deliverables?: T;
+  allowTeams?: T;
+  rubric?:
+    | T
+    | {
+        criterion?: T;
+        description?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "submissions_select".
+ */
+export interface SubmissionsSelect<T extends boolean = true> {
+  brief?: T;
+  class?: T;
+  members?: T;
+  text?: T;
+  links?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
+  status?: T;
+  submittedAt?: T;
+  scores?: T;
+  feedback?: T;
+  gradedBy?: T;
+  gradedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
