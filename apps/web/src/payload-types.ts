@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     schools: School;
     classes: Class;
+    'consent-requests': ConsentRequest;
     tracks: Track;
     units: Unit;
     lessons: Lesson;
@@ -95,6 +96,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     schools: SchoolsSelect<false> | SchoolsSelect<true>;
     classes: ClassesSelect<false> | ClassesSelect<true>;
+    'consent-requests': ConsentRequestsSelect<false> | ConsentRequestsSelect<true>;
     tracks: TracksSelect<false> | TracksSelect<true>;
     units: UnitsSelect<false> | UnitsSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
@@ -171,9 +173,15 @@ export interface User {
   dateOfBirth?: string | null;
   preferredLocale?: ('id' | 'en') | null;
   /**
-   * WhatsApp number, normalised to 62…
+   * WhatsApp number, stored as 62…
    */
   phone?: string | null;
+  notifyEmail?: boolean | null;
+  notifyWhatsApp?: boolean | null;
+  /**
+   * Always off for under-18s until gallery consent exists.
+   */
+  showInShowcase?: boolean | null;
   consentStatus?: ('not_required' | 'pending' | 'granted' | 'declined') | null;
   guardians?: (number | User)[] | null;
   updatedAt: string;
@@ -367,6 +375,26 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-requests".
+ */
+export interface ConsentRequest {
+  id: number;
+  student: number | User;
+  guardianName?: string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
+  token: string;
+  status: 'pending' | 'granted' | 'declined' | 'expired';
+  expiresAt?: string | null;
+  decidedAt?: string | null;
+  consentVersion: string;
+  decisionIp?: string | null;
+  decisionUserAgent?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -494,6 +522,10 @@ export interface PayloadLockedDocument {
         value: number | Class;
       } | null)
     | ({
+        relationTo: 'consent-requests';
+        value: number | ConsentRequest;
+      } | null)
+    | ({
         relationTo: 'tracks';
         value: number | Track;
       } | null)
@@ -562,6 +594,9 @@ export interface UsersSelect<T extends boolean = true> {
   dateOfBirth?: T;
   preferredLocale?: T;
   phone?: T;
+  notifyEmail?: T;
+  notifyWhatsApp?: T;
+  showInShowcase?: T;
   consentStatus?: T;
   guardians?: T;
   updatedAt?: T;
@@ -615,6 +650,25 @@ export interface ClassesSelect<T extends boolean = true> {
   joinCode?: T;
   teachers?: T;
   students?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-requests_select".
+ */
+export interface ConsentRequestsSelect<T extends boolean = true> {
+  student?: T;
+  guardianName?: T;
+  guardianEmail?: T;
+  guardianPhone?: T;
+  token?: T;
+  status?: T;
+  expiresAt?: T;
+  decidedAt?: T;
+  consentVersion?: T;
+  decisionIp?: T;
+  decisionUserAgent?: T;
   updatedAt?: T;
   createdAt?: T;
 }

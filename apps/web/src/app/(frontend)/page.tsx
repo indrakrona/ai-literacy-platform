@@ -1,17 +1,23 @@
 import Link from 'next/link'
+import { Shell } from '../../components/Shell'
+import { getDict } from '../../i18n/server'
 
-// Placeholder home page. The real public site is built in task A1/A2/A7/A8.
-export default function HomePage() {
+// Temporary landing page; the full public site is task A1/A2/A7/A8.
+export default async function HomePage() {
+  const { t, locale } = await getDict()
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-6 px-4 py-16">
-      <p className="text-sm font-semibold tracking-widest text-brand-deep uppercase">Impact Thinklab</p>
-      <h1 className="text-4xl font-bold sm:text-5xl">AI Literacy Platform</h1>
-      <p className="text-lg text-neutral-700">
-        Platform literasi AI untuk siswa SMP dan SMA/SMK. Sedang dalam pengembangan.
-      </p>
-      <Link href="/admin" className="w-fit rounded-xl bg-ink px-5 py-3 font-semibold text-paper">
-        Admin
-      </Link>
-    </main>
+    <Shell narrow={false}>
+      <section className="flex flex-col gap-6 py-10 sm:py-16">
+        <p className="text-sm font-semibold tracking-widest text-brand-deep uppercase">Impact Thinklab</p>
+        <h1 className="max-w-2xl text-4xl font-bold sm:text-5xl">
+          {locale === 'id' ? 'Literasi AI untuk remaja Indonesia' : 'AI literacy for Indonesian teens'}
+        </h1>
+        <p className="max-w-xl text-lg text-muted">{t.signup.lead}</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link href="/daftar" className="rounded-xl bg-ink px-6 py-3.5 text-center font-semibold text-paper">{t.nav.signup}</Link>
+          <Link href="/masuk" className="rounded-xl border border-ink px-6 py-3.5 text-center font-semibold">{t.nav.login}</Link>
+        </div>
+      </section>
+    </Shell>
   )
 }

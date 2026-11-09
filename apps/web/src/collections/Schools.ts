@@ -1,13 +1,13 @@
 import type { CollectionConfig } from 'payload'
-import { roles, superAdminOnly } from '../access'
+import { readOwnSchool, superAdminOnly, updateOwnSchool } from '../access'
 
 export const Schools: CollectionConfig = {
   slug: 'schools',
   admin: { useAsTitle: 'name', defaultColumns: ['name', 'level', 'city', 'npsn'], group: 'People' },
   access: {
-    read: roles('super_admin', 'school_admin', 'teacher'),
+    read: readOwnSchool,
     create: superAdminOnly,
-    update: roles('super_admin', 'school_admin'),
+    update: updateOwnSchool,
     delete: superAdminOnly,
   },
   fields: [

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { roles } from '../access'
+import { readClasses, roles, updateClasses } from '../access'
+import { importRosterEndpoint, joinClassEndpoint } from '../endpoints/accounts'
 
 const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I to avoid misreading
 
@@ -15,11 +16,12 @@ export const Classes: CollectionConfig = {
   slug: 'classes',
   admin: { useAsTitle: 'name', defaultColumns: ['name', 'school', 'academicYear', 'joinCode'], group: 'People' },
   access: {
-    read: roles('super_admin', 'school_admin', 'teacher'),
+    read: readClasses,
     create: roles('super_admin', 'school_admin'),
-    update: roles('super_admin', 'school_admin', 'teacher'),
+    update: updateClasses,
     delete: roles('super_admin', 'school_admin'),
   },
+  endpoints: [joinClassEndpoint, importRosterEndpoint],
   fields: [
     { name: 'name', type: 'text', required: true, admin: { description: 'e.g. 8B or XI IPA 2' } },
     { name: 'school', type: 'relationship', relationTo: 'schools', required: true, index: true },

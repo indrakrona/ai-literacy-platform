@@ -5,9 +5,14 @@
   --color-brand-deep: #c2401a;
   --color-ink: #16130f;
   --color-paper: #faf7f2;
+  --color-line: #e6dfd4;
+  --color-muted: #5c564e;
+  --color-danger: #b42318;
+  --color-ok: #1f7a4d;
 }
 
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
