@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ailit
+          POSTGRES_PASSWORD: ailit
+          POSTGRES_DB: ailit_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ailit" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URI: postgres://ailit:ailit@localhost:5432/ailit_test
+      TEST_DATABASE_URI: postgres://ailit:ailit@localhost:5432/ailit_test
+      PAYLOAD_SECRET: ci-secret-0123456789abcdef
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated files are up to date
+        run: |
+          pnpm --filter web generate
+          git diff --exit-code -- apps/web/src/payload-types.ts "apps/web/src/app/(payload)/admin/importMap.js"
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Migrations apply to an empty database
+        run: |
+          PGPASSWORD=ailit psql -h localhost -U ailit -d ailit_test -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+          pnpm --filter web payload migrate
+      - run: pnpm --filter web build
