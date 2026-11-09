@@ -13,6 +13,9 @@ importers:
       '@ailit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@ailit/test-engine':
+        specifier: workspace:*
+        version: link:../../packages/test-engine
       '@payloadcms/db-postgres':
         specifier: 3.90.2
         version: 3.90.2(payload@3.90.2(graphql@16.15.0)(typescript@5.9.3))

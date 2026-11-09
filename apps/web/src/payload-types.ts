@@ -76,6 +76,9 @@ export interface Config {
     lessons: Lesson;
     'lesson-progress': LessonProgress;
     media: Media;
+    'test-items': TestItem;
+    'test-forms': TestForm;
+    'test-attempts': TestAttempt;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -103,6 +106,9 @@ export interface Config {
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'test-items': TestItemsSelect<false> | TestItemsSelect<true>;
+    'test-forms': TestFormsSelect<false> | TestFormsSelect<true>;
+    'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -475,6 +481,182 @@ export interface LessonProgress {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-items".
+ */
+export interface TestItem {
+  id: number;
+  /**
+   * e.g. AIL-UND-0001
+   */
+  code: string;
+  type: 'single_choice' | 'multiple_choice' | 'scenario_judgment' | 'performance_task';
+  competency:
+    | 'DIS-1'
+    | 'DIS-2'
+    | 'DIS-3'
+    | 'UND-1'
+    | 'UND-2'
+    | 'UND-3'
+    | 'CRE-1'
+    | 'CRE-2'
+    | 'CRE-3'
+    | 'PRO-1'
+    | 'PRO-2'
+    | 'PRO-3'
+    | 'THR-1'
+    | 'THR-2'
+    | 'THR-3';
+  level: 'smp' | 'sma_smk' | 'adult';
+  difficulty: '1' | '2' | '3';
+  /**
+   * draft → review → approved → piloted → live → retired
+   */
+  state: 'draft' | 'review' | 'approved' | 'piloted' | 'live' | 'retired';
+  /**
+   * Optional situation shown before the question
+   */
+  scenario?: string | null;
+  stem: string;
+  options?:
+    | {
+        text: string;
+        correct?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * One row per score level, from 0 up
+   */
+  rubric?:
+    | {
+        points: number;
+        descriptor: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Internal only
+   */
+  reviewerNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-forms".
+ */
+export interface TestForm {
+  id: number;
+  /**
+   * e.g. AILIS Pilot Form A · SMA
+   */
+  name: string;
+  level: 'smp' | 'sma_smk' | 'adult';
+  status: 'draft' | 'active' | 'closed';
+  timeLimitMinutes: number;
+  blueprint: {
+    itemsPerDomain: number;
+    performanceTasks: number;
+  };
+  /**
+   * Which item states may be used. Pilot forms may include approved items.
+   */
+  itemStates?: ('approved' | 'piloted' | 'live')[] | null;
+  /**
+   * Proctor gives this code to candidates in the room.
+   */
+  accessCode?: string | null;
+  seed?: number | null;
+  /**
+   * Filled by Assemble
+   */
+  items?: (number | TestItem)[] | null;
+  /**
+   * Domains where the bank had too few items
+   */
+  shortfall?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-attempts".
+ */
+export interface TestAttempt {
+  id: number;
+  candidate: number | User;
+  form: number | TestForm;
+  status: 'in_progress' | 'awaiting_rating' | 'scored';
+  startedAt: string;
+  deadline: string;
+  submittedAt?: string | null;
+  itemOrder:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  responses?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  points?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  ratings?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  integrity?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  report?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -624,6 +806,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'test-items';
+        value: number | TestItem;
+      } | null)
+    | ({
+        relationTo: 'test-forms';
+        value: number | TestForm;
+      } | null)
+    | ({
+        relationTo: 'test-attempts';
+        value: number | TestAttempt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -885,6 +1079,80 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-items_select".
+ */
+export interface TestItemsSelect<T extends boolean = true> {
+  code?: T;
+  type?: T;
+  competency?: T;
+  level?: T;
+  difficulty?: T;
+  state?: T;
+  scenario?: T;
+  stem?: T;
+  options?:
+    | T
+    | {
+        text?: T;
+        correct?: T;
+        id?: T;
+      };
+  rubric?:
+    | T
+    | {
+        points?: T;
+        descriptor?: T;
+        id?: T;
+      };
+  reviewerNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-forms_select".
+ */
+export interface TestFormsSelect<T extends boolean = true> {
+  name?: T;
+  level?: T;
+  status?: T;
+  timeLimitMinutes?: T;
+  blueprint?:
+    | T
+    | {
+        itemsPerDomain?: T;
+        performanceTasks?: T;
+      };
+  itemStates?: T;
+  accessCode?: T;
+  seed?: T;
+  items?: T;
+  shortfall?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-attempts_select".
+ */
+export interface TestAttemptsSelect<T extends boolean = true> {
+  candidate?: T;
+  form?: T;
+  status?: T;
+  startedAt?: T;
+  deadline?: T;
+  submittedAt?: T;
+  itemOrder?: T;
+  responses?: T;
+  points?: T;
+  ratings?: T;
+  integrity?: T;
+  report?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

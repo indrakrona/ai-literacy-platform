@@ -4,6 +4,7 @@ import * as migration_20261109_131241_lesson_competencies from './20261109_13124
 import * as migration_20261109_133955_lesson_progress from './20261109_133955_lesson_progress';
 import * as migration_20261109_134657_lesson_quiz from './20261109_134657_lesson_quiz';
 import * as migration_20261109_152702_lesson_simulator from './20261109_152702_lesson_simulator';
+import * as migration_20261109_153457_ailis_engine from './20261109_153457_ailis_engine';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261109_152702_lesson_simulator.up,
     down: migration_20261109_152702_lesson_simulator.down,
-    name: '20261109_152702_lesson_simulator'
+    name: '20261109_152702_lesson_simulator',
+  },
+  {
+    up: migration_20261109_153457_ailis_engine.up,
+    down: migration_20261109_153457_ailis_engine.down,
+    name: '20261109_153457_ailis_engine'
   },
 ];
