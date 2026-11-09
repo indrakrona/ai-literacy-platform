@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { TrackOnMount } from '../../../../../components/Track'
+import { ReportButton } from '../../../../../components/ReportButton'
 import { notFound } from 'next/navigation'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { Shell } from '../../../../../components/Shell'
@@ -90,6 +91,7 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
             labels={{ title: t.learn.quizTitle, correct: t.learn.quizCorrect, wrong: t.learn.quizWrong, score: t.learn.quizScore }}
           />
         )}
+        {lesson && user && <ReportButton targetType="lesson" targetId={lesson.id} locale={locale} />}
         {lesson && lesson._status === 'published' && (
           user ? (
             <CompleteButton

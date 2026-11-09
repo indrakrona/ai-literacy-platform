@@ -86,6 +86,8 @@ export interface Config {
     submissions: Submission;
     orders: Order;
     'analytics-events': AnalyticsEvent;
+    notifications: Notification;
+    reports: Report;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -123,6 +125,8 @@ export interface Config {
     submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    reports: ReportsSelect<false> | ReportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -917,6 +921,50 @@ export interface AnalyticsEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  kind:
+    | 'assignment_new'
+    | 'submission_received'
+    | 'project_graded'
+    | 'score_ready'
+    | 'consent_granted'
+    | 'consent_declined'
+    | 'report_received';
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Problems reported by users about content and AI replies.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports".
+ */
+export interface Report {
+  id: number;
+  reporter: number | User;
+  targetType: 'lesson' | 'ai_reply' | 'project_brief' | 'test_item' | 'page';
+  targetId?: string | null;
+  reason: 'wrong' | 'harmful' | 'inappropriate' | 'broken' | 'other';
+  url?: string | null;
+  /**
+   * Personal data is redacted automatically.
+   */
+  details?: string | null;
+  status: 'open' | 'reviewing' | 'resolved' | 'dismissed';
+  resolution?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1106,6 +1154,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'analytics-events';
         value: number | AnalyticsEvent;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'reports';
+        value: number | Report;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1581,6 +1637,36 @@ export interface AnalyticsEventsSelect<T extends boolean = true> {
   ageBand?: T;
   device?: T;
   props?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  kind?: T;
+  title?: T;
+  body?: T;
+  link?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports_select".
+ */
+export interface ReportsSelect<T extends boolean = true> {
+  reporter?: T;
+  targetType?: T;
+  targetId?: T;
+  reason?: T;
+  url?: T;
+  details?: T;
+  status?: T;
+  resolution?: T;
   updatedAt?: T;
   createdAt?: T;
 }

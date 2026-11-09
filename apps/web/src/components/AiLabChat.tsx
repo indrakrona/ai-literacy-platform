@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { ReportButton } from './ReportButton'
 import { api } from './forms/api'
 
 interface Msg {
@@ -68,6 +69,9 @@ export function AiLabChat({ activityId, starters, reflection, locale }: { activi
           >
             {m.content}
             {m.status === 'shield' && <p className="mt-2 text-xs font-semibold">{t.shieldTip}</p>}
+            {m.role === 'assistant' && m.status === 'answered' && (
+              <div className="mt-2"><ReportButton targetType="ai_reply" targetId={convo ? `${convo}:${i}` : undefined} locale={locale} compact /></div>
+            )}
           </li>
         ))}
       </ol>

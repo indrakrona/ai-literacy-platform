@@ -3,6 +3,7 @@ import { hasRole } from '@ailit/shared'
 import { scoreAttempt, toPaperItem } from '../lib/ailis'
 import type { TestAttempt, TestItem } from '../payload-types'
 import { track, type Actor } from '../lib/analytics'
+import { notify } from '../lib/notify'
 
 const GRACE_MS = 30_000
 
@@ -160,6 +161,7 @@ const submit: Endpoint = {
     })
     const actor = req.user as unknown as Actor
     await track(req.payload, { name: 'test_submitted', user: actor, headers: req.headers, props: { attemptId: attempt.id } })
+    if (!pendingRatings) await notify(req.payload, { userIds: [Number(req.user!.id)], kind: 'score_ready', link: `/tes/${attempt.id}/hasil`, email: false })
     if (!pendingRatings) await track(req.payload, { name: 'score_released', user: actor, headers: req.headers, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })
   },
@@ -192,6 +194,7 @@ const rate: Endpoint = {
     })
     if (!pendingRatings) {
       const candidate = await req.payload.findByID({ collection: 'users', id: typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate, depth: 0, overrideAccess: true }).catch(() => null)
+      await notify(req.payload, { userIds: [candidate?.id], kind: 'score_ready', link: `/tes/${attempt.id}/hasil` })
       await track(req.payload, { name: 'score_released', user: candidate, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     }
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })

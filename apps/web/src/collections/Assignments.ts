@@ -1,5 +1,6 @@
 import type { Access, CollectionConfig, Where } from 'payload'
 import { hasRole } from '@ailit/shared'
+import { notify } from '../lib/notify'
 
 /** Teachers see assignments for classes they teach; students for classes they are in. */
 const readAssignments: Access = async ({ req }) => {
@@ -43,6 +44,23 @@ export const Assignments: CollectionConfig = {
       ({ req, data, operation }) => {
         if (operation === 'create' && req.user) data.assignedBy = req.user.id
         return data
+      },
+    ],
+    afterChange: [
+      async ({ req, doc, operation }) => {
+        if (operation !== 'create') return doc
+        const klass = await req.payload.findByID({ collection: 'classes', id: typeof doc.class === 'object' ? doc.class.id : doc.class, depth: 0, overrideAccess: true }).catch(() => null)
+        const lesson = await req.payload.findByID({ collection: 'lessons', id: typeof doc.lesson === 'object' ? doc.lesson.id : doc.lesson, depth: 2, overrideAccess: true, draft: true }).catch(() => null)
+        if (!klass || !lesson) return doc
+        const unit = typeof lesson.unit === 'object' ? lesson.unit : null
+        const track = unit && typeof unit.track === 'object' ? unit.track : null
+        await notify(req.payload, {
+          userIds: (klass.students ?? []).map((s) => (typeof s === 'object' ? s.id : s)),
+          kind: 'assignment_new',
+          vars: { lesson: lesson.title, class: klass.name, due: new Date(doc.dueDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) },
+          link: track ? `/belajar/${track.slug}/${lesson.order}` : '/beranda',
+        })
+        return doc
       },
     ],
   },

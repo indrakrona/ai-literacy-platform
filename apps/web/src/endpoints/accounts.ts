@@ -4,6 +4,7 @@ import { decideConsent, requestGuardianConsent } from '../lib/consent'
 import { importRoster } from '../lib/roster'
 import { consentDecisionSchema, importSchema, joinClassSchema, signupSchema, zodMessage } from './validation'
 import { track, type Actor } from '../lib/analytics'
+import { notify } from '../lib/notify'
 
 const MIN_STUDENT_AGE = 10
 const MIN_CANDIDATE_AGE = 15
@@ -167,6 +168,7 @@ export const consentDecideEndpoint: Endpoint = {
       const status = result.reason === 'not_found' ? 404 : 409
       return bad(result.reason, status)
     }
+    await notify(req.payload, { userIds: [Number(result.studentId)], kind: result.decision === 'granted' ? 'consent_granted' : 'consent_declined', link: '/beranda' })
     if (result.decision === 'granted') {
       const student = await req.payload.findByID({ collection: 'users', id: result.studentId, depth: 0, overrideAccess: true }).catch(() => null)
       await track(req.payload, { name: 'consent_given', user: student, headers: req.headers })

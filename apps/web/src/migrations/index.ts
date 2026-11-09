@@ -10,6 +10,7 @@ import * as migration_20261109_155811_assignments from './20261109_155811_assign
 import * as migration_20261109_162135_projects from './20261109_162135_projects';
 import * as migration_20261109_171317_payments_placeholder from './20261109_171317_payments_placeholder';
 import * as migration_20261109_172648_analytics from './20261109_172648_analytics';
+import * as migration_20261109_223128_notifications_reports from './20261109_223128_notifications_reports';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20261109_172648_analytics.up,
     down: migration_20261109_172648_analytics.down,
-    name: '20261109_172648_analytics'
+    name: '20261109_172648_analytics',
+  },
+  {
+    up: migration_20261109_223128_notifications_reports.up,
+    down: migration_20261109_223128_notifications_reports.down,
+    name: '20261109_223128_notifications_reports'
   },
 ];

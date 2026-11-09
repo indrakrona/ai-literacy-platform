@@ -4,6 +4,7 @@ import { hasFullAccess, hasRole } from '@ailit/shared'
 import { Shell } from '../../../../components/Shell'
 import { Card, Notice } from '../../../../components/ui'
 import { SubmitProjectForm } from '../../../../components/forms/SubmitProjectForm'
+import { ReportButton } from '../../../../components/ReportButton'
 import { getDict } from '../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../lib/session'
 import { rubricTotal } from '../../../../lib/projects'
@@ -83,6 +84,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             />
           </Card>
         )}
+        <ReportButton targetType="project_brief" targetId={brief.id} locale={locale} />
         <Link href="/proyek" className="text-center underline">{id ? 'Semua proyek' : 'All projects'}</Link>
       </div>
     </Shell>

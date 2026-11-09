@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import React from 'react'
 import { getDict } from '../i18n/server'
-import { getCurrentUser } from '../lib/session'
+import { getCurrentUser, getPayloadClient } from '../lib/session'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { LogoutButton } from './forms/LogoutButton'
 
 export async function Shell({ children, narrow = true }: { children: React.ReactNode; narrow?: boolean }) {
   const { locale, t } = await getDict()
   const user = await getCurrentUser()
+  const unread = user
+    ? (await (await getPayloadClient()).count({ collection: 'notifications', overrideAccess: true, where: { and: [{ user: { equals: user.id } }, { readAt: { exists: false } }] } }).catch(() => ({ totalDocs: 0 }))).totalDocs
+    : 0
   return (
     <div className="min-h-screen">
       <header className="border-b border-line bg-white/80 backdrop-blur">
@@ -18,6 +21,10 @@ export async function Shell({ children, narrow = true }: { children: React.React
           <nav className="flex items-center gap-3 text-sm font-semibold">
             {user ? (
               <>
+                <Link href="/notifikasi" className="relative inline-flex items-center" aria-label={`${locale === 'id' ? 'Pemberitahuan' : 'Notifications'}${unread ? ` (${unread})` : ''}`}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                  {unread > 0 && <span className="absolute -top-1.5 -right-2 min-w-[18px] rounded-full bg-brand-deep px-1 text-center text-[11px] leading-[18px] text-white">{unread > 9 ? '9+' : unread}</span>}
+                </Link>
                 <Link href="/akun" className="hidden sm:inline">
                   {t.nav.account}
                 </Link>

@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, Endpoint, PayloadRequest, Where } from 'payload'
 import { hasFullAccess, hasRole } from '@ailit/shared'
 import { track, type Actor } from '../lib/analytics'
+import { notify } from '../lib/notify'
 
 const idOf = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 
@@ -76,6 +77,15 @@ const submit: Endpoint = {
     const doc = prev
       ? await req.payload.update({ collection: 'submissions', id: prev.id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'submissions', overrideAccess: true, data })
+    if (!prev) {
+      const names = (await req.payload.find({ collection: 'users', overrideAccess: true, depth: 0, limit: 4, where: { id: { in: [...members] } } })).docs.map((m) => m.name.split(' ')[0]).join(', ')
+      await notify(req.payload, {
+        userIds: (klass.teachers ?? []).map(idOf),
+        kind: 'submission_received',
+        vars: { students: names, brief: brief.title, class: klass.name },
+        link: `/guru/kelas/${klass.id}/nilai`,
+      })
+    }
     if (!prev) await track(req.payload, { name: 'project_submitted', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, competency: brief.competency } })
     return Response.json({ id: doc.id, status: doc.status })
   },
@@ -104,6 +114,13 @@ const grade: Endpoint = {
       id: sub.id,
       overrideAccess: true,
       data: { scores, feedback, status: 'graded', gradedBy: user.id, gradedAt: new Date().toISOString() },
+    })
+    const firstGrade = sub.status !== 'graded'
+    await notify(req.payload, {
+      userIds: firstGrade ? (sub.members ?? []).map(idOf) : [],
+      kind: 'project_graded',
+      vars: { brief: brief.title, total: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 },
+      link: `/proyek/${brief.slug}`,
     })
     await track(req.payload, { name: 'project_graded', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, score: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 } })
     return Response.json({ id: doc.id, status: doc.status, total: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 })
