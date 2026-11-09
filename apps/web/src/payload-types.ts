@@ -81,6 +81,7 @@ export interface Config {
     'test-attempts': TestAttempt;
     'ai-activities': AiActivity;
     'ai-conversations': AiConversation;
+    assignments: Assignment;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -113,6 +114,7 @@ export interface Config {
     'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
     'ai-activities': AiActivitiesSelect<false> | AiActivitiesSelect<true>;
     'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
+    assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -741,6 +743,20 @@ export interface AiConversation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments".
+ */
+export interface Assignment {
+  id: number;
+  class: number | Class;
+  lesson: number | Lesson;
+  dueDate: string;
+  note?: string | null;
+  assignedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -910,6 +926,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'ai-conversations';
         value: number | AiConversation;
+      } | null)
+    | ({
+        relationTo: 'assignments';
+        value: number | Assignment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1287,6 +1307,19 @@ export interface AiConversationsSelect<T extends boolean = true> {
   flagged?: T;
   tokens?: T;
   provider?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments_select".
+ */
+export interface AssignmentsSelect<T extends boolean = true> {
+  class?: T;
+  lesson?: T;
+  dueDate?: T;
+  note?: T;
+  assignedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

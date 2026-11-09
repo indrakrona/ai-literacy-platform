@@ -9,7 +9,7 @@ import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 export default async function DashboardPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/masuk')
-  const { t } = await getDict()
+  const { t, locale } = await getDict()
   const payload = await getPayloadClient()
   const classes = await payload.find({
     collection: 'classes',
@@ -19,6 +19,10 @@ export default async function DashboardPage() {
     limit: 20,
   })
   const isStudent = user.roles?.includes('student')
+  const isTeacher = user.roles?.some((r) => ['teacher', 'school_admin', 'super_admin'].includes(r))
+  const assignments = classes.docs.length
+    ? await payload.find({ collection: 'assignments', overrideAccess: false, user, where: { class: { in: classes.docs.map((c) => c.id) } }, sort: 'dueDate', depth: 2, limit: 20 })
+    : { docs: [] }
 
   return (
     <Shell narrow={false}>
@@ -46,6 +50,26 @@ export default async function DashboardPage() {
             </div>
           )}
         </Card>
+        {assignments.docs.length > 0 && (
+          <Card>
+            <h2 className="text-lg font-semibold">{locale === 'id' ? 'Tugas dari guru' : 'Assignments'}</h2>
+            <ul className="mt-2 divide-y divide-line">
+              {assignments.docs.map((a) => {
+                const l = typeof a.lesson === 'object' ? a.lesson : null
+                const tr = l && typeof l.unit === 'object' && typeof l.unit.track === 'object' ? l.unit.track : null
+                return (
+                  <li key={a.id} className="flex justify-between gap-3 py-2 text-sm">
+                    {l && tr ? <Link className="underline" href={`/belajar/${tr.slug}/${l.order}`}>{l.title}</Link> : <span>{l?.title}</span>}
+                    <span className="text-muted">{new Date(a.dueDate).toLocaleDateString(locale === 'id' ? 'id-ID' : 'en-GB')}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </Card>
+        )}
+        {isTeacher && (
+          <Link href="/guru" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Ruang Guru' : 'Teacher space'}</Link>
+        )}
         <Link href="/belajar" className="w-fit rounded-xl bg-ink px-5 py-3 font-semibold text-paper">
           {t.home.startLearning}
         </Link>
