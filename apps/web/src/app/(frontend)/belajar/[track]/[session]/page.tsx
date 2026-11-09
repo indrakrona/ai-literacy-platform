@@ -4,6 +4,7 @@ import { RichText } from '@payloadcms/richtext-lexical/react'
 import { Shell } from '../../../../../components/Shell'
 import { Card, Notice } from '../../../../../components/ui'
 import { CompleteButton } from '../../../../../components/forms/CompleteButton'
+import { QuizBlock } from '../../../../../components/QuizBlock'
 import { fmt } from '../../../../../i18n/dict'
 import { getDict } from '../../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../../lib/session'
@@ -61,6 +62,12 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
               </section>
             )}
           </Card>
+        )}
+        {lesson?.quiz && lesson.quiz.length > 0 && (
+          <QuizBlock
+            questions={lesson.quiz}
+            labels={{ title: t.learn.quizTitle, correct: t.learn.quizCorrect, wrong: t.learn.quizWrong, score: t.learn.quizScore }}
+          />
         )}
         {lesson && lesson._status === 'published' && (
           user ? (

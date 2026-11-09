@@ -73,6 +73,27 @@ export const Lessons: CollectionConfig = {
     { name: 'activity', label: 'Main activity', type: 'textarea', localized: true },
     { name: 'content', type: 'richText', localized: true },
     {
+      name: 'quiz',
+      label: 'Practice questions',
+      type: 'array',
+      admin: { description: 'Instant-feedback practice; not part of the AILIS item bank.' },
+      fields: [
+        { name: 'prompt', type: 'textarea', required: true, localized: true },
+        {
+          name: 'options',
+          type: 'array',
+          minRows: 2,
+          maxRows: 5,
+          required: true,
+          fields: [
+            { name: 'text', type: 'text', required: true, localized: true },
+            { name: 'correct', type: 'checkbox', defaultValue: false },
+          ],
+        },
+        { name: 'explanation', type: 'textarea', localized: true, admin: { description: 'Shown after answering' } },
+      ],
+    },
+    {
       name: 'video',
       type: 'upload',
       relationTo: 'media',

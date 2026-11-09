@@ -128,3 +128,16 @@ describe('curriculum seed', () => {
     expect(en.title).toBe('Protecting personal data')
   })
 })
+
+describe('sample lesson content', () => {
+  it('publishes SMP session 2 with content and five practice questions, each with one correct answer', async () => {
+    const { seedCurriculum } = await import('../src/seed/curriculum')
+    const { seedLessonContent } = await import('../src/seed/lesson-content')
+    await seedCurriculum(payload)
+    expect(await seedLessonContent(payload)).toEqual({ published: 1 })
+    const lesson = (await payload.find({ collection: 'lessons', where: { and: [{ order: { equals: 2 } }, { _status: { equals: 'published' } }, { competency: { equals: 'PRO-1' } }] }, limit: 1 })).docs[0]!
+    expect(lesson.content?.root.children.length).toBeGreaterThan(5)
+    expect(lesson.quiz).toHaveLength(5)
+    for (const q of lesson.quiz ?? []) expect(q.options.filter((o) => o.correct)).toHaveLength(1)
+  })
+})

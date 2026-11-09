@@ -368,6 +368,24 @@ export interface Lesson {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Instant-feedback practice; not part of the AILIS item bank.
+   */
+  quiz?:
+    | {
+        prompt: string;
+        options: {
+          text: string;
+          correct?: boolean | null;
+          id?: string | null;
+        }[];
+        /**
+         * Shown after answering
+         */
+        explanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   video?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
@@ -780,6 +798,20 @@ export interface LessonsSelect<T extends boolean = true> {
   objective?: T;
   activity?: T;
   content?: T;
+  quiz?:
+    | T
+    | {
+        prompt?: T;
+        options?:
+          | T
+          | {
+              text?: T;
+              correct?: T;
+              id?: T;
+            };
+        explanation?: T;
+        id?: T;
+      };
   video?: T;
   updatedAt?: T;
   createdAt?: T;

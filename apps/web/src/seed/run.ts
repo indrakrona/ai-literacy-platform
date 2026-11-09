@@ -1,8 +1,10 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { seedCurriculum } from './curriculum'
+import { seedLessonContent } from './lesson-content'
 
 const payload = await getPayload({ config })
 const report = await seedCurriculum(payload)
 payload.logger.info(`Curriculum seeded: ${JSON.stringify(report)}`)
+payload.logger.info(`Lesson content: ${JSON.stringify(await seedLessonContent(payload))}`)
 process.exit(0)
