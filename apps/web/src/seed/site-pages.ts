@@ -379,6 +379,16 @@ export async function seedSitePages(payload: Payload) {
       : await payload.create({ collection: 'pages', locale: 'id', data: idData as never })
     await payload.update({ collection: 'pages', id: saved.id, locale: 'en', data: { ...base, title: pg.title.en, description: pg.description.en, layout: pg.layout.en } as never })
   }
+  // Contact details confirmed by IJ (9 Nov 2026). Editable later in the CMS under Website › Site settings.
+  await payload.updateGlobal({
+    slug: 'site-settings',
+    data: {
+      contactEmail: 'indra@impact.id',
+      whatsapp: '+6281289991777',
+      address: 'The Plaza Thamrin, Jakarta',
+      pilotNotifyEmails: [{ email: 'indra@impact.id' }],
+    },
+  })
   await payload.updateGlobal({ slug: 'site-settings', locale: 'id', data: { tagline: 'Literasi AI untuk remaja Indonesia' } })
   await payload.updateGlobal({ slug: 'site-settings', locale: 'en', data: { tagline: 'AI literacy for Indonesian teens' } })
   return { pages: PAGES.length }
