@@ -11,6 +11,16 @@ export const WRITTEN = [SMP_01, SMP_02, SMP_03, SMP_04, SMP_06, SMP_07, SMP_08, 
   SMA_01, SMA_02, SMA_03, SMA_06, SMA_07, SMA_08, SMA_09, SMA_11,
   SMA_12, SMA_13, SMA_16, SMA_18]
 
+const SIMULATORS: Record<string, string> = {
+  'smp-ai-untuk-belajar-dan-integritas:2': 'shield-sort',
+  'smp-ai-untuk-belajar-dan-integritas:3': 'program-vs-ai',
+  'smp-ai-untuk-belajar-dan-integritas:6': 'data-trainer',
+  'smp-ai-untuk-belajar-dan-integritas:7': 'fair-data',
+  'smp-ai-untuk-belajar-dan-integritas:10': 'prompt-builder',
+  'sma-smk-membangun-dengan-ai:2': 'shield-sort',
+  'sma-smk-membangun-dengan-ai:6': 'data-trainer',
+}
+
 /** Apply written lesson content (Bahasa Indonesia) and publish those lessons. */
 export async function seedLessonContent(payload: Payload) {
   let published = 0
@@ -31,7 +41,14 @@ export async function seedLessonContent(payload: Payload) {
       collection: 'lessons',
       id: lesson.id,
       locale: 'id',
-      data: { objective: l.objective, content: l.content, quiz: l.quiz, reviewState: 'in_review', _status: 'published' },
+      data: {
+        objective: l.objective,
+        content: l.content,
+        quiz: l.quiz,
+        simulator: (SIMULATORS[`${l.track}:${l.order}`] ?? null) as never,
+        reviewState: 'in_review',
+        _status: 'published',
+      },
     })
     published++
   }

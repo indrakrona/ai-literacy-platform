@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { COMPETENCIES, LESSON_TYPES, REVIEW_STATES } from '@ailit/shared'
 import { publishedOrStaff, roles } from '../access'
+import { SIMULATOR_OPTIONS } from '../simulators/options'
 
 const LESSON_TYPE_LABELS: Record<(typeof LESSON_TYPES)[number], string> = {
   video: 'Video',
@@ -72,6 +73,12 @@ export const Lessons: CollectionConfig = {
     { name: 'objective', type: 'textarea', localized: true },
     { name: 'activity', label: 'Main activity', type: 'textarea', localized: true },
     { name: 'content', type: 'richText', localized: true },
+    {
+      name: 'simulator',
+      type: 'select',
+      options: SIMULATOR_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+      admin: { description: 'Interactive tool shown in the lesson' },
+    },
     {
       name: 'quiz',
       label: 'Practice questions',

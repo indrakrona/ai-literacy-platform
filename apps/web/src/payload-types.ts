@@ -369,6 +369,10 @@ export interface Lesson {
     [k: string]: unknown;
   } | null;
   /**
+   * Interactive tool shown in the lesson
+   */
+  simulator?: ('shield-sort' | 'program-vs-ai' | 'data-trainer' | 'fair-data' | 'prompt-builder') | null;
+  /**
    * Instant-feedback practice; not part of the AILIS item bank.
    */
   quiz?:
@@ -798,6 +802,7 @@ export interface LessonsSelect<T extends boolean = true> {
   objective?: T;
   activity?: T;
   content?: T;
+  simulator?: T;
   quiz?:
     | T
     | {

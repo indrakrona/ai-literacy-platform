@@ -5,6 +5,7 @@ import { Shell } from '../../../../../components/Shell'
 import { Card, Notice } from '../../../../../components/ui'
 import { CompleteButton } from '../../../../../components/forms/CompleteButton'
 import { QuizBlock } from '../../../../../components/QuizBlock'
+import { Simulator } from '../../../../../simulators/Simulator'
 import { fmt } from '../../../../../i18n/dict'
 import { getDict } from '../../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../../lib/session'
@@ -63,6 +64,7 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
             )}
           </Card>
         )}
+        {lesson?.simulator && <Simulator name={lesson.simulator} locale={locale} />}
         {lesson?.quiz && lesson.quiz.length > 0 && (
           <QuizBlock
             questions={lesson.quiz}
