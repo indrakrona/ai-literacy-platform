@@ -1,7 +1,8 @@
 import type { Payload } from 'payload'
 import { SMP_02 } from './lessons/smp-02'
+import { SMP_01, SMP_03, SMP_04, SMP_06 } from './lessons/smp-batch1'
 
-const WRITTEN = [SMP_02]
+export const WRITTEN = [SMP_01, SMP_02, SMP_03, SMP_04, SMP_06]
 
 /** Apply written lesson content (Bahasa Indonesia) and publish those lessons. */
 export async function seedLessonContent(payload: Payload) {
