@@ -10,7 +10,7 @@ import { escapeHtml } from './emails'
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -39,6 +39,10 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   consent_declined: {
     id: { title: 'Orang tua belum memberi izin', body: 'Kamu tetap dapat membaca materi. Bicarakan dengan orang tuamu jika ingin memakai AI Lab.' },
     en: { title: 'Parent permission not given', body: 'You can still read the lessons. Talk to your parents if you would like to use the AI Lab.' },
+  },
+  pilot_request: {
+    id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },
+    en: { title: 'New pilot request', body: '{school} ({city}) would like to join the pilot.' },
   },
   report_received: {
     id: { title: 'Laporan masalah baru', body: 'Ada laporan "{reason}" tentang {target}.' },

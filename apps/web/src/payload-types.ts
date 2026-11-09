@@ -88,6 +88,8 @@ export interface Config {
     'analytics-events': AnalyticsEvent;
     notifications: Notification;
     reports: Report;
+    pages: Page;
+    'pilot-requests': PilotRequest;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -127,6 +129,8 @@ export interface Config {
     'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     reports: ReportsSelect<false> | ReportsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    'pilot-requests': PilotRequestsSelect<false> | PilotRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -137,8 +141,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('id' | 'en') | ('id' | 'en')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: 'id' | 'en';
   widgets: {
     collections: CollectionsWidget;
@@ -933,7 +941,8 @@ export interface Notification {
     | 'score_ready'
     | 'consent_granted'
     | 'consent_declined'
-    | 'report_received';
+    | 'report_received'
+    | 'pilot_request';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -960,6 +969,167 @@ export interface Report {
   details?: string | null;
   status: 'open' | 'reviewing' | 'resolved' | 'dismissed';
   resolution?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  /**
+   * "home" is the front page
+   */
+  slug: string;
+  /**
+   * Shown by Google; about 150 characters
+   */
+  description?: string | null;
+  showInNav?: boolean | null;
+  navOrder?: number | null;
+  footerGroup?: ('legal' | 'about') | null;
+  layout?:
+    | (
+        | {
+            eyebrow?: string | null;
+            heading: string;
+            lead?: string | null;
+            primary?: {
+              label?: string | null;
+              /**
+               * e.g. /untuk-sekolah or /daftar
+               */
+              href?: string | null;
+            };
+            secondary?: {
+              label?: string | null;
+              /**
+               * e.g. /untuk-sekolah or /daftar
+               */
+              href?: string | null;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            text: string;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'notice';
+          }
+        | {
+            heading?: string | null;
+            intro?: string | null;
+            items?:
+              | {
+                  title: string;
+                  body?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'features';
+          }
+        | {
+            heading?: string | null;
+            items?:
+              | {
+                  title: string;
+                  body?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            heading?: string | null;
+            body: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            heading?: string | null;
+            items?:
+              | {
+                  question: string;
+                  answer: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'faq';
+          }
+        | {
+            heading: string;
+            body?: string | null;
+            button?: {
+              label?: string | null;
+              /**
+               * e.g. /untuk-sekolah or /daftar
+               */
+              href?: string | null;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+        | {
+            heading?: string | null;
+            intro?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pilotForm';
+          }
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Schools that asked to join the pilot from the website.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pilot-requests".
+ */
+export interface PilotRequest {
+  id: number;
+  schoolName: string;
+  npsn?: string | null;
+  level: 'smp' | 'sma' | 'smk' | 'other';
+  city: string;
+  province: string;
+  students?: number | null;
+  contactName: string;
+  contactRole: string;
+  email: string;
+  phone?: string | null;
+  message?: string | null;
+  locale?: string | null;
+  status: 'new' | 'contacted' | 'meeting' | 'accepted' | 'declined';
+  internalNotes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1162,6 +1332,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reports';
         value: number | Report;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'pilot-requests';
+        value: number | PilotRequest;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1672,6 +1850,148 @@ export interface ReportsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  showInNav?: T;
+  navOrder?: T;
+  footerGroup?: T;
+  layout?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              lead?: T;
+              primary?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                  };
+              secondary?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        notice?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+              blockName?: T;
+            };
+        features?:
+          | T
+          | {
+              heading?: T;
+              intro?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    body?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        steps?:
+          | T
+          | {
+              heading?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    body?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        text?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              id?: T;
+              blockName?: T;
+            };
+        faq?:
+          | T
+          | {
+              heading?: T;
+              items?:
+                | T
+                | {
+                    question?: T;
+                    answer?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              button?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        pilotForm?:
+          | T
+          | {
+              heading?: T;
+              intro?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pilot-requests_select".
+ */
+export interface PilotRequestsSelect<T extends boolean = true> {
+  schoolName?: T;
+  npsn?: T;
+  level?: T;
+  city?: T;
+  province?: T;
+  students?: T;
+  contactName?: T;
+  contactRole?: T;
+  email?: T;
+  phone?: T;
+  message?: T;
+  locale?: T;
+  status?: T;
+  internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1740,6 +2060,50 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  tagline?: string | null;
+  contactEmail?: string | null;
+  /**
+   * e.g. 62812xxxxxxx; leave empty to hide
+   */
+  whatsapp?: string | null;
+  address?: string | null;
+  /**
+   * Super admins are always notified in the platform as well.
+   */
+  pilotNotifyEmails?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  tagline?: T;
+  contactEmail?: T;
+  whatsapp?: T;
+  address?: T;
+  pilotNotifyEmails?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

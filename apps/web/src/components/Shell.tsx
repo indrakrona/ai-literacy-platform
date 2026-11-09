@@ -4,10 +4,14 @@ import { getDict } from '../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../lib/session'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { LogoutButton } from './forms/LogoutButton'
+import { PublicNav } from './site/PublicNav'
+import { Footer } from './site/Footer'
+import { getSiteChrome } from '../lib/site'
 
 export async function Shell({ children, narrow = true }: { children: React.ReactNode; narrow?: boolean }) {
   const { locale, t } = await getDict()
   const user = await getCurrentUser()
+  const chrome = user ? null : await getSiteChrome(locale)
   const unread = user
     ? (await (await getPayloadClient()).count({ collection: 'notifications', overrideAccess: true, where: { and: [{ user: { equals: user.id } }, { readAt: { exists: false } }] } }).catch(() => ({ totalDocs: 0 }))).totalDocs
     : 0
@@ -31,13 +35,17 @@ export async function Shell({ children, narrow = true }: { children: React.React
                 <LogoutButton label={t.nav.logout} />
               </>
             ) : (
-              <Link href="/masuk">{t.nav.login}</Link>
+              <>
+                <PublicNav items={chrome?.nav ?? []} menuLabel={locale === 'id' ? 'Menu' : 'Menu'} />
+                <Link href="/masuk">{t.nav.login}</Link>
+              </>
             )}
             <LanguageSwitcher locale={locale} />
           </nav>
         </div>
       </header>
       <main className={`mx-auto w-full px-4 py-8 sm:py-12 ${narrow ? 'max-w-lg' : 'max-w-5xl'}`}>{children}</main>
+      <Footer locale={locale} />
     </div>
   )
 }

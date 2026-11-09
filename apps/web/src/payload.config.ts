@@ -27,6 +27,9 @@ import { Orders } from './collections/Orders'
 import { AnalyticsEvents } from './collections/AnalyticsEvents'
 import { Notifications } from './collections/Notifications'
 import { Reports } from './collections/Reports'
+import { Pages } from './collections/Pages'
+import { PilotRequests } from './collections/PilotRequests'
+import { SiteSettings } from './globals/SiteSettings'
 import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
@@ -41,7 +44,8 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(dirname) },
     meta: { titleSuffix: ' · AI Literacy Admin' },
   },
-  collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, LessonProgress, Media, TestItems, TestForms, TestAttempts, AiActivities, AiConversations, Assignments, ProjectBriefs, Submissions, Orders, AnalyticsEvents, Notifications, Reports],
+  collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, LessonProgress, Media, TestItems, TestForms, TestAttempts, AiActivities, AiConversations, Assignments, ProjectBriefs, Submissions, Orders, AnalyticsEvents, Notifications, Reports, Pages, PilotRequests],
+  globals: [SiteSettings],
   editor: lexicalEditor(),
   localization: {
     locales: [
