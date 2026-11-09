@@ -137,6 +137,7 @@ describe('sample lesson content', () => {
     expect(await seedLessonContent(payload)).toEqual({ published: WRITTEN.length })
     const orders = (track: string) => WRITTEN.filter((l) => l.track === track).map((l) => l.order).sort((a, b) => a - b)
     expect(orders('smp-ai-untuk-belajar-dan-integritas')).toEqual([1, 2, 3, 4, 6, 7, 8, 10, 11, 14, 17, 18])
+    expect(orders('sma-smk-membangun-dengan-ai')).toEqual([1, 2, 3, 6, 7, 8, 9, 11, 12, 13, 16, 18])
     for (const l of WRITTEN) for (const qq of l.quiz) expect(qq.options.filter((o) => o.correct)).toHaveLength(1)
     const lesson = (await payload.find({ collection: 'lessons', locale: 'id', where: { and: [{ title: { equals: 'Perlindungan Data Pribadi' } }, { _status: { equals: 'published' } }] }, limit: 1 })).docs[0]!
     expect(lesson.content?.root.children.length).toBeGreaterThan(5)

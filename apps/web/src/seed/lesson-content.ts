@@ -5,9 +5,11 @@ import { SMP_07, SMP_08, SMP_10, SMP_11 } from './lessons/smp-batch2'
 import { SMP_14, SMP_17, SMP_18 } from './lessons/smp-batch3'
 import { SMA_01, SMA_02, SMA_03, SMA_06 } from './lessons/sma-batch1'
 import { SMA_07, SMA_08, SMA_09, SMA_11 } from './lessons/sma-batch2'
+import { SMA_12, SMA_13, SMA_16, SMA_18 } from './lessons/sma-batch3'
 
 export const WRITTEN = [SMP_01, SMP_02, SMP_03, SMP_04, SMP_06, SMP_07, SMP_08, SMP_10, SMP_11, SMP_14, SMP_17, SMP_18,
-  SMA_01, SMA_02, SMA_03, SMA_06, SMA_07, SMA_08, SMA_09, SMA_11]
+  SMA_01, SMA_02, SMA_03, SMA_06, SMA_07, SMA_08, SMA_09, SMA_11,
+  SMA_12, SMA_13, SMA_16, SMA_18]
 
 /** Apply written lesson content (Bahasa Indonesia) and publish those lessons. */
 export async function seedLessonContent(payload: Payload) {
