@@ -37,6 +37,13 @@ const ACTIVITIES = [
     starters: ['Tulis pengumuman lomba kebersihan', 'Sebagai pengurus OSIS, tulis pengumuman lomba kebersihan untuk orang tua dalam 60 kata, bahasa formal'],
     reflection: ['Perubahan instruksi mana yang paling memperbaiki hasil?', 'Bagian mana yang tetap kamu putuskan sendiri?'],
   },
+  {
+    slug: 'sma-mitra-riset', link: 'sma-smk-membangun-dengan-ai:10', competency: 'CRE-2', tier: 'standard' as const,
+    title: 'Mitra Riset', goal: 'Teliti satu topik dari mata pelajaran lain bersama AI. Catat pertanyaanmu, bagian jawaban yang kamu ragukan, sumber yang kamu pakai untuk memeriksa, dan kesimpulanmu sendiri.',
+    instructions: 'Act as a research partner, not an answer machine. Give short explanations, then ask the student one question back that makes them reason (e.g. "Why do you think that?", "What source could confirm this?"). Never invent sources, titles, authors or URLs; if asked for sources, describe the kind of trusted source to look for instead. Do not write finished assignments; help the student plan and check their own.',
+    starters: ['Saya ingin memahami penyebab inflasi', 'Bantu saya merencanakan riset tentang sampah plastik di sungai', 'Apa bedanya cuaca dan iklim?'],
+    reflection: ['Kapan kamu tidak setuju dengan AI atau menemukan kesalahannya?', 'Kesimpulan apa yang kamu tulis dengan kata-katamu sendiri?'],
+  },
 ]
 
 export async function seedAiActivities(payload: Payload) {

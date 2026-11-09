@@ -91,9 +91,13 @@ describe('pilot item bank', () => {
   it('loads all pilot items as approved and every choice item is valid', async () => {
     const { seedItems } = await import('../src/seed/items')
     const r = await seedItems(payload)
-    expect(r.total).toBe(22)
-    const items = await payload.find({ collection: 'test-items', where: { code: { like: 'AIL-SMA-' } }, limit: 100 })
-    expect(items.totalDocs).toBe(22)
+    expect(r.total).toBe(64)
+    const sma = await payload.find({ collection: 'test-items', where: { code: { like: 'AIL-SMA-' } }, limit: 100 })
+    const smp = await payload.find({ collection: 'test-items', where: { code: { like: 'AIL-SMP-' } }, limit: 100 })
+    expect(sma.totalDocs).toBe(32)
+    expect(smp.totalDocs).toBe(32)
+    expect(smp.docs.every((i) => i.level === 'smp')).toBe(true)
+    const items = { docs: [...sma.docs, ...smp.docs] }
     expect(items.docs.every((i) => i.state === 'approved')).toBe(true)
   })
 })

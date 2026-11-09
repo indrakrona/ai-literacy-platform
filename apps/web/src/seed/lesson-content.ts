@@ -6,10 +6,14 @@ import { SMP_14, SMP_17, SMP_18 } from './lessons/smp-batch3'
 import { SMA_01, SMA_02, SMA_03, SMA_06 } from './lessons/sma-batch1'
 import { SMA_07, SMA_08, SMA_09, SMA_11 } from './lessons/sma-batch2'
 import { SMA_12, SMA_13, SMA_16, SMA_18 } from './lessons/sma-batch3'
+import { SMP_05, SMP_09, SMP_12, SMP_13, SMP_15, SMP_16 } from './lessons/smp-batch4'
+import { SMA_04, SMA_05, SMA_10, SMA_14, SMA_15, SMA_17 } from './lessons/sma-batch4'
 
 export const WRITTEN = [SMP_01, SMP_02, SMP_03, SMP_04, SMP_06, SMP_07, SMP_08, SMP_10, SMP_11, SMP_14, SMP_17, SMP_18,
   SMA_01, SMA_02, SMA_03, SMA_06, SMA_07, SMA_08, SMA_09, SMA_11,
-  SMA_12, SMA_13, SMA_16, SMA_18]
+  SMA_12, SMA_13, SMA_16, SMA_18,
+  SMP_05, SMP_09, SMP_12, SMP_13, SMP_15, SMP_16,
+  SMA_04, SMA_05, SMA_10, SMA_14, SMA_15, SMA_17]
 
 const SIMULATORS: Record<string, string> = {
   'smp-ai-untuk-belajar-dan-integritas:2': 'shield-sort',
@@ -17,6 +21,7 @@ const SIMULATORS: Record<string, string> = {
   'smp-ai-untuk-belajar-dan-integritas:6': 'data-trainer',
   'smp-ai-untuk-belajar-dan-integritas:7': 'fair-data',
   'smp-ai-untuk-belajar-dan-integritas:10': 'prompt-builder',
+  'smp-ai-untuk-belajar-dan-integritas:13': 'fair-data',
   'sma-smk-membangun-dengan-ai:2': 'shield-sort',
   'sma-smk-membangun-dengan-ai:6': 'data-trainer',
 }
@@ -43,6 +48,8 @@ export async function seedLessonContent(payload: Payload) {
       locale: 'id',
       data: {
         objective: l.objective,
+        // The written lesson has its own Bahasa activity section; the English planning note stays on the 'en' locale only.
+        activity: null,
         content: l.content,
         quiz: l.quiz,
         simulator: (SIMULATORS[`${l.track}:${l.order}`] ?? null) as never,
