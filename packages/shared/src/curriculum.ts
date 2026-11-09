@@ -60,3 +60,16 @@ const PREFIX_TO_BIG_IDEA = { DIS: 'discover', UND: 'understand', CRE: 'create', 
 export function bigIdeaOf(c: Competency): BigIdea {
   return PREFIX_TO_BIG_IDEA[c.slice(0, 3) as keyof typeof PREFIX_TO_BIG_IDEA]
 }
+
+/** Each big idea feeds one AILIS score domain (framework doc, "Big ideas and score domains"). */
+export const DOMAIN_OF_BIG_IDEA: Record<BigIdea, ScoreDomain> = {
+  discover: 'understand',
+  understand: 'evaluate',
+  create: 'use_create',
+  protect: 'protect',
+  thrive: 'apply',
+}
+
+export function domainOf(c: Competency): ScoreDomain {
+  return DOMAIN_OF_BIG_IDEA[bigIdeaOf(c)]
+}
