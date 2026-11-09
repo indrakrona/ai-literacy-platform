@@ -134,7 +134,7 @@ describe('sample lesson content', () => {
     const { seedCurriculum } = await import('../src/seed/curriculum')
     const { seedLessonContent, WRITTEN } = await import('../src/seed/lesson-content')
     await seedCurriculum(payload)
-    expect(await seedLessonContent(payload)).toEqual({ published: WRITTEN.length })
+    expect(await seedLessonContent(payload)).toEqual({ published: WRITTEN.length, translated: WRITTEN.length })
     const orders = (track: string) => WRITTEN.filter((l) => l.track === track).map((l) => l.order).sort((a, b) => a - b)
     const all18 = Array.from({ length: 18 }, (_, i) => i + 1)
     expect(orders('smp-ai-untuk-belajar-dan-integritas')).toEqual(all18)

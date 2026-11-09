@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import { EN_LESSONS } from './lessons-en'
 import { SMP_02 } from './lessons/smp-02'
 import { SMP_01, SMP_03, SMP_04, SMP_06 } from './lessons/smp-batch1'
 import { SMP_07, SMP_08, SMP_10, SMP_11 } from './lessons/smp-batch2'
@@ -29,6 +30,7 @@ const SIMULATORS: Record<string, string> = {
 /** Apply written lesson content (Bahasa Indonesia) and publish those lessons. */
 export async function seedLessonContent(payload: Payload) {
   let published = 0
+  let translated = 0
   for (const l of WRITTEN) {
     const track = (await payload.find({ collection: 'tracks', where: { slug: { equals: l.track } }, limit: 1 })).docs[0]
     if (!track) continue
@@ -58,6 +60,29 @@ export async function seedLessonContent(payload: Payload) {
       },
     })
     published++
+    const en = EN_LESSONS[`${l.track}:${l.order}`]
+    if (en) {
+      // Write the English text onto the same quiz rows so the answer key stays shared.
+      const saved = await payload.findByID({ collection: 'lessons', id: lesson.id, locale: 'id', depth: 0 })
+      const rows = saved.quiz ?? []
+      await payload.update({
+        collection: 'lessons',
+        id: lesson.id,
+        locale: 'en',
+        data: {
+          objective: en.objective,
+          content: en.content,
+          quiz: rows.map((row, i) => ({
+            id: row.id,
+            prompt: en.quiz[i]?.prompt ?? row.prompt,
+            explanation: en.quiz[i]?.explanation ?? row.explanation,
+            options: (row.options ?? []).map((o, j) => ({ id: o.id, correct: o.correct, text: en.quiz[i]?.options[j] ?? o.text })),
+          })),
+          _status: 'published',
+        },
+      })
+      translated++
+    }
   }
-  return { published }
+  return { published, translated }
 }

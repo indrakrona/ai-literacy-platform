@@ -1,0 +1,110 @@
+import { doc, h2, p, ul } from '../lexical'
+import { type EnLesson, qe, SMP } from './types'
+
+export const EN_SMP_1: Record<string, EnLesson> = {
+  [`${SMP}:1`]: {
+    objective: 'Students get to know the aims of the program, share their first experiences with AI, and take a pre-test that measures their starting point.',
+    content: doc(
+      h2('Opening (10 minutes)'),
+      p('The teacher introduces the program and class rules. Students answer a quick poll: "Which apps do you think use AI?" Answers are collected on the board without marking them right or wrong.'),
+      h2('Concept: What will we learn? (15 minutes)'),
+      p('Artificial intelligence (AI) is a computer system that can do tasks that usually need human intelligence, such as recognising images, understanding language or making recommendations. In this program, students learn five big ideas:'),
+      ul(
+        'Discover AI: what AI is, where we find it, and what its limits are.',
+        'Understand how AI works: data, patterns, and why AI can be wrong.',
+        'Create with AI: using AI to learn and make things honestly.',
+        'Protect yourself and others: personal data, fairness and integrity.',
+        'Thrive with AI: using AI to solve real problems.',
+      ),
+      h2('Activity: Pre-test (30 minutes)'),
+      p('Students take the pre-test on their own. It does not count towards report grades; the results are used to see progress at the end of the program.'),
+      h2('Reflection (15 minutes)'),
+      p('Students write one thing they want to know about AI and one worry they have about using AI. The teacher keeps these to discuss again in the final session.'),
+      h2('Final check (10 minutes)'),
+      p('The practice below has sample questions from each big idea.'),
+    ),
+    quiz: [
+      qe('Which of these is best described as an AI system?', ['A calculator that adds numbers', 'An app that recommends videos based on what you watched before', 'A digital clock that shows the time', 'A lamp that turns on when you press the switch'], 'A recommendation system learns patterns from what you watch to predict videos you might like. Calculators, clocks and lamps only follow fixed rules.'),
+      qe('A chatbot says the capital of your province is the wrong city. What should you do?', ['Believe it straight away because AI is always right', 'Check the answer with a trusted source such as a book or an official website', 'Share it in the class group', 'Ignore every AI answer forever'], 'AI can produce information that sounds convincing but is wrong. Make a habit of checking important facts with trusted sources.'),
+      qe('Which instruction (prompt) is the clearest?', ['"Make an assignment."', '"Explain the water cycle for junior secondary students in five simple sentences."', '"Water."', '"Please help."'], 'A clear instruction states the goal, the audience and the kind of answer you want.'),
+      qe('Which information should you not share with an AI service?', ['A question about the formula for the area of a circle', 'Your phone number and home address', 'The title of your favourite song', 'The names of animals at the zoo'], 'Phone numbers and home addresses are personal data that can be used to identify and contact you.'),
+      qe('How can AI help deal with floods?', ['By stopping the rain directly', 'By helping predict areas at risk of flooding from rainfall and water-level data', 'By replacing all disaster management officers', 'By making rivers wider'], 'AI can analyse data to give early warnings, but decisions and action are still taken by people.'),
+    ],
+  },
+  [`${SMP}:3`]: {
+    objective: 'Students can tell ordinary computer programs apart from AI systems based on how each one makes decisions.',
+    content: doc(
+      h2('Opening (10 minutes)'),
+      p('The teacher shows two things: a calculator and a map app on a phone. Students guess which one "learns" and which one only follows instructions.'),
+      h2('Concept: Fixed rules or learning from data? (15 minutes)'),
+      p('An ordinary computer program follows rules written by a programmer, for example "if the button is pressed, turn on the light". The result is always the same for the same input. An AI system is built by learning patterns from many examples, so it can predict answers for new situations, such as recognising faces or estimating travel times.'),
+      ul(
+        'Ordinary programs: calculators, alarm clocks, washing machines with timers, timed traffic lights.',
+        'AI systems: camera face filters, video recommendations, automatic translators, voice assistants, chatbots.',
+      ),
+      h2('Activity: Card sorting (30 minutes)'),
+      p('In groups, students sort cards showing everyday objects and apps into two groups: "Ordinary program" and "AI system". Each group must explain its choice for the three hardest cards.'),
+      h2('Reflection (15 minutes)'),
+      p('The class discusses the cards people disagreed on. The teacher points out that many products combine both: some parts follow fixed rules and other parts use AI.'),
+      h2('Final check (10 minutes)'),
+      p('Do the practice below.'),
+    ),
+    quiz: [
+      qe('What is the main difference between an AI system and an ordinary computer program?', ['AI systems are always more expensive', 'AI systems learn patterns from data, while ordinary programs only follow written rules', 'Ordinary programs do not use electricity', 'AI systems are never wrong'], 'Ordinary programs give the same result for the same input because they follow fixed rules. AI systems predict answers based on patterns learned from data.'),
+      qe('Which of these is an ordinary program?', ['An automatic translator', 'An alarm clock that rings at 05.00', 'A camera face filter', 'Product recommendations in an online shop'], 'An alarm clock rings because of a fixed rule set by the user, not because it learned a pattern.'),
+      qe('A map app estimates travel time based on traffic. Why can this app be said to use AI?', ['Because the app is colourful', 'Because it estimates time from patterns in the travel data of many users', 'Because it can be opened on a phone', 'Because it uses a map'], 'Travel-time estimates come from patterns in traffic data, not from one fixed rule.'),
+    ],
+  },
+  [`${SMP}:4`]: {
+    objective: 'Students can find uses of AI in everyday apps and explain things AI cannot do well.',
+    content: doc(
+      h2('Opening (10 minutes)'),
+      p('The teacher asks: "Why are the videos on everyone’s home feed different?" Students discuss in pairs for three minutes.'),
+      h2('Concept: AI around us (15 minutes)'),
+      p('AI often works out of sight. Some examples close to students’ lives:'),
+      ul(
+        'Recommendations: videos, songs and products that appear based on your habits.',
+        'Cameras: face filters, face recognition to unlock phones, and photo sharpening.',
+        'Maps and transport: travel-time estimates and the fastest route.',
+        'Language: spelling correction, automatic translation and chatbots.',
+      ),
+      p('AI also has limits. It has no feelings, does not truly care, may not know about recent events, and cannot replace human moral judgement.'),
+      h2('Activity: App exploration (30 minutes)'),
+      p('In groups, students choose three apps they use often and fill in a worksheet: which features use AI, what data might be used, and what the benefits and risks are.'),
+      h2('Reflection (15 minutes)'),
+      p('Each group shares one finding. The class builds two lists: "Things AI can help with" and "Things that still need people".'),
+      h2('Final check (10 minutes)'),
+      p('Do the practice below.'),
+    ),
+    quiz: [
+      qe('Why can everyone’s video feed be different?', ['Because everyone’s internet connection is different', 'Because the recommendation system learns each user’s viewing habits', 'Because the videos are chosen completely at random', 'Because every phone has different apps'], 'Recommendation systems use data such as videos you watched, liked or skipped to predict what you want to see.'),
+      qe('Which of these can AI not do well?', ['Sorting thousands of photos by face', 'Feeling empathy and caring for a friend who is sad', 'Translating simple sentences', 'Estimating travel time'], 'AI can imitate sentences that sound caring, but it has no feelings. Care and empathy still come from people.'),
+      qe('What data does a camera face filter probably use?', ['Today’s weather data', 'Images of faces and the position of parts of the face', 'The user’s school report grades', 'The contact list on the phone'], 'Face filters recognise where the eyes, nose and mouth are in an image of a face. That is why face photos are personal data that needs protecting.'),
+    ],
+  },
+  [`${SMP}:6`]: {
+    objective: 'Students can explain that AI learns from many examples of data and that the amount and variety of data affect the result.',
+    content: doc(
+      h2('Opening (10 minutes)'),
+      p('The teacher shows pictures of an unripe mango, a ripe mango and a rotten mango. Students are asked: "How did you learn to tell them apart when you were little?"'),
+      h2('Concept: Learning from examples (15 minutes)'),
+      p('People learn to recognise things from many examples. AI learns in a similar way: the computer is given many examples of data with labels, for example photos of mangoes labelled "ripe" or "not ripe". From these examples, the computer finds patterns and builds a model to predict the label of a new photo.'),
+      ul(
+        'Training data: the examples used for learning.',
+        'Model: the result of learning, used to make predictions.',
+        'Confidence: how sure the model is about its prediction.',
+      ),
+      h2('Activity: Data trainer simulator (30 minutes)'),
+      p('Students use the simulator to train a model to recognise ripe fruit. They try three situations: few examples, many similar examples, and many varied examples, and note how the model’s confidence changes.'),
+      h2('Reflection (15 minutes)'),
+      p('The class discusses: why does a model trained on varied examples recognise fruit it has never seen better? What happens if all the examples come from just one kind of mango?'),
+      h2('Final check (10 minutes)'),
+      p('Do the practice below.'),
+    ),
+    quiz: [
+      qe('What is training data?', ['Data that is deleted after use', 'The examples a computer uses to learn patterns', 'A sports training schedule', 'The final result shown to users'], 'Training data is a set of examples, often with labels, used to build an AI model.'),
+      qe('A model was trained only on photos of harum manis mangoes. What might happen when it sees another kind of mango?', ['It will certainly recognise it correctly', 'It may be wrong because it has never learned from examples of that kind', 'It will refuse to work', 'It will immediately learn by itself without data'], 'A model only knows the patterns in the data it learned from. Data that lacks variety makes a model easily wrong in new situations.'),
+      qe('How can you improve a model’s ability to recognise fruit?', ['Reduce the number of examples', 'Add many varied examples with correct labels', 'Change the app’s colours', 'Use examples with wrong labels'], 'Many varied, correctly labelled examples help a model recognise patterns better.'),
+    ],
+  },
+}

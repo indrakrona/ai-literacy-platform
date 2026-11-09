@@ -51,3 +51,18 @@ describe('AILIS item bank', () => {
     }
   })
 })
+
+describe('English lessons', () => {
+  it('exist for every written lesson with the same quiz shape', async () => {
+    const { EN_LESSONS } = await import('../src/seed/lessons-en')
+    for (const l of WRITTEN) {
+      const key = `${l.track}:${l.order}`
+      const en = EN_LESSONS[key]
+      expect(en, key).toBeTruthy()
+      expect(en!.objective.length, key).toBeGreaterThan(40)
+      expect(en!.quiz.length, key).toBe(l.quiz.length)
+      en!.quiz.forEach((q, i) => expect(q.options.length, `${key} q${i + 1}`).toBe(l.quiz[i]!.options.length))
+    }
+    expect(Object.keys(EN_LESSONS)).toHaveLength(WRITTEN.length)
+  })
+})
