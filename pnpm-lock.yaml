@@ -10,6 +10,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ailit/ai-gateway':
+        specifier: workspace:*
+        version: link:../../packages/ai-gateway
       '@ailit/shared':
         specifier: workspace:*
         version: link:../../packages/shared

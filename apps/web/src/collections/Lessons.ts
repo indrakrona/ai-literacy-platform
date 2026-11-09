@@ -74,6 +74,13 @@ export const Lessons: CollectionConfig = {
     { name: 'activity', label: 'Main activity', type: 'textarea', localized: true },
     { name: 'content', type: 'richText', localized: true },
     {
+      name: 'aiActivity',
+      label: 'AI Lab activity',
+      type: 'relationship',
+      relationTo: 'ai-activities',
+      admin: { condition: (d) => d?.type === 'ai_lab' },
+    },
+    {
       name: 'simulator',
       type: 'select',
       options: SIMULATOR_OPTIONS.map((o) => ({ value: o.value, label: o.label })),

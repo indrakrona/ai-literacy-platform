@@ -27,7 +27,8 @@
     "react-dom": "19.1.10",
     "sharp": "0.34.5",
     "zod": "4.6.7",
-    "@ailit/test-engine": "workspace:*"
+    "@ailit/test-engine": "workspace:*",
+    "@ailit/ai-gateway": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

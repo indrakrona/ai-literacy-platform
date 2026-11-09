@@ -79,6 +79,8 @@ export interface Config {
     'test-items': TestItem;
     'test-forms': TestForm;
     'test-attempts': TestAttempt;
+    'ai-activities': AiActivity;
+    'ai-conversations': AiConversation;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -109,6 +111,8 @@ export interface Config {
     'test-items': TestItemsSelect<false> | TestItemsSelect<true>;
     'test-forms': TestFormsSelect<false> | TestFormsSelect<true>;
     'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
+    'ai-activities': AiActivitiesSelect<false> | AiActivitiesSelect<true>;
+    'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -374,6 +378,7 @@ export interface Lesson {
     };
     [k: string]: unknown;
   } | null;
+  aiActivity?: (number | null) | AiActivity;
   /**
    * Interactive tool shown in the lesson
    */
@@ -400,6 +405,52 @@ export interface Lesson {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-activities".
+ */
+export interface AiActivity {
+  id: number;
+  title: string;
+  slug: string;
+  competency:
+    | 'DIS-1'
+    | 'DIS-2'
+    | 'DIS-3'
+    | 'UND-1'
+    | 'UND-2'
+    | 'UND-3'
+    | 'CRE-1'
+    | 'CRE-2'
+    | 'CRE-3'
+    | 'PRO-1'
+    | 'PRO-2'
+    | 'PRO-3'
+    | 'THR-1'
+    | 'THR-2'
+    | 'THR-3';
+  goal: string;
+  /**
+   * Added after the platform safety rules. Students do not see this.
+   */
+  instructions: string;
+  starterPrompts?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  tier: 'fast' | 'standard';
+  messageLimit: number;
+  reflection?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -657,6 +708,39 @@ export interface TestAttempt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-conversations".
+ */
+export interface AiConversation {
+  id: number;
+  user: number | User;
+  activity: number | AiActivity;
+  school?: (number | null) | School;
+  messages:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flagged?: boolean | null;
+  tokens?: number | null;
+  provider?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -818,6 +902,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'test-attempts';
         value: number | TestAttempt;
+      } | null)
+    | ({
+        relationTo: 'ai-activities';
+        value: number | AiActivity;
+      } | null)
+    | ({
+        relationTo: 'ai-conversations';
+        value: number | AiConversation;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -996,6 +1088,7 @@ export interface LessonsSelect<T extends boolean = true> {
   objective?: T;
   activity?: T;
   content?: T;
+  aiActivity?: T;
   simulator?: T;
   quiz?:
     | T
@@ -1151,6 +1244,49 @@ export interface TestAttemptsSelect<T extends boolean = true> {
   ratings?: T;
   integrity?: T;
   report?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-activities_select".
+ */
+export interface AiActivitiesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  competency?: T;
+  goal?: T;
+  instructions?: T;
+  starterPrompts?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  tier?: T;
+  messageLimit?: T;
+  reflection?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-conversations_select".
+ */
+export interface AiConversationsSelect<T extends boolean = true> {
+  user?: T;
+  activity?: T;
+  school?: T;
+  messages?: T;
+  flags?: T;
+  flagged?: T;
+  tokens?: T;
+  provider?: T;
   updatedAt?: T;
   createdAt?: T;
 }

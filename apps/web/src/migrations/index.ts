@@ -5,6 +5,7 @@ import * as migration_20261109_133955_lesson_progress from './20261109_133955_le
 import * as migration_20261109_134657_lesson_quiz from './20261109_134657_lesson_quiz';
 import * as migration_20261109_152702_lesson_simulator from './20261109_152702_lesson_simulator';
 import * as migration_20261109_153457_ailis_engine from './20261109_153457_ailis_engine';
+import * as migration_20261109_155157_ai_lab from './20261109_155157_ai_lab';
 
 export const migrations = [
   {
@@ -40,6 +41,11 @@ export const migrations = [
   {
     up: migration_20261109_153457_ailis_engine.up,
     down: migration_20261109_153457_ailis_engine.down,
-    name: '20261109_153457_ailis_engine'
+    name: '20261109_153457_ailis_engine',
+  },
+  {
+    up: migration_20261109_155157_ai_lab.up,
+    down: migration_20261109_155157_ai_lab.down,
+    name: '20261109_155157_ai_lab'
   },
 ];

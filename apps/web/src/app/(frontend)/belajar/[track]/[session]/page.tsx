@@ -65,6 +65,11 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
           </Card>
         )}
         {lesson?.simulator && <Simulator name={lesson.simulator} locale={locale} />}
+        {lesson?.aiActivity && typeof lesson.aiActivity === 'object' && (
+          <Link href={`/lab/${lesson.aiActivity.slug}`} className="rounded-xl bg-ink px-5 py-3.5 text-center font-semibold text-paper">
+            {locale === 'id' ? 'Buka AI Lab' : 'Open the AI Lab'} · {lesson.aiActivity.title}
+          </Link>
+        )}
         {lesson?.quiz && lesson.quiz.length > 0 && (
           <QuizBlock
             questions={lesson.quiz}
