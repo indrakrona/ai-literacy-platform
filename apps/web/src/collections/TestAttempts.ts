@@ -2,6 +2,7 @@ import type { CollectionConfig, Endpoint, PayloadRequest } from 'payload'
 import { hasRole } from '@ailit/shared'
 import { scoreAttempt, toPaperItem } from '../lib/ailis'
 import type { TestAttempt, TestItem } from '../payload-types'
+import { track, type Actor } from '../lib/analytics'
 
 const GRACE_MS = 30_000
 
@@ -82,6 +83,7 @@ const start: Endpoint = {
         integrity: { tabHidden: 0, pastes: 0 },
       },
     })
+    await track(req.payload, { name: 'test_started', user: req.user as unknown as Actor, headers: req.headers, props: { attemptId: attempt.id } })
     return Response.json({ attemptId: attempt.id, resumed: false }, { status: 201 })
   },
 }
@@ -156,6 +158,9 @@ const submit: Endpoint = {
       overrideAccess: true,
       data: { status: pendingRatings ? 'awaiting_rating' : 'scored', submittedAt: new Date().toISOString(), points, report },
     })
+    const actor = req.user as unknown as Actor
+    await track(req.payload, { name: 'test_submitted', user: actor, headers: req.headers, props: { attemptId: attempt.id } })
+    if (!pendingRatings) await track(req.payload, { name: 'score_released', user: actor, headers: req.headers, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })
   },
 }
@@ -185,6 +190,10 @@ const rate: Endpoint = {
       overrideAccess: true,
       data: { points, ratings, report, status: pendingRatings ? 'awaiting_rating' : 'scored' },
     })
+    if (!pendingRatings) {
+      const candidate = await req.payload.findByID({ collection: 'users', id: typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate, depth: 0, overrideAccess: true }).catch(() => null)
+      await track(req.payload, { name: 'score_released', user: candidate, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
+    }
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })
   },
 }

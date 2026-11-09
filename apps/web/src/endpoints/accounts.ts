@@ -3,6 +3,7 @@ import { ageOn, hasRole, needsGuardianConsent, normalizeIdPhone } from '@ailit/s
 import { decideConsent, requestGuardianConsent } from '../lib/consent'
 import { importRoster } from '../lib/roster'
 import { consentDecisionSchema, importSchema, joinClassSchema, signupSchema, zodMessage } from './validation'
+import { track, type Actor } from '../lib/analytics'
 
 const MIN_STUDENT_AGE = 10
 const MIN_CANDIDATE_AGE = 15
@@ -88,7 +89,10 @@ export const signupEndpoint: Endpoint = {
     })
 
     if (klass) await addStudentToClass(req, klass.id, user.id)
+    await track(req.payload, { name: 'signed_up', user, headers: req.headers })
+    if (klass) await track(req.payload, { name: 'class_joined', user, headers: req.headers, props: { classId: klass.id } })
     if (minor) {
+      await track(req.payload, { name: 'consent_requested', user, headers: req.headers })
       await requestGuardianConsent(
         req.payload,
         user,
@@ -116,6 +120,7 @@ export const joinClassEndpoint: Endpoint = {
     const klass = await findClassByCode(req, parsed.data.code)
     if (!klass) return bad('No class with this code', 404)
     await addStudentToClass(req, klass.id, Number(req.user.id))
+    await track(req.payload, { name: 'class_joined', user: req.user as unknown as Actor, headers: req.headers, props: { classId: klass.id } })
     return Response.json({ classId: klass.id, className: klass.name })
   },
 }
@@ -161,6 +166,10 @@ export const consentDecideEndpoint: Endpoint = {
     if (!result.ok) {
       const status = result.reason === 'not_found' ? 404 : 409
       return bad(result.reason, status)
+    }
+    if (result.decision === 'granted') {
+      const student = await req.payload.findByID({ collection: 'users', id: result.studentId, depth: 0, overrideAccess: true }).catch(() => null)
+      await track(req.payload, { name: 'consent_given', user: student, headers: req.headers })
     }
     return Response.json({ decision: result.decision })
   },

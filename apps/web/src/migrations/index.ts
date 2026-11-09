@@ -9,6 +9,7 @@ import * as migration_20261109_155157_ai_lab from './20261109_155157_ai_lab';
 import * as migration_20261109_155811_assignments from './20261109_155811_assignments';
 import * as migration_20261109_162135_projects from './20261109_162135_projects';
 import * as migration_20261109_171317_payments_placeholder from './20261109_171317_payments_placeholder';
+import * as migration_20261109_172648_analytics from './20261109_172648_analytics';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261109_171317_payments_placeholder.up,
     down: migration_20261109_171317_payments_placeholder.down,
-    name: '20261109_171317_payments_placeholder'
+    name: '20261109_171317_payments_placeholder',
+  },
+  {
+    up: migration_20261109_172648_analytics.up,
+    down: migration_20261109_172648_analytics.down,
+    name: '20261109_172648_analytics'
   },
 ];

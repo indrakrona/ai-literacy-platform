@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, Endpoint, Payload, PayloadRequest } from 'payload'
 import { hasRole } from '@ailit/shared'
 import { getPaymentProvider, mockPaymentsAllowed, mockSign, PLANS, quote, type PlanKey, type WebhookEvent } from '../lib/payments'
+import { track, type Actor } from '../lib/analytics'
 
 const idOf = (v: unknown): number => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 const bad = (error: string, status = 400) => Response.json({ error }, { status })
@@ -35,6 +36,8 @@ export async function applyPaymentEvent(payload: Payload, ev: WebhookEvent): Pro
   }
   const now = new Date()
   await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { status: 'paid', paidAt: now.toISOString() } })
+  const buyer = order.createdBy ? await payload.findByID({ collection: 'users', id: idOf(order.createdBy), depth: 0, overrideAccess: true }).catch(() => null) : null
+  await track(payload, { name: 'payment_completed', user: buyer, props: { orderId: order.id, seats: order.seats, amountIdr: order.amountIdr } })
 
   // Licence: a still-active licence gains seats and is extended from its end date; otherwise it restarts today.
   const school = await payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
@@ -94,6 +97,7 @@ const checkout: Endpoint = {
         returnUrl: `${base}/sekolah`,
       })
       await req.payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { providerRef: res.providerRef, paymentUrl: res.paymentUrl, expiresAt: res.expiresAt } })
+      await track(req.payload, { name: 'checkout_started', user: u as unknown as Actor, headers: req.headers, props: { orderId: order.id, plan, seats, amountIdr } })
       return Response.json({ orderId: order.id, paymentUrl: res.paymentUrl, live: provider.live })
     } catch (e) {
       await req.payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { status: 'failed', note: (e as Error).message } })

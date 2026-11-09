@@ -69,6 +69,9 @@ export default async function DashboardPage() {
         )}
         <div className="flex flex-wrap gap-3">
         <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
+        {user.roles?.includes('super_admin') && (
+          <Link href="/dasbor" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Dasbor analitik' : 'Analytics dashboard'}</Link>
+        )}
         {user.roles?.some((r) => r === 'school_admin' || r === 'super_admin') && (
           <Link href="/sekolah" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Ruang Sekolah' : 'School space'}</Link>
         )}

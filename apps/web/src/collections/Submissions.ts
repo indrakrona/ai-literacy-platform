@@ -1,5 +1,6 @@
 import type { Access, CollectionConfig, Endpoint, PayloadRequest, Where } from 'payload'
 import { hasFullAccess, hasRole } from '@ailit/shared'
+import { track, type Actor } from '../lib/analytics'
 
 const idOf = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 
@@ -75,6 +76,7 @@ const submit: Endpoint = {
     const doc = prev
       ? await req.payload.update({ collection: 'submissions', id: prev.id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'submissions', overrideAccess: true, data })
+    if (!prev) await track(req.payload, { name: 'project_submitted', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, competency: brief.competency } })
     return Response.json({ id: doc.id, status: doc.status })
   },
 }
@@ -103,6 +105,7 @@ const grade: Endpoint = {
       overrideAccess: true,
       data: { scores, feedback, status: 'graded', gradedBy: user.id, gradedAt: new Date().toISOString() },
     })
+    await track(req.payload, { name: 'project_graded', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, score: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 } })
     return Response.json({ id: doc.id, status: doc.status, total: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 })
   },
 }

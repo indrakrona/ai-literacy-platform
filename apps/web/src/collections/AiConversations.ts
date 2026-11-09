@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, Endpoint, Where } from 'payload'
 import { hasFullAccess, hasRole } from '@ailit/shared'
 import { getGateway } from '../lib/ai'
+import { track, type Actor } from '../lib/analytics'
 
 /** Students read their own; teachers read their classes' students; staff read all (spec D5). */
 const readConversations: Access = async ({ req }) => {
@@ -91,6 +92,13 @@ const send: Endpoint = {
     const saved = convo
       ? await req.payload.update({ collection: 'ai-conversations', id: convo.id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'ai-conversations', overrideAccess: true, data })
+    const actor = user as unknown as Actor
+    const ev = { activityId: activity.id, status: outcome.status, tokens: outcome.status === 'answered' ? outcome.inputTokens + outcome.outputTokens : 0 }
+    await track(req.payload, { name: 'ai_message_sent', user: actor, headers: req.headers, props: ev })
+    if (outcome.status === 'shield') await track(req.payload, { name: 'shield_blocked', user: actor, headers: req.headers, props: { activityId: activity.id } })
+    if ((outcome.status === 'blocked' || outcome.status === 'answered') && outcome.flags.length) {
+      await track(req.payload, { name: 'ai_message_flagged', user: actor, headers: req.headers, props: { activityId: activity.id, category: outcome.flags[0] } })
+    }
     return Response.json({ conversation: saved.id, status: outcome.status, reply: outcome.text, mock: gateway.providerName === 'mock' })
   },
 }

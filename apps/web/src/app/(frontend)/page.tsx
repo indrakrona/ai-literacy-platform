@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { Shell } from '../../components/Shell'
 import { getDict } from '../../i18n/server'
+import { PublicAnalytics } from '../../components/PublicAnalytics'
 
 // Temporary landing page; the full public site is task A1/A2/A7/A8.
 export default async function HomePage() {
   const { t, locale } = await getDict()
   return (
     <Shell narrow={false}>
+      <PublicAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} locale={locale} />
       <section className="flex flex-col gap-6 py-10 sm:py-16">
         <p className="text-sm font-semibold tracking-widest text-brand-deep uppercase">Impact Thinklab</p>
         <h1 className="max-w-2xl text-4xl font-bold sm:text-5xl">

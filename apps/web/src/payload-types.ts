@@ -85,6 +85,7 @@ export interface Config {
     'project-briefs': ProjectBrief;
     submissions: Submission;
     orders: Order;
+    'analytics-events': AnalyticsEvent;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -121,6 +122,7 @@ export interface Config {
     'project-briefs': ProjectBriefsSelect<false> | ProjectBriefsSelect<true>;
     submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -867,6 +869,53 @@ export interface Order {
   createdAt: string;
 }
 /**
+ * Pseudonymous product events. No names, emails or exact ages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events".
+ */
+export interface AnalyticsEvent {
+  id: number;
+  name:
+    | 'signed_up'
+    | 'consent_requested'
+    | 'consent_given'
+    | 'class_joined'
+    | 'lesson_started'
+    | 'lesson_completed'
+    | 'quiz_submitted'
+    | 'ai_message_sent'
+    | 'ai_message_flagged'
+    | 'shield_blocked'
+    | 'project_submitted'
+    | 'project_graded'
+    | 'badge_earned'
+    | 'challenge_joined'
+    | 'test_started'
+    | 'test_submitted'
+    | 'score_released'
+    | 'certificate_shared'
+    | 'checkout_started'
+    | 'payment_completed';
+  aid: string;
+  role?: string | null;
+  school?: number | null;
+  track?: string | null;
+  ageBand?: string | null;
+  device?: string | null;
+  props?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1053,6 +1102,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'analytics-events';
+        value: number | AnalyticsEvent;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1512,6 +1565,22 @@ export interface OrdersSelect<T extends boolean = true> {
   paidAt?: T;
   createdBy?: T;
   note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events_select".
+ */
+export interface AnalyticsEventsSelect<T extends boolean = true> {
+  name?: T;
+  aid?: T;
+  role?: T;
+  school?: T;
+  track?: T;
+  ageBand?: T;
+  device?: T;
+  props?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { trackClient } from './Track'
 
 export interface QuizQuestion {
   id?: string | null
@@ -8,10 +9,15 @@ export interface QuizQuestion {
   explanation?: string | null
 }
 
-export function QuizBlock({ questions, labels }: { questions: QuizQuestion[]; labels: { title: string; correct: string; wrong: string; score: string } }) {
+export function QuizBlock({ questions, labels, lessonId, track }: { questions: QuizQuestion[]; labels: { title: string; correct: string; wrong: string; score: string }; lessonId?: number; track?: string }) {
   const [picked, setPicked] = useState<Record<number, number>>({})
   const answered = Object.keys(picked).length
   const right = Object.entries(picked).filter(([q, o]) => questions[Number(q)]?.options[o]?.correct).length
+  const finished = questions.length > 0 && answered === questions.length
+  useEffect(() => {
+    if (finished && lessonId) trackClient('quiz_submitted', { lessonId, score: right, max: questions.length }, track)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished])
 
   return (
     <section className="flex flex-col gap-5">

@@ -88,5 +88,5 @@ export async function decideConsent(
     overrideAccess: true,
     data: { consentStatus: decision },
   })
-  return { ok: true as const, decision }
+  return { ok: true as const, decision, studentId }
 }

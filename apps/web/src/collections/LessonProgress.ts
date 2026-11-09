@@ -1,5 +1,6 @@
 import type { Access, CollectionConfig, Endpoint } from 'payload'
 import { hasRole } from '@ailit/shared'
+import { track, type Actor } from '../lib/analytics'
 
 const ownOrAdmin: Access = ({ req }) => {
   if (!req.user) return false
@@ -40,6 +41,9 @@ const completeEndpoint: Endpoint = {
     const doc = existing.docs[0]
       ? await req.payload.update({ collection: 'lesson-progress', id: existing.docs[0].id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'lesson-progress', overrideAccess: true, data })
+    if (!existing.docs[0] || existing.docs[0].status !== 'completed') {
+      await track(req.payload, { name: 'lesson_completed', user: req.user as unknown as Actor, headers: req.headers, props: { lessonId } })
+    }
     return Response.json({ id: doc.id, status: doc.status })
   },
 }

@@ -32,7 +32,7 @@ describe('guardian consent', () => {
     expect(req.token.length).toBeGreaterThan(20)
 
     const res = await decideConsent(payload, req.token, 'granted', { guardianName: 'Ibu Sari', ip: '10.0.0.1', userAgent: 'test' })
-    expect(res).toEqual({ ok: true, decision: 'granted' })
+    expect(res).toMatchObject({ ok: true, decision: 'granted' })
 
     const after = await payload.findByID({ collection: 'users', id: student.id })
     expect(after.consentStatus).toBe('granted')

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { TrackOnMount } from '../../../../../components/Track'
 import { notFound } from 'next/navigation'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { Shell } from '../../../../../components/Shell'
@@ -64,6 +65,7 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
             )}
           </Card>
         )}
+        {lesson && user && <TrackOnMount name="lesson_started" props={{ lessonId: lesson.id }} track={track.slug} />}
         {lesson?.simulator && <Simulator name={lesson.simulator} locale={locale} />}
         {lesson?.aiActivity && typeof lesson.aiActivity === 'object' && (
           <Link href={`/lab/${lesson.aiActivity.slug}`} className="rounded-xl bg-ink px-5 py-3.5 text-center font-semibold text-paper">
@@ -82,6 +84,8 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
         )}
         {lesson?.quiz && lesson.quiz.length > 0 && (
           <QuizBlock
+            lessonId={lesson.id}
+            track={track.slug}
             questions={lesson.quiz}
             labels={{ title: t.learn.quizTitle, correct: t.learn.quizCorrect, wrong: t.learn.quizWrong, score: t.learn.quizScore }}
           />
