@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { Shell } from '../../../../../components/Shell'
 import { Card, Notice } from '../../../../../components/ui'
+import { CompleteButton } from '../../../../../components/forms/CompleteButton'
 import { fmt } from '../../../../../i18n/dict'
 import { getDict } from '../../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../../lib/session'
@@ -60,6 +61,27 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
               </section>
             )}
           </Card>
+        )}
+        {lesson && lesson._status === 'published' && (
+          user ? (
+            <CompleteButton
+              lessonId={lesson.id}
+              done={Boolean(
+                (
+                  await payload.find({
+                    collection: 'lesson-progress',
+                    overrideAccess: false,
+                    user,
+                    where: { and: [{ lesson: { equals: lesson.id } }, { status: { equals: 'completed' } }] },
+                    limit: 1,
+                  })
+                ).docs[0],
+              )}
+              labels={{ markDone: t.learn.markDone, done: t.learn.done }}
+            />
+          ) : (
+            <Notice>{t.learn.signInToSave}</Notice>
+          )
         )}
       </div>
     </Shell>

@@ -14,6 +14,7 @@ import { Units } from './collections/Units'
 import { Lessons } from './collections/Lessons'
 import { Media } from './collections/Media'
 import { ConsentRequests } from './collections/ConsentRequests'
+import { LessonProgress } from './collections/LessonProgress'
 import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
@@ -28,7 +29,7 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(dirname) },
     meta: { titleSuffix: ' · AI Literacy Admin' },
   },
-  collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media],
+  collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, LessonProgress, Media],
   editor: lexicalEditor(),
   localization: {
     locales: [

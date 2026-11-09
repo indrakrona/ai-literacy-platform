@@ -74,6 +74,7 @@ export interface Config {
     tracks: Track;
     units: Unit;
     lessons: Lesson;
+    'lesson-progress': LessonProgress;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -100,6 +101,7 @@ export interface Config {
     tracks: TracksSelect<false> | TracksSelect<true>;
     units: UnitsSelect<false> | UnitsSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
+    'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -438,6 +440,19 @@ export interface ConsentRequest {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-progress".
+ */
+export interface LessonProgress {
+  id: number;
+  user: number | User;
+  lesson: number | Lesson;
+  status: 'started' | 'completed';
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -579,6 +594,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'lessons';
         value: number | Lesson;
+      } | null)
+    | ({
+        relationTo: 'lesson-progress';
+        value: number | LessonProgress;
       } | null)
     | ({
         relationTo: 'media';
@@ -765,6 +784,18 @@ export interface LessonsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-progress_select".
+ */
+export interface LessonProgressSelect<T extends boolean = true> {
+  user?: T;
+  lesson?: T;
+  status?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

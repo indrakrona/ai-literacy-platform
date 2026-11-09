@@ -100,6 +100,10 @@ const id = {
     minutes: '{n} menit',
     notPublished: 'Materi ini belum tersedia.',
     back: 'Kembali ke jalur',
+    markDone: 'Tandai selesai',
+    done: 'Selesai',
+    signInToSave: 'Masuk untuk menyimpan kemajuan.',
+    progress: '{done} dari {total} sesi selesai',
   },
   home: {
     hello: 'Halo, {name}',
@@ -230,6 +234,10 @@ const en: Dict = {
     minutes: '{n} minutes',
     notPublished: 'This lesson is not available yet.',
     back: 'Back to the track',
+    markDone: 'Mark as done',
+    done: 'Done',
+    signInToSave: 'Sign in to save your progress.',
+    progress: '{done} of {total} sessions done',
   },
   home: {
     hello: 'Hello, {name}',
