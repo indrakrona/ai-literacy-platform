@@ -4,6 +4,8 @@ import { hasRole } from '@ailit/shared'
 import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { CreateClassForm, RosterUpload } from '../../../components/forms/SchoolForms'
+import { BuyLicenceForm } from '../../../components/forms/LicenceForms'
+import { formatIdr, getPaymentProvider, PLANS, PRICES_ARE_PLACEHOLDERS } from '../../../lib/payments'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { schoolOverview } from '../../../lib/school'
@@ -30,6 +32,15 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
   }
   const { school, classes, totals, pending } = await schoolOverview(payload, schoolId)
   const tracks = (await payload.find({ collection: 'tracks', locale, depth: 0, limit: 20 })).docs.map((t) => ({ id: t.id, title: t.title }))
+  const orders = (await payload.find({ collection: 'orders', overrideAccess: true, depth: 0, limit: 5, sort: '-createdAt', where: { school: { equals: schoolId } } })).docs
+  const lic = school.licence ?? {}
+  const licActive = Boolean(lic.endsAt && new Date(lic.endsAt) > new Date())
+  const plan = PLANS.sekolah_tahunan
+  const provider = getPaymentProvider()
+  const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString(id ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—')
+  const statusLabel: Record<string, string> = id
+    ? { pending: 'menunggu pembayaran', paid: 'lunas', failed: 'gagal', expired: 'kedaluwarsa' }
+    : { pending: 'awaiting payment', paid: 'paid', failed: 'failed', expired: 'expired' }
   const stat = (label: string, value: number) => (
     <div className="rounded-2xl border border-line bg-white p-4">
       <p className="text-3xl font-bold">{value}</p>
@@ -56,6 +67,43 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
             {id ? 'Siswa ini hanya dapat melihat materi tanpa AI Lab dan tanpa mengirim proyek.' : 'These students can view lessons but cannot use the AI Lab or submit projects.'}
           </Notice>
         )}
+
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Lisensi sekolah' : 'School licence'}</h2>
+          {licActive ? (
+            <p className="mt-1">
+              {id ? 'Aktif sampai' : 'Active until'} <strong>{fmtDate(lic.endsAt)}</strong> · {totals.students}/{lic.seats ?? 0} {id ? 'kursi siswa terpakai' : 'student seats used'}
+            </p>
+          ) : (
+            <p className="mt-1 text-muted">{id ? 'Belum ada lisensi aktif. Selama masa uji coba, semua fitur dapat dipakai.' : 'No active licence. During the pilot, all features are available.'}</p>
+          )}
+          {licActive && totals.students > (lic.seats ?? 0) && (
+            <p className="mt-2 text-sm font-semibold text-danger">{id ? 'Jumlah siswa melebihi kursi lisensi.' : 'Students exceed the licensed seats.'}</p>
+          )}
+          {hasRole(user, 'school_admin') && (
+            <div className="mt-4 border-t border-line pt-4">
+              {(!provider.live || PRICES_ARE_PLACEHOLDERS) && (
+                <p className="mb-3 rounded-xl bg-brand/10 px-3 py-2 text-sm">
+                  {id ? 'Mode uji: gerbang pembayaran belum disambungkan dan harga masih sementara.' : 'Test mode: the payment gateway is not connected and prices are placeholders.'}
+                </p>
+              )}
+              <BuyLicenceForm pricePerSeat={plan.pricePerSeatIdr} minSeats={plan.minSeats} maxSeats={plan.maxSeats} suggested={Math.max(totals.students, lic.seats ?? 0)} locale={locale} />
+            </div>
+          )}
+          {orders.length > 0 && (
+            <ul className="mt-4 divide-y divide-line text-sm">
+              {orders.map((o) => (
+                <li key={o.id} className="flex flex-wrap justify-between gap-2 py-2">
+                  <span>#{o.id} · {fmtDate(o.createdAt)} · {o.seats} {id ? 'siswa' : 'students'}</span>
+                  <span>
+                    {formatIdr(o.amountIdr)} · {statusLabel[o.status] ?? o.status}
+                    {o.status === 'pending' && o.paymentUrl && <> · <Link className="underline" href={o.paymentUrl}>{id ? 'bayar' : 'pay'}</Link></>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
         <Card>
           <h2 className="mb-3 text-lg font-semibold">{id ? 'Buat kelas baru' : 'Create a class'}</h2>

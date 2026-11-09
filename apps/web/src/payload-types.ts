@@ -84,6 +84,7 @@ export interface Config {
     assignments: Assignment;
     'project-briefs': ProjectBrief;
     submissions: Submission;
+    orders: Order;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -119,6 +120,7 @@ export interface Config {
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'project-briefs': ProjectBriefsSelect<false> | ProjectBriefsSelect<true>;
     submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -842,6 +844,29 @@ export interface Submission {
   createdAt: string;
 }
 /**
+ * School licence payments. Payment gateway is a placeholder (test mode).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  school: number | School;
+  plan: 'sekolah_tahunan';
+  seats: number;
+  amountIdr: number;
+  status: 'pending' | 'paid' | 'failed' | 'expired';
+  provider: string;
+  providerRef?: string | null;
+  paymentUrl?: string | null;
+  expiresAt?: string | null;
+  paidAt?: string | null;
+  createdBy?: (number | null) | User;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1024,6 +1049,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'submissions';
         value: number | Submission;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1463,6 +1492,26 @@ export interface SubmissionsSelect<T extends boolean = true> {
   feedback?: T;
   gradedBy?: T;
   gradedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  school?: T;
+  plan?: T;
+  seats?: T;
+  amountIdr?: T;
+  status?: T;
+  provider?: T;
+  providerRef?: T;
+  paymentUrl?: T;
+  expiresAt?: T;
+  paidAt?: T;
+  createdBy?: T;
+  note?: T;
   updatedAt?: T;
   createdAt?: T;
 }

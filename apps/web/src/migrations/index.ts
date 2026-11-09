@@ -8,6 +8,7 @@ import * as migration_20261109_153457_ailis_engine from './20261109_153457_ailis
 import * as migration_20261109_155157_ai_lab from './20261109_155157_ai_lab';
 import * as migration_20261109_155811_assignments from './20261109_155811_assignments';
 import * as migration_20261109_162135_projects from './20261109_162135_projects';
+import * as migration_20261109_171317_payments_placeholder from './20261109_171317_payments_placeholder';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20261109_162135_projects.up,
     down: migration_20261109_162135_projects.down,
-    name: '20261109_162135_projects'
+    name: '20261109_162135_projects',
+  },
+  {
+    up: migration_20261109_171317_payments_placeholder.up,
+    down: migration_20261109_171317_payments_placeholder.down,
+    name: '20261109_171317_payments_placeholder'
   },
 ];
