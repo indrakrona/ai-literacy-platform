@@ -135,7 +135,8 @@ describe('sample lesson content', () => {
     const { seedLessonContent, WRITTEN } = await import('../src/seed/lesson-content')
     await seedCurriculum(payload)
     expect(await seedLessonContent(payload)).toEqual({ published: WRITTEN.length })
-    expect(WRITTEN.map((l) => l.order).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 6, 7, 8, 10, 11, 14, 17, 18])
+    const orders = (track: string) => WRITTEN.filter((l) => l.track === track).map((l) => l.order).sort((a, b) => a - b)
+    expect(orders('smp-ai-untuk-belajar-dan-integritas')).toEqual([1, 2, 3, 4, 6, 7, 8, 10, 11, 14, 17, 18])
     for (const l of WRITTEN) for (const qq of l.quiz) expect(qq.options.filter((o) => o.correct)).toHaveLength(1)
     const lesson = (await payload.find({ collection: 'lessons', where: { and: [{ order: { equals: 2 } }, { _status: { equals: 'published' } }, { competency: { equals: 'PRO-1' } }] }, limit: 1 })).docs[0]!
     expect(lesson.content?.root.children.length).toBeGreaterThan(5)
