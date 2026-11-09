@@ -46,9 +46,9 @@ export default async function DashboardPage() {
             </div>
           )}
         </Card>
-        <Card>
-          <p className="text-muted">{t.home.comingSoon}</p>
-        </Card>
+        <Link href="/belajar" className="w-fit rounded-xl bg-ink px-5 py-3 font-semibold text-paper">
+          {t.home.startLearning}
+        </Link>
       </div>
     </Shell>
   )
