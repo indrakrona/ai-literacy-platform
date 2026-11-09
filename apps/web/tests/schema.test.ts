@@ -52,7 +52,7 @@ describe('core schema (Sprint 0)', () => {
     })
     await payload.create({
       collection: 'lessons',
-      data: { title: 'Robot atau Bukan?', unit: unit.id, type: 'interactive', order: 1, _status: 'published' },
+      data: { title: 'Robot atau Bukan?', unit: unit.id, type: 'interactive', order: 1, competency: 'DIS-1', _status: 'published' },
     })
 
     const en = await payload.findByID({ collection: 'tracks', id: track.id, locale: 'en', depth: 2 })
@@ -64,7 +64,7 @@ describe('core schema (Sprint 0)', () => {
   it('hides draft lessons from anonymous readers but not from content editors', async () => {
     const track = await payload.create({ collection: 'tracks', data: { title: 'T', slug: `t-${Date.now()}`, level: 'sma_smk', _status: 'published' } })
     const unit = await payload.create({ collection: 'units', data: { title: 'U', track: track.id, bigIdea: 'protect', order: 1, _status: 'published' } })
-    const draft = await payload.create({ collection: 'lessons', draft: true, data: { title: 'Draft only', unit: unit.id, type: 'reading', order: 1 } })
+    const draft = await payload.create({ collection: 'lessons', draft: true, data: { title: 'Draft only', unit: unit.id, type: 'reading', order: 1, competency: 'PRO-1' } })
 
     const anon = await payload.find({ collection: 'lessons', overrideAccess: false, where: { id: { equals: draft.id } } })
     expect(anon.docs).toHaveLength(0)
@@ -99,5 +99,32 @@ describe('core schema (Sprint 0)', () => {
     })
     expect(updated.roles).toEqual(['student'])
     expect(b.id).not.toBe(a.id)
+  })
+})
+
+describe('curriculum seed', () => {
+  it('loads both tracks with 5 units and 18 lessons each, and is safe to re-run', async () => {
+    const { seedCurriculum } = await import('../src/seed/curriculum')
+    const first = await seedCurriculum(payload)
+    expect(first).toEqual({ tracks: 2, units: 10, lessons: 36 })
+    await seedCurriculum(payload)
+
+    const smp = (await payload.find({ collection: 'tracks', where: { slug: { equals: 'smp-ai-untuk-belajar-dan-integritas' } } })).docs[0]!
+    const units = await payload.find({ collection: 'units', where: { track: { equals: smp.id } }, limit: 10 })
+    expect(units.totalDocs).toBe(5)
+    const lessons = await payload.find({
+      collection: 'lessons',
+      draft: true,
+      where: { unit: { in: units.docs.map((u) => u.id) } },
+      limit: 50,
+    })
+    expect(lessons.totalDocs).toBe(18)
+    expect(lessons.docs.filter((l) => l.inCoreVersion)).toHaveLength(12)
+
+    const shield = lessons.docs.find((l) => l.order === 2)!
+    expect(shield.title).toBe('Perlindungan Data Pribadi')
+    expect(shield.competency).toBe('PRO-1')
+    const en = await payload.findByID({ collection: 'lessons', id: shield.id, locale: 'en', draft: true })
+    expect(en.title).toBe('Protecting personal data')
   })
 })

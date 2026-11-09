@@ -304,10 +304,53 @@ export interface Lesson {
   order: number;
   estimatedMinutes?: number | null;
   /**
+   * Framework tag, e.g. PRO-1
+   */
+  competency:
+    | 'DIS-1'
+    | 'DIS-2'
+    | 'DIS-3'
+    | 'UND-1'
+    | 'UND-2'
+    | 'UND-3'
+    | 'CRE-1'
+    | 'CRE-2'
+    | 'CRE-3'
+    | 'PRO-1'
+    | 'PRO-2'
+    | 'PRO-3'
+    | 'THR-1'
+    | 'THR-2'
+    | 'THR-3';
+  /**
+   * Extra statements folded in (12-session version)
+   */
+  alsoCovers?:
+    | (
+        | 'DIS-1'
+        | 'DIS-2'
+        | 'DIS-3'
+        | 'UND-1'
+        | 'UND-2'
+        | 'UND-3'
+        | 'CRE-1'
+        | 'CRE-2'
+        | 'CRE-3'
+        | 'PRO-1'
+        | 'PRO-2'
+        | 'PRO-3'
+        | 'THR-1'
+        | 'THR-2'
+        | 'THR-3'
+      )[]
+    | null;
+  inCoreVersion?: boolean | null;
+  /**
    * Draft → In review → Approved, then publish.
    */
   reviewState?: ('draft' | 'in_review' | 'approved') | null;
   objective?: string | null;
+  activity?: string | null;
   content?: {
     root: {
       type: string;
@@ -711,8 +754,12 @@ export interface LessonsSelect<T extends boolean = true> {
   type?: T;
   order?: T;
   estimatedMinutes?: T;
+  competency?: T;
+  alsoCovers?: T;
+  inCoreVersion?: T;
   reviewState?: T;
   objective?: T;
+  activity?: T;
   content?: T;
   video?: T;
   updatedAt?: T;

@@ -44,3 +44,19 @@ export type LessonType = (typeof LESSON_TYPES)[number]
 /** Editorial workflow for lessons (spec: CMS > Approval workflow). */
 export const REVIEW_STATES = ['draft', 'in_review', 'approved'] as const
 export type ReviewState = (typeof REVIEW_STATES)[number]
+
+/** The 15 can-do statements (curriculum framework). Every lesson, activity and test item carries one. */
+export const COMPETENCIES = [
+  'DIS-1', 'DIS-2', 'DIS-3',
+  'UND-1', 'UND-2', 'UND-3',
+  'CRE-1', 'CRE-2', 'CRE-3',
+  'PRO-1', 'PRO-2', 'PRO-3',
+  'THR-1', 'THR-2', 'THR-3',
+] as const
+export type Competency = (typeof COMPETENCIES)[number]
+
+const PREFIX_TO_BIG_IDEA = { DIS: 'discover', UND: 'understand', CRE: 'create', PRO: 'protect', THR: 'thrive' } as const
+
+export function bigIdeaOf(c: Competency): BigIdea {
+  return PREFIX_TO_BIG_IDEA[c.slice(0, 3) as keyof typeof PREFIX_TO_BIG_IDEA]
+}

@@ -10,7 +10,8 @@
     "payload": "payload",
     "generate": "payload generate:types && payload generate:importmap",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "seed": "payload run src/seed/run.ts"
   },
   "dependencies": {
     "@ailit/shared": "workspace:*",

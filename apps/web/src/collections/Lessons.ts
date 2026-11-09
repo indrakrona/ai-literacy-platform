@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { LESSON_TYPES, REVIEW_STATES } from '@ailit/shared'
+import { COMPETENCIES, LESSON_TYPES, REVIEW_STATES } from '@ailit/shared'
 import { publishedOrStaff, roles } from '../access'
 
 const LESSON_TYPE_LABELS: Record<(typeof LESSON_TYPES)[number], string> = {
@@ -16,7 +16,7 @@ export const Lessons: CollectionConfig = {
   slug: 'lessons',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'unit', 'type', 'reviewState', '_status'],
+    defaultColumns: ['order', 'title', 'unit', 'competency', 'inCoreVersion', '_status'],
     group: 'Learning',
   },
   // Drafts, autosave, scheduled publishing and full revision history (WordPress parity).
@@ -40,6 +40,28 @@ export const Lessons: CollectionConfig = {
     { name: 'order', type: 'number', required: true, defaultValue: 1, admin: { position: 'sidebar' } },
     { name: 'estimatedMinutes', type: 'number', min: 1, admin: { position: 'sidebar' } },
     {
+      name: 'competency',
+      label: 'Can-do statement',
+      type: 'select',
+      required: true,
+      options: COMPETENCIES.map((c) => ({ value: c, label: c })),
+      admin: { position: 'sidebar', description: 'Framework tag, e.g. PRO-1' },
+    },
+    {
+      name: 'alsoCovers',
+      type: 'select',
+      hasMany: true,
+      options: COMPETENCIES.map((c) => ({ value: c, label: c })),
+      admin: { position: 'sidebar', description: 'Extra statements folded in (12-session version)' },
+    },
+    {
+      name: 'inCoreVersion',
+      label: 'In 12-session version',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: { position: 'sidebar' },
+    },
+    {
       name: 'reviewState',
       label: 'Review state',
       type: 'select',
@@ -48,6 +70,7 @@ export const Lessons: CollectionConfig = {
       admin: { position: 'sidebar', description: 'Draft → In review → Approved, then publish.' },
     },
     { name: 'objective', type: 'textarea', localized: true },
+    { name: 'activity', label: 'Main activity', type: 'textarea', localized: true },
     { name: 'content', type: 'richText', localized: true },
     {
       name: 'video',
