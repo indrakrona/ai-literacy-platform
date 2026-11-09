@@ -3,18 +3,16 @@ import { hasRole } from '@ailit/shared'
 
 /** Teachers see assignments for classes they teach; students for classes they are in. */
 const readAssignments: Access = async ({ req }) => {
-  const u = req.user as { id: number; roles?: string[] } | null
+  const u = req.user as { id: number; roles?: string[]; school?: number | { id: number } | null } | null
   if (!u) return false
   if (hasRole(u, 'super_admin')) return true
-  const classes = await req.payload.find({
-    collection: 'classes',
-    overrideAccess: true,
-    depth: 0,
-    limit: 200,
-    where: { or: [{ teachers: { contains: u.id } }, { students: { contains: u.id } }] },
-  })
-  const w: Where = { class: { in: classes.docs.map((c) => c.id) } }
-  return classes.docs.length ? w : false
+  const or: Where[] = [{ teachers: { contains: u.id } }, { students: { contains: u.id } }]
+  const school = typeof u.school === 'object' ? u.school?.id : u.school
+  if (hasRole(u, 'school_admin') && school) or.push({ school: { equals: school } })
+  const classes = await req.payload.find({ collection: 'classes', overrideAccess: true, depth: 0, limit: 500, where: { or } })
+  // An empty result (not `false`) so pages listing assignments show none instead of failing.
+  const w: Where = classes.docs.length ? { class: { in: classes.docs.map((c) => c.id) } } : { id: { equals: -1 } }
+  return w
 }
 
 /** Only a teacher of the class (or a super admin) can create or change its assignments. */

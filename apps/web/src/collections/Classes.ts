@@ -22,6 +22,20 @@ export const Classes: CollectionConfig = {
     delete: roles('super_admin', 'school_admin'),
   },
   endpoints: [joinClassEndpoint, importRosterEndpoint],
+  hooks: {
+    // A school admin can only create or move classes within their own school.
+    beforeValidate: [
+      ({ req, data = {} }) => {
+        const u = req.user as { roles?: string[]; school?: number | { id: number } | null } | null
+        if (u && !u.roles?.includes('super_admin') && u.roles?.includes('school_admin')) {
+          const own = typeof u.school === 'object' ? u.school?.id : u.school
+          if (!own) throw new Error('Your account is not linked to a school')
+          data.school = own
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     { name: 'name', type: 'text', required: true, admin: { description: 'e.g. 8B or XI IPA 2' } },
     { name: 'school', type: 'relationship', relationTo: 'schools', required: true, index: true },
