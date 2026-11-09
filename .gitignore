@@ -8,3 +8,5 @@ coverage
 apps/web/media
 .terraform
 *.tfstate*
+backups
+.env.selfhost
