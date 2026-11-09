@@ -86,3 +86,14 @@ describe('AILIS form and scoring', () => {
     expect(report.provisional).toBe(true)
   })
 })
+
+describe('pilot item bank', () => {
+  it('loads all pilot items as approved and every choice item is valid', async () => {
+    const { seedItems } = await import('../src/seed/items')
+    const r = await seedItems(payload)
+    expect(r.total).toBe(22)
+    const items = await payload.find({ collection: 'test-items', where: { code: { like: 'AIL-SMA-' } }, limit: 100 })
+    expect(items.totalDocs).toBe(22)
+    expect(items.docs.every((i) => i.state === 'approved')).toBe(true)
+  })
+})
