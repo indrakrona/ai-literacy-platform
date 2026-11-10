@@ -55,6 +55,9 @@ const id = {
     notFound: 'Kode kelas tidak ditemukan.',
   },
   consent: {
+    followTitle: 'Pantau kemajuan anak Anda',
+    followBody: 'Buat akun orang tua gratis untuk melihat pelajaran, lencana, hasil tes, dan ringkasan mingguan. Isi percakapan dengan AI tidak pernah ditampilkan.',
+    followCta: 'Buat akun orang tua',
     title: 'Izin orang tua / wali',
     lead: '{name} ingin menggunakan platform AI Literacy dari Impact Thinklab.',
     whatTitle: 'Data yang kami kumpulkan',
@@ -223,6 +226,9 @@ const en: Dict = {
     notFound: 'No class with that code.',
   },
   consent: {
+    followTitle: 'Follow your child’s progress',
+    followBody: 'Create a free parent account to see lessons, badges, test results and a weekly summary. Conversations with the AI are never shown.',
+    followCta: 'Create parent account',
     title: 'Parent / guardian permission',
     lead: '{name} would like to use the Impact Thinklab AI Literacy platform.',
     whatTitle: 'What data we collect',

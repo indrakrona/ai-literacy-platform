@@ -5,6 +5,7 @@ import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { CreateClassForm, RosterUpload } from '../../../components/forms/SchoolForms'
 import { ConsentShare } from '../../../components/forms/ConsentShare'
+import { AnnouncementForm, DeleteAnnouncement } from '../../../components/forms/ParentForms'
 import { BuyLicenceForm } from '../../../components/forms/LicenceForms'
 import { formatIdr, getPaymentProvider, PLANS, PRICES_ARE_PLACEHOLDERS } from '../../../lib/payments'
 import { getDict } from '../../../i18n/server'
@@ -34,6 +35,7 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
   const { school, classes, totals, pending } = await schoolOverview(payload, schoolId)
   const tracks = (await payload.find({ collection: 'tracks', locale, depth: 0, limit: 20 })).docs.map((t) => ({ id: t.id, title: t.title }))
   const orders = (await payload.find({ collection: 'orders', overrideAccess: true, depth: 0, limit: 5, sort: '-createdAt', where: { school: { equals: schoolId } } })).docs
+  const announcements = (await payload.find({ collection: 'announcements', overrideAccess: true, depth: 0, locale, limit: 10, sort: '-startsAt', where: { and: [{ scope: { equals: 'school' } }, { school: { equals: schoolId } }] } })).docs
   const lic = school.licence ?? {}
   const licActive = Boolean(lic.endsAt && new Date(lic.endsAt) > new Date())
   const plan = PLANS.sekolah_tahunan
@@ -105,6 +107,30 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
                   </span>
                 </li>
               ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Pengumuman sekolah' : 'School announcements'}</h2>
+          <p className="mt-1 mb-4 text-sm text-muted">
+            {id ? 'Tampil di beranda siswa, guru dan orang tua di sekolah ini.' : 'Shown on the home page of students, teachers and parents at this school.'}
+          </p>
+          <AnnouncementForm schoolId={schoolId} locale={locale} />
+          {announcements.length > 0 && (
+            <ul className="mt-5 divide-y divide-line text-sm">
+              {announcements.map((a) => {
+                const ended = a.endsAt && new Date(a.endsAt) < new Date()
+                return (
+                  <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+                    <span>
+                      <span className="font-medium">{a.title}</span>
+                      <span className="text-muted"> · {fmtDate(a.startsAt)}{ended ? (id ? ' · selesai' : ' · ended') : ''}{a.notifiedAt ? (id ? ' · terkirim' : ' · notified') : ''}</span>
+                    </span>
+                    <DeleteAnnouncement id={a.id} locale={locale} />
+                  </li>
+                )
+              })}
             </ul>
           )}
         </Card>

@@ -3,6 +3,7 @@ import { audit, ipOf } from '../lib/audit'
 import { ROLES, ROLE_LABELS, hasRole, needsGuardianConsent, normalizeIdPhone } from '@ailit/shared'
 import { canAccessAdminPanel, fieldSuperAdminOnly, readUsers, selfOrSuperAdmin, superAdminOnly } from '../access'
 import { signupEndpoint } from '../endpoints/accounts'
+import { linkChild, makeParentCode, parentSignup, unlinkGuardian } from '../endpoints/parents'
 import { escapeHtml } from '../lib/emails'
 
 const VALID_ROLES = new Set<string>(ROLES)
@@ -65,7 +66,7 @@ export const Users: CollectionConfig = {
       },
     },
   },
-  endpoints: [signupEndpoint, manageEndpoint],
+  endpoints: [signupEndpoint, manageEndpoint, parentSignup, linkChild, makeParentCode, unlinkGuardian],
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'roles', 'school'],
@@ -179,7 +180,22 @@ export const Users: CollectionConfig = {
       relationTo: 'users',
       hasMany: true,
       filterOptions: { roles: { contains: 'parent' } },
-      admin: { condition: (data) => hasRole(data as { roles?: string[] }, 'student') },
+      // Payload would re-check the saved list with the editing user's own read access on every save, which
+      // blocks a student's profile edits (students cannot read their parent's account). Only super admins and
+      // the linking endpoints (which check the parent role) can change this list, so skip that check.
+      validate: () => true,
+      access: { update: fieldSuperAdminOnly },
+      admin: { condition: (data) => hasRole(data as { roles?: string[] }, 'student'), description: 'Parent accounts that can see this student’s progress. Parents link themselves with the consent link or a code from the student.' },
     },
+    // Code a student makes for a parent to connect (readable only by the student and super admins).
+    {
+      name: 'parentLinkCode',
+      type: 'text',
+      index: true,
+      access: { read: ({ req, doc }) => Boolean(req.user && (req.user.id === doc?.id || hasRole(req.user as { roles?: string[] }, 'super_admin'))), update: fieldSuperAdminOnly },
+      admin: { hidden: true },
+    },
+    { name: 'parentLinkExpiresAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { hidden: true } },
+    { name: 'lastWeeklySummaryAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { readOnly: true, position: 'sidebar', condition: (data) => hasRole(data as { roles?: string[] }, 'parent') } },
   ],
 }

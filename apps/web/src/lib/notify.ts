@@ -1,16 +1,17 @@
 /**
  * In-app notifications plus transactional email (spec L1, L3). Every message exists in Bahasa and
  * English; each recipient gets their own language. Email respects the user's "notify by email"
- * preference. WhatsApp is a placeholder until a provider is chosen.
+ * preference; WhatsApp templates go to users who opted in (lib/whatsapp.ts).
  * Notifying never breaks the action that triggered it.
  */
 import type { Payload } from 'payload'
 import { escapeHtml } from './emails'
+import { sendWhatsApp, type WaTemplate } from './whatsapp'
 
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -43,6 +44,22 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   badge_earned: {
     id: { title: 'Lencana baru: {badge}', body: 'Selamat! Lihat lencana dan kemajuanmu di Beranda.' },
     en: { title: 'New badge: {badge}', body: 'Well done! See your badges and progress on your dashboard.' },
+  },
+  announcement: {
+    id: { title: 'Pengumuman: {title}', body: '{excerpt}' },
+    en: { title: 'Announcement: {title}', body: '{excerpt}' },
+  },
+  test_reminder: {
+    id: { title: 'Pengingat tes AILIS: {session}', body: 'Tes dimulai {when} di {place}. Bawa perangkat yang terisi daya dan datang 15 menit lebih awal.' },
+    en: { title: 'AILIS test reminder: {session}', body: 'The test starts {when} at {place}. Bring a charged device and arrive 15 minutes early.' },
+  },
+  weekly_summary: {
+    id: { title: 'Ringkasan minggu ini', body: '{summary}' },
+    en: { title: 'This week’s summary', body: '{summary}' },
+  },
+  child_linked: {
+    id: { title: 'Orang tua terhubung', body: '{parent} sekarang dapat melihat kemajuan belajarmu (bukan isi percakapan AI Lab).' },
+    en: { title: 'Parent connected', body: '{parent} can now see your learning progress (not your AI Lab chats).' },
   },
   pilot_request: {
     id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },
@@ -77,6 +94,8 @@ export interface NotifyInput {
   link?: string
   /** Defaults to true; set false for low-value notices that should stay in-app only. */
   email?: boolean
+  /** Also send this WhatsApp template to users who opted in and have a number. */
+  whatsapp?: { template: WaTemplate; params: (u: { name: string }, locale: Locale) => string[] }
 }
 
 export async function notify(payload: Payload, input: NotifyInput): Promise<number> {
@@ -95,7 +114,9 @@ export async function notify(payload: Payload, input: NotifyInput): Promise<numb
         const mail = notificationEmail(text, input.link, locale)
         await payload.sendEmail({ to: u.email, subject: mail.subject, html: mail.html }).catch((e: Error) => payload.logger.warn(`notify: email failed: ${e.message}`))
       }
-      // WhatsApp: placeholder until a provider is selected (the notifyWhatsApp preference is stored already).
+      if (input.whatsapp && u.notifyWhatsApp && u.phone) {
+        await sendWhatsApp(payload, { to: u.phone, template: input.whatsapp.template, locale, params: input.whatsapp.params(u, locale) })
+      }
     }
   } catch (e) {
     payload.logger.warn(`notify: ${input.kind} failed: ${(e as Error).message}`)

@@ -253,7 +253,13 @@ const rate: Endpoint = {
     if (!pendingRatings) {
       await issueCertificate(req.payload, attempt.id)
       const candidate = await req.payload.findByID({ collection: 'users', id: typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate, depth: 0, overrideAccess: true }).catch(() => null)
-      await notify(req.payload, { userIds: [candidate?.id], kind: 'score_ready', link: `/tes/${attempt.id}/hasil` })
+      const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      await notify(req.payload, {
+        userIds: [candidate?.id],
+        kind: 'score_ready',
+        link: `/tes/${attempt.id}/hasil`,
+        whatsapp: { template: 'score_ready', params: (u) => [u.name.split(' ')[0] ?? u.name, `${base}/tes/${attempt.id}/hasil`] },
+      })
       await track(req.payload, { name: 'score_released', user: candidate, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     }
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored', itemStatus: state.status })

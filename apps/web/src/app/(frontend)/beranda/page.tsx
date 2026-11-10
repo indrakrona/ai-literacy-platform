@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { ProgressPanel } from '../../../components/ProgressPanel'
+import { Announcements } from '../../../components/Announcements'
 import { getDict } from '../../../i18n/server'
 import { fmt } from '../../../i18n/dict'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
@@ -10,6 +11,8 @@ import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 export default async function DashboardPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/masuk')
+  // Parents (without another role) have their own home.
+  if (user.roles?.length && user.roles.every((r) => r === 'parent')) redirect('/orang-tua')
   const { t, locale } = await getDict()
   const payload = await getPayloadClient()
   const classes = await payload.find({
@@ -29,6 +32,7 @@ export default async function DashboardPage() {
     <Shell narrow={false}>
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold">{fmt(t.home.hello, { name: user.name.split(' ')[0] ?? user.name })}</h1>
+        <Announcements user={user} locale={locale} limit={2} />
         {user.consentStatus === 'pending' && <Notice tone="warn" title={t.home.pendingTitle}>{t.home.pendingBody}</Notice>}
         {user.consentStatus === 'declined' && <Notice tone="warn" title={t.home.declinedTitle}>{t.home.declinedBody}</Notice>}
         <Card>

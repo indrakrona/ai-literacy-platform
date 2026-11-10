@@ -197,6 +197,7 @@ export const Bookings: CollectionConfig = {
     { name: 'voucher', type: 'relationship', relationTo: 'vouchers' },
     { name: 'priceIdr', label: 'Fee after voucher (Rp)', type: 'number', min: 0 },
     { name: 'note', type: 'text' },
+    { name: 'remindedAt', type: 'date', admin: { readOnly: true, description: 'Reminder sent (24 hours before)' } },
   ],
 }
 

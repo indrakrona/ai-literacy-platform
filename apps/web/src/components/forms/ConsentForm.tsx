@@ -21,7 +21,19 @@ export function ConsentForm({ t, token }: { t: Dict; token: string }) {
     setOutcome('error')
   }
 
-  if (outcome === 'granted') return <Notice tone="ok" title={t.consent.granted} />
+  if (outcome === 'granted')
+    return (
+      <div className="flex flex-col gap-4">
+        <Notice tone="ok" title={t.consent.granted} />
+        <div className="rounded-2xl border border-line p-4">
+          <p className="font-semibold">{t.consent.followTitle}</p>
+          <p className="mt-1 text-sm text-muted">{t.consent.followBody}</p>
+          <a href={`/daftar/orang-tua?token=${encodeURIComponent(token)}`} className="mt-3 inline-block rounded-xl bg-ink px-5 py-3 font-semibold text-paper">
+            {t.consent.followCta}
+          </a>
+        </div>
+      </div>
+    )
   if (outcome === 'declined') return <Notice title={t.consent.declined} />
   if (outcome === 'already') return <Notice title={t.consent.already} />
   if (outcome === 'expired') return <Notice tone="warn" title={t.consent.expired} />

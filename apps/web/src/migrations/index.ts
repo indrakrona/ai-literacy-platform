@@ -19,6 +19,7 @@ import * as migration_20261110_003906_ai_suggestions from './20261110_003906_ai_
 import * as migration_20261110_005659_proctor_assignment from './20261110_005659_proctor_assignment';
 import * as migration_20261110_034050_platform_ops from './20261110_034050_platform_ops';
 import * as migration_20261110_040704_certificates_booking from './20261110_040704_certificates_booking';
+import * as migration_20261110_045609_parents_announcements from './20261110_045609_parents_announcements';
 
 export const migrations = [
   {
@@ -124,6 +125,11 @@ export const migrations = [
   {
     up: migration_20261110_040704_certificates_booking.up,
     down: migration_20261110_040704_certificates_booking.down,
-    name: '20261110_040704_certificates_booking'
+    name: '20261110_040704_certificates_booking',
+  },
+  {
+    up: migration_20261110_045609_parents_announcements.up,
+    down: migration_20261110_045609_parents_announcements.down,
+    name: '20261110_045609_parents_announcements'
   },
 ];

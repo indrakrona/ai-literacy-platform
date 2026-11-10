@@ -2,6 +2,7 @@ import type { Payload } from 'payload'
 import { CONSENT_VERSION, normalizeIdPhone } from '@ailit/shared'
 import { randomToken } from './tokens'
 import { consentEmail } from './emails'
+import { sendWhatsApp } from './whatsapp'
 
 const CONSENT_LINK_DAYS = 14
 
@@ -13,7 +14,7 @@ export interface GuardianContact {
 
 /**
  * Create a consent request for a minor and notify the guardian.
- * Email is sent now; WhatsApp delivery is added with the WhatsApp provider (task L2).
+ * Sent by email and, when a number is given, as a WhatsApp template message.
  */
 export async function requestGuardianConsent(
   payload: Payload,
@@ -43,6 +44,10 @@ export async function requestGuardianConsent(
     const link = `${base}/persetujuan/${token}`
     const mail = consentEmail({ studentName: student.name, link, locale })
     await payload.sendEmail({ to: request.guardianEmail, subject: mail.subject, html: mail.html })
+  }
+  if (request.guardianPhone) {
+    const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    await sendWhatsApp(payload, { to: request.guardianPhone, template: 'consent_request', locale, params: [student.name.split(' ')[0] ?? student.name, `${base}/persetujuan/${token}`] })
   }
   return request
 }

@@ -89,6 +89,7 @@ export interface Config {
     certificates: Certificate;
     'test-sessions': TestSession;
     vouchers: Voucher;
+    announcements: Announcement;
     bookings: Booking;
     'lesson-progress': LessonProgress;
     'test-attempts': TestAttempt;
@@ -139,6 +140,7 @@ export interface Config {
     certificates: CertificatesSelect<false> | CertificatesSelect<true>;
     'test-sessions': TestSessionsSelect<false> | TestSessionsSelect<true>;
     vouchers: VouchersSelect<false> | VouchersSelect<true>;
+    announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
@@ -243,7 +245,13 @@ export interface User {
    * Blocks sign-in. Set from Operations › Users.
    */
   suspended?: boolean | null;
+  /**
+   * Parent accounts that can see this student’s progress. Parents link themselves with the consent link or a code from the student.
+   */
   guardians?: (number | User)[] | null;
+  parentLinkCode?: string | null;
+  parentLinkExpiresAt?: string | null;
+  lastWeeklySummaryAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1195,6 +1203,31 @@ export interface Voucher {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: number;
+  title: string;
+  body: string;
+  scope: 'platform' | 'school';
+  school?: (number | null) | School;
+  /**
+   * Leave empty for everyone in scope
+   */
+  audience?: ('student' | 'teacher' | 'parent' | 'school_admin' | 'candidate')[] | null;
+  startsAt: string;
+  /**
+   * Optional: hide after this time
+   */
+  endsAt?: string | null;
+  notify?: boolean | null;
+  notifiedAt?: string | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "bookings".
  */
 export interface Booking {
@@ -1206,6 +1239,10 @@ export interface Booking {
   voucher?: (number | null) | Voucher;
   priceIdr?: number | null;
   note?: string | null;
+  /**
+   * Reminder sent (24 hours before)
+   */
+  remindedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1351,7 +1388,11 @@ export interface Notification {
     | 'consent_declined'
     | 'report_received'
     | 'pilot_request'
-    | 'badge_earned';
+    | 'badge_earned'
+    | 'announcement'
+    | 'test_reminder'
+    | 'weekly_summary'
+    | 'child_linked';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -1615,6 +1656,10 @@ export interface PayloadLockedDocument {
         value: number | Voucher;
       } | null)
     | ({
+        relationTo: 'announcements';
+        value: number | Announcement;
+      } | null)
+    | ({
         relationTo: 'bookings';
         value: number | Booking;
       } | null)
@@ -1713,6 +1758,9 @@ export interface UsersSelect<T extends boolean = true> {
   consentStatus?: T;
   suspended?: T;
   guardians?: T;
+  parentLinkCode?: T;
+  parentLinkExpiresAt?: T;
+  lastWeeklySummaryAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2295,6 +2343,24 @@ export interface VouchersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements_select".
+ */
+export interface AnnouncementsSelect<T extends boolean = true> {
+  title?: T;
+  body?: T;
+  scope?: T;
+  school?: T;
+  audience?: T;
+  startsAt?: T;
+  endsAt?: T;
+  notify?: T;
+  notifiedAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "bookings_select".
  */
 export interface BookingsSelect<T extends boolean = true> {
@@ -2305,6 +2371,7 @@ export interface BookingsSelect<T extends boolean = true> {
   voucher?: T;
   priceIdr?: T;
   note?: T;
+  remindedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
