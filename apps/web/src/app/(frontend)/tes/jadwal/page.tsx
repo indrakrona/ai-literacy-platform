@@ -44,7 +44,8 @@ export default async function TestSchedulePage() {
           <h1 className="text-2xl font-bold">{id ? 'Jadwal Tes AILIS' : 'AILIS test dates'}</h1>
           <p className="mt-1 text-muted">
             {id ? 'Daftar ke salah satu sesi. Pada hari tes, pengawas memberikan kode untuk memulai.' : 'Book a seat on a session. On the day, the proctor gives you the code to start.'}{' '}
-            <Link href="/tes" className="underline">{id ? 'Sudah punya kode?' : 'Have a code already?'}</Link>
+            <Link href="/tes" className="underline">{id ? 'Sudah punya kode?' : 'Have a code already?'}</Link>{' '}
+            · <Link href="/beli?produk=voucher-tes-ailis" className="underline">{id ? 'Beli voucher tes' : 'Buy a test voucher'}</Link>
           </p>
         </div>
 

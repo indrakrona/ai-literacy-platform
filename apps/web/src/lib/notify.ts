@@ -11,7 +11,7 @@ import { sendWhatsApp, type WaTemplate } from './whatsapp'
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn', 'content_review', 'content_decision', 'ticket_new', 'ticket_reply', 'showcase_nominated', 'showcase_published', 'peer_review'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn', 'content_review', 'content_decision', 'ticket_new', 'ticket_reply', 'showcase_nominated', 'showcase_published', 'peer_review', 'order_paid', 'order_transfer_reported', 'order_rejected'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -100,6 +100,18 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   peer_review: {
     id: { title: 'Ulasan baru dari teman sekelas', body: 'Ada masukan baru untuk proyekmu.' },
     en: { title: 'New review from a classmate', body: 'There is new feedback on your project.' },
+  },
+  order_paid: {
+    id: { title: 'Pembayaran diterima: pesanan {order}', body: 'Terima kasih. {amount} sudah kami terima dan pesanan sudah aktif.' },
+    en: { title: 'Payment received: order {order}', body: 'Thank you. We received {amount} and the order is active.' },
+  },
+  order_transfer_reported: {
+    id: { title: 'Transfer dilaporkan: pesanan {order}', body: 'Periksa rekening untuk {amount}, lalu konfirmasi.' },
+    en: { title: 'Transfer reported: order {order}', body: 'Check the account for {amount}, then confirm.' },
+  },
+  order_rejected: {
+    id: { title: 'Transfer belum ditemukan: pesanan {order}', body: '{reason}' },
+    en: { title: 'Transfer not found yet: order {order}', body: '{reason}' },
   },
   pilot_request: {
     id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },

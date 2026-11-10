@@ -9,6 +9,7 @@ import { seedSitePages } from './site-pages'
 import { seedGamification } from './gamification'
 import { seedKkaOutcomes } from './kka-outcomes'
 import { seedHelpArticles } from './help-articles'
+import { seedProducts } from './products'
 
 const payload = await getPayload({ config })
 const report = await seedCurriculum(payload)
@@ -22,4 +23,5 @@ payload.logger.info(`Website: ${JSON.stringify(await seedSitePages(payload))}`)
 payload.logger.info(`Gamification: ${JSON.stringify(await seedGamification(payload))}`)
 payload.logger.info(`KKA mapping (draft): ${JSON.stringify(await seedKkaOutcomes(payload))}`)
 payload.logger.info(`Help centre: ${JSON.stringify(await seedHelpArticles(payload))}`)
+payload.logger.info(`Products (placeholder prices): ${JSON.stringify(await seedProducts(payload))}`)
 process.exit(0)

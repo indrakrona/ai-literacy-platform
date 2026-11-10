@@ -103,6 +103,7 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
                   {id ? 'Mode uji: gerbang pembayaran belum disambungkan dan harga masih sementara.' : 'Test mode: the payment gateway is not connected and prices are placeholders.'}
                 </p>
               )}
+              <p className="mb-3 text-sm"><Link className="font-semibold underline" href="/beli?produk=lisensi-sekolah-tahunan">{id ? 'Bayar lisensi dengan transfer bank →' : 'Pay for the licence by bank transfer →'}</Link></p>
               <BuyLicenceForm pricePerSeat={plan.pricePerSeatIdr} minSeats={plan.minSeats} maxSeats={plan.maxSeats} suggested={Math.max(totals.students, lic.seats ?? 0)} locale={locale} />
             </div>
           )}

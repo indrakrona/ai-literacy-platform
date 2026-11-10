@@ -163,6 +163,7 @@ export default async function ParentPage() {
           <LinkChildForm problems={problems} locale={locale} />
         </Card>
 
+        <p className="text-sm"><Link className="font-semibold underline" href="/beli?produk=voucher-tes-ailis">{id ? 'Beli voucher tes AILIS untuk anak →' : 'Buy an AILIS test voucher for your child →'}</Link> · <Link className="underline" href="/pesanan">{id ? 'Pesanan saya' : 'My orders'}</Link></p>
         <p className="text-sm text-muted">
           {id ? 'Ringkasan mingguan dikirim setiap Minggu sore. Atur email dan WhatsApp di ' : 'A weekly summary is sent every Sunday afternoon. Choose email or WhatsApp on your '}
           <Link className="underline" href="/akun">{id ? 'halaman Akun' : 'Account page'}</Link>.

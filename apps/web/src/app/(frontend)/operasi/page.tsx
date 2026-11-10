@@ -10,11 +10,15 @@ import { getSwitches } from '../../../lib/settings'
 import { AI_COST_PER_MTOK_USD } from '../../../lib/metrics'
 import { ProcessDataRequest } from '../../../components/forms/DataRightsForms'
 import { TICKET_STATUS } from '../../../collections/Support'
+import { PaymentActions } from '../../../components/forms/CommerceForms'
+import { ORDER_STATUS } from '../../../lib/commerce'
+import { formatIdr } from '../../../lib/payments'
 
 const TABS = [
   { key: 'pengguna', id: 'Pengguna', en: 'Users' },
   { key: 'ai', id: 'Monitor AI', en: 'AI monitor' },
   { key: 'audit', id: 'Log audit', en: 'Audit log' },
+  { key: 'pembayaran', id: 'Pembayaran', en: 'Payments' },
   { key: 'tiket', id: 'Tiket bantuan', en: 'Support tickets' },
   { key: 'data', id: 'Permintaan data', en: 'Data requests' },
   { key: 'cadangan', id: 'Cadangan', en: 'Backups' },
@@ -137,7 +141,7 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
     const and: Where[] = []
     if (sp.aksi) and.push({ action: { equals: sp.aksi } })
     const logs = await payload.find({ collection: 'audit-logs', overrideAccess: true, depth: 1, limit: 100, sort: '-createdAt', where: and.length ? { and } : {} })
-    const actions = ['login', 'create', 'update', 'delete', 'view_as', 'suspend', 'unsuspend', 'set_roles', 'reset_link', 'rate', 'grade', 'regrade', 'incident', 'consent_granted', 'consent_declined', 'consent_withdrawn', 'data_export', 'data_deletion_requested', 'data_erased', 'data_deletion_rejected']
+    const actions = ['login', 'create', 'update', 'delete', 'view_as', 'suspend', 'unsuspend', 'set_roles', 'reset_link', 'rate', 'grade', 'regrade', 'incident', 'consent_granted', 'consent_declined', 'consent_withdrawn', 'data_export', 'data_deletion_requested', 'data_erased', 'data_deletion_rejected', 'payment_confirm', 'payment_reject', 'payment_refund']
     body = (
       <Card>
         <div className="flex flex-wrap gap-2">
@@ -157,6 +161,32 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
           ))}</tbody>
         </table></div>
         <p className="mt-2 text-xs text-muted">{id ? 'Log hanya bisa ditambah, tidak bisa diubah atau dihapus. Nilai data tidak disimpan, hanya nama kolom yang berubah.' : 'The log is append-only. Values are not stored, only which fields changed.'}</p>
+      </Card>
+    )
+  } else if (tab === 'pembayaran') {
+    const orders = await payload.find({ collection: 'orders', overrideAccess: true, depth: 1, locale, limit: 100, sort: '-updatedAt' })
+    const rank = { awaiting_confirmation: 0, pending: 1, paid: 2 } as Record<string, number>
+    const rows = [...orders.docs].sort((a, b) => (rank[a.status] ?? 3) - (rank[b.status] ?? 3))
+    const waiting = rows.filter((o) => o.status === 'awaiting_confirmation').length
+    body = (
+      <Card>
+        <h2 className="text-lg font-semibold">{id ? `Menunggu konfirmasi (${waiting})` : `Waiting for confirmation (${waiting})`}</h2>
+        <p className="mt-1 text-sm text-muted">{id ? 'Cocokkan transfer di rekening dengan jumlah persis (termasuk kode unik 3 digit), lalu konfirmasi. Rekening, PPN dan batas waktu diatur di Pengaturan platform.' : 'Match the transfer in the bank account by the exact amount (including the 3-digit code), then confirm. Bank account, PPN and deadline are in Platform settings.'}</p>
+        <ul className="mt-3 divide-y divide-line">
+          {rows.map((o) => (
+            <li key={o.id} className="flex flex-col gap-2 py-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  <a href={`/pesanan/${o.id}`} className="font-medium underline">#{o.id}</a> · {typeof o.product === 'object' && o.product ? o.product.name : o.plan} · {o.quantity ?? o.seats}×
+                  <span className="text-sm text-muted"> · {typeof o.createdBy === 'object' && o.createdBy ? o.createdBy.name : ''}{typeof o.school === 'object' && o.school ? ` (${o.school.name})` : ''}</span>
+                </span>
+                <span className={`text-sm ${o.status === 'awaiting_confirmation' ? 'font-semibold' : 'text-muted'}`}>{formatIdr(o.amountIdr)} · {ORDER_STATUS[o.status]?.[locale] ?? o.status} · {o.method === 'bank_transfer' ? (id ? 'transfer' : 'transfer') : o.provider}</span>
+              </div>
+              {o.transferNote && <p className="text-sm text-muted">{id ? 'Kata pembeli' : 'Buyer says'}: “{o.transferNote}”</p>}
+              {o.method === 'bank_transfer' && ['pending', 'awaiting_confirmation', 'paid'].includes(o.status) && <PaymentActions orderId={o.id} status={o.status} amountIdr={o.amountIdr} locale={locale} />}
+            </li>
+          ))}
+        </ul>
       </Card>
     )
   } else if (tab === 'tiket') {

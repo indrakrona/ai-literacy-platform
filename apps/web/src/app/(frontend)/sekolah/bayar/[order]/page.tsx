@@ -1,3 +1,4 @@
+import { ORDER_STATUS } from '../../../../../lib/commerce'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { hasRole } from '@ailit/shared'
@@ -32,7 +33,7 @@ export default async function MockPaymentPage({ params }: { params: Promise<{ or
           <h1 className="mt-1 text-2xl font-bold">{plan ? plan.label[locale] : order.plan}</h1>
           <p className="mt-2">{order.seats} {id ? 'siswa' : 'students'}</p>
           <p className="mt-1 text-3xl font-bold">{formatIdr(order.amountIdr)}</p>
-          <p className="mt-1 text-sm text-muted">Status: {(id ? { pending: 'menunggu pembayaran', paid: 'lunas', failed: 'gagal', expired: 'kedaluwarsa' } : { pending: 'awaiting payment', paid: 'paid', failed: 'failed', expired: 'expired' })[order.status] ?? order.status}</p>
+          <p className="mt-1 text-sm text-muted">Status: {ORDER_STATUS[order.status]?.[locale] ?? order.status}</p>
           <div className="mt-6">
             {order.status === 'pending' ? <MockPayButtons orderId={order.id} locale={locale} /> : <Link className="underline" href="/sekolah">{id ? 'Kembali ke Ruang Sekolah' : 'Back to school space'}</Link>}
           </div>

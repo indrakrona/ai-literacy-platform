@@ -18,7 +18,7 @@ export function invoiceNumber(order: { id: number; createdAt: string }): string 
   return `INV/AILIT/${jkt.getUTCFullYear()}/${String(jkt.getUTCMonth() + 1).padStart(2, '0')}/${String(order.id).padStart(6, '0')}`
 }
 
-type OrderLike = { id: number; createdAt: string; plan: string; seats: number; amountIdr: number; status: string; paidAt?: string | null; provider?: string | null; providerRef?: string | null }
+type OrderLike = { id: number; createdAt: string; plan?: string | null; seats?: number | null; amountIdr: number; status: string; paidAt?: string | null; provider?: string | null; providerRef?: string | null; kind?: string | null; quantity?: number | null; productName?: string | null; subtotalIdr?: number | null; discountIdr?: number | null; ppnIdr?: number | null; uniqueCode?: number | null; refundIdr?: number | null; method?: string | null }
 type SchoolLike = { name: string; npsn?: string | null; city?: string | null; address?: string | null }
 
 export async function invoicePdf(order: OrderLike, school: SchoolLike, locale: 'id' | 'en'): Promise<Uint8Array> {
@@ -37,11 +37,11 @@ export async function invoicePdf(order: OrderLike, school: SchoolLike, locale: '
   const text = (t: string, x: number, y: number, size = 10, font = regular, color = ink) => page.drawText(safe(t), { x, y, size, font, color })
   const right = (t: string, xr: number, y: number, size = 10, font = regular, color = ink) => text(t, xr - font.widthOfTextAtSize(safe(t), size), y, size, font, color)
   const date = (d: string) => new Date(d).toLocaleDateString(id ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })
-  const paid = order.status === 'paid'
+  const paid = order.status === 'paid' || order.status === 'refunded'
 
   text('IMPACT THINKLAB · AI LITERACY', 50, 790, 11, bold, brand)
   text(paid ? (id ? 'INVOICE' : 'INVOICE') : 'PROFORMA INVOICE', 50, 760, 22, bold)
-  right(paid ? (id ? 'LUNAS' : 'PAID') : id ? 'BELUM DIBAYAR' : 'UNPAID', 545, 765, 14, bold, paid ? rgb(0.13, 0.45, 0.25) : brand)
+  right(order.status === 'refunded' ? (id ? 'DIREFUND' : 'REFUNDED') : paid ? (id ? 'LUNAS' : 'PAID') : id ? 'BELUM DIBAYAR' : 'UNPAID', 545, 765, 14, bold, paid && order.status !== 'refunded' ? rgb(0.13, 0.45, 0.25) : brand)
 
   text(`${id ? 'Nomor' : 'Number'}: ${number}`, 50, 730)
   text(`${id ? 'Tanggal' : 'Date'}: ${date(order.createdAt)}`, 50, 715)
@@ -57,23 +57,35 @@ export async function invoicePdf(order: OrderLike, school: SchoolLike, locale: '
   if (school.city) text(school.city, 320, 622)
 
   // Line item
-  const plan = PLANS[order.plan as PlanKey]
-  const perSeat = order.seats ? Math.round(order.amountIdr / order.seats) : 0
+  const plan = order.plan ? PLANS[order.plan as PlanKey] : undefined
+  const qty = order.quantity ?? order.seats ?? 1
+  const subtotal = order.subtotalIdr ?? order.amountIdr - (order.uniqueCode ?? 0)
+  const perUnit = qty ? Math.round(subtotal / qty) : 0
+  const isVoucher = order.kind === 'test_voucher'
   page.drawRectangle({ x: 50, y: 560, width: 495, height: 22, color: rgb(0.96, 0.94, 0.9) })
   text(id ? 'Deskripsi' : 'Description', 58, 567, 9, bold)
   right(id ? 'Jumlah' : 'Qty', 360, 567, 9, bold)
   right(id ? 'Harga satuan' : 'Unit price', 450, 567, 9, bold)
   right('Total', 537, 567, 9, bold)
-  text(plan ? plan.label[locale] : order.plan, 58, 540)
-  text(id ? 'Akses platform AI Literacy per siswa' : 'AI Literacy platform access per student', 58, 526, 9, regular, muted)
-  right(`${order.seats} ${id ? 'siswa' : 'students'}`, 360, 540)
-  right(formatIdr(perSeat), 450, 540)
-  right(formatIdr(order.amountIdr), 537, 540)
+  text(order.productName ?? (plan ? plan.label[locale] : String(order.plan ?? '')), 58, 540)
+  text(isVoucher ? (id ? 'Kode voucher tes AILIS, berlaku 1 tahun' : 'AILIS test voucher codes, valid 1 year') : id ? 'Akses platform AI Literacy per siswa' : 'AI Literacy platform access per student', 58, 526, 9, regular, muted)
+  right(`${qty} ${isVoucher ? (id ? 'voucher' : 'vouchers') : id ? 'siswa' : 'students'}`, 360, 540)
+  right(formatIdr(perUnit), 450, 540)
+  right(formatIdr(subtotal), 537, 540)
   page.drawLine({ start: { x: 50, y: 510 }, end: { x: 545, y: 510 }, thickness: 0.5, color: muted })
-  right(id ? 'Total tagihan' : 'Amount due', 450, 490, 11, bold)
-  right(formatIdr(order.amountIdr), 537, 490, 11, bold)
+  let ty = 492
+  const line = (label: string, value: string, strong = false) => {
+    right(label, 450, ty, strong ? 11 : 10, strong ? bold : regular)
+    right(value, 537, ty, strong ? 11 : 10, strong ? bold : regular)
+    ty -= 16
+  }
+  if (order.discountIdr) line(id ? 'Potongan' : 'Discount', `-${formatIdr(order.discountIdr)}`)
+  if (order.ppnIdr) line('PPN', formatIdr(order.ppnIdr))
+  if (order.uniqueCode) line(id ? 'Kode unik transfer' : 'Transfer code', formatIdr(order.uniqueCode))
+  line(id ? 'Total tagihan' : 'Amount due', formatIdr(order.amountIdr), true)
+  if (order.refundIdr) line(id ? 'Dikembalikan' : 'Refunded', `-${formatIdr(order.refundIdr)}`)
 
-  let y = 440
+  let y = Math.min(440, ty - 20)
   if (order.providerRef) {
     text(`${id ? 'Referensi pembayaran' : 'Payment reference'}: ${order.providerRef}`, 50, y, 9, regular, muted)
     y -= 15

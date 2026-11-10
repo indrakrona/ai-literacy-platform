@@ -43,6 +43,16 @@ export const PlatformSettings: GlobalConfig = {
       ],
     },
     { name: 'dataRequestDays', label: 'Days to complete a data deletion request', type: 'number', min: 1, max: 30, defaultValue: 3, admin: { description: 'Shown to the person as the due date. Confirm the period with legal counsel (UU PDP).' } },
+    {
+      type: 'collapsible',
+      label: 'Payments: bank transfer and tax',
+      admin: { initCollapsed: true },
+      fields: [
+        { type: 'row', fields: [{ name: 'bankName', label: 'Bank', type: 'text' }, { name: 'bankAccount', label: 'Account number', type: 'text' }, { name: 'bankHolder', label: 'Account holder', type: 'text' }] },
+        { name: 'transferDays', label: 'Days to pay a bank-transfer order', type: 'number', min: 1, max: 30, defaultValue: 3 },
+        { type: 'row', fields: [{ name: 'ppnEnabled', label: 'Add PPN to prices', type: 'checkbox', defaultValue: false, admin: { description: 'Only if Impact Thinklab is a PKP; confirm the rate with your tax adviser' } }, { name: 'ppnRate', label: 'PPN rate (%)', type: 'number', min: 0, max: 20, defaultValue: 11 }] },
+      ],
+    },
     { name: 'maintenanceMessage', label: 'Banner for all users', type: 'textarea', localized: true, admin: { description: 'Shown at the top of every page while filled in, e.g. planned maintenance.' } },
   ],
 }

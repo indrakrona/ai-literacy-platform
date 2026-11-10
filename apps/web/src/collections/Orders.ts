@@ -1,4 +1,5 @@
-import type { Access, CollectionConfig, Endpoint, Payload, PayloadRequest } from 'payload'
+import type { Access, CollectionConfig, Endpoint, Payload, PayloadRequest, Where } from 'payload'
+import { buy, confirmTransfer, refund, rejectTransfer, reportTransfer } from './commerce-endpoints'
 import { hasRole } from '@ailit/shared'
 import { getPaymentProvider, mockPaymentsAllowed, mockSign, PLANS, quote, type PlanKey, type WebhookEvent } from '../lib/payments'
 import { track, type Actor } from '../lib/analytics'
@@ -8,14 +9,37 @@ const idOf = (v: unknown): number => (v && typeof v === 'object' ? (v as { id: n
 const bad = (error: string, status = 400) => Response.json({ error }, { status })
 type U = { id: number; name?: string; email?: string; roles?: string[]; school?: number | { id: number } | null } | null
 
-/** School admins see their own school's orders; super admins see all. */
+/** Buyers see their own orders (and beneficiaries the ones bought for them); school admins their school's; super admins all. */
 const readOrders: Access = ({ req }) => {
   const u = req.user as U
   if (!u) return false
   if (hasRole(u, 'super_admin')) return true
   const school = idOf(u.school)
-  if (hasRole(u, 'school_admin') && school) return { school: { equals: school } }
-  return false
+  const or: Where[] = [{ createdBy: { equals: u.id } }, { beneficiary: { equals: u.id } }]
+  if (hasRole(u, 'school_admin') && school) or.push({ school: { equals: school } })
+  const w: Where = { or }
+  return w
+}
+
+const canSeeOrder = (u: U, order: { school?: unknown; createdBy?: unknown; beneficiary?: unknown }) =>
+  Boolean(u && (hasRole(u, 'super_admin') || idOf(order.createdBy) === u.id || idOf(order.beneficiary) === u.id || (hasRole(u, 'school_admin') && order.school && idOf(order.school) === idOf(u.school))))
+
+/** Add a paid licence order's seats and months to the school (a still-active licence is extended from its end). */
+export async function extendLicence(payload: Payload, order: { school?: unknown; seats?: number | null; quantity?: number | null; plan?: string | null; months?: number | null }) {
+  const now = new Date()
+  const school = await payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
+  const lic = school.licence ?? {}
+  const active = lic.endsAt && new Date(lic.endsAt) > now
+  const from = active ? new Date(lic.endsAt as string) : now
+  const ends = new Date(from)
+  ends.setMonth(ends.getMonth() + (order.months ?? PLANS[order.plan as PlanKey]?.months ?? 12))
+  const seats = order.seats ?? order.quantity ?? 0
+  await payload.update({
+    collection: 'schools',
+    id: school.id,
+    overrideAccess: true,
+    data: { licence: { seats: active ? Math.max(lic.seats ?? 0, seats) : seats, startsAt: active ? lic.startsAt : now.toISOString(), endsAt: ends.toISOString() } },
+  })
 }
 
 /**
@@ -40,25 +64,8 @@ export async function applyPaymentEvent(payload: Payload, ev: WebhookEvent): Pro
   const buyer = order.createdBy ? await payload.findByID({ collection: 'users', id: idOf(order.createdBy), depth: 0, overrideAccess: true }).catch(() => null) : null
   await track(payload, { name: 'payment_completed', user: buyer, props: { orderId: order.id, seats: order.seats, amountIdr: order.amountIdr } })
 
-  // Licence: a still-active licence gains seats and is extended from its end date; otherwise it restarts today.
-  const school = await payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
-  const lic = school.licence ?? {}
-  const active = lic.endsAt && new Date(lic.endsAt) > now
-  const from = active ? new Date(lic.endsAt as string) : now
-  const ends = new Date(from)
-  ends.setMonth(ends.getMonth() + (PLANS[order.plan as PlanKey]?.months ?? 12))
-  await payload.update({
-    collection: 'schools',
-    id: school.id,
-    overrideAccess: true,
-    data: {
-      licence: {
-        seats: active ? Math.max(lic.seats ?? 0, order.seats) : order.seats,
-        startsAt: active ? lic.startsAt : now.toISOString(),
-        endsAt: ends.toISOString(),
-      },
-    },
-  })
+  await extendLicence(payload, order)
+  await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { fulfilledAt: now.toISOString() } })
   return { applied: true }
 }
 
@@ -157,11 +164,16 @@ const invoice: Endpoint = {
     if (!u) return bad('Sign in first', 401)
     const order = await req.payload.findByID({ collection: 'orders', id: Number(req.routeParams?.id), depth: 0, overrideAccess: true }).catch(() => null)
     if (!order) return bad('Not found', 404)
-    const own = hasRole(u, 'school_admin') && idOf(u.school) === idOf(order.school)
-    if (!own && !hasRole(u, 'super_admin')) return bad('Not allowed', 403)
-    const school = await req.payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
+    if (!canSeeOrder(u, order)) return bad('Not allowed', 403)
+    const school = order.school
+      ? await req.payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
+      : await (async () => {
+          const buyer = await req.payload.findByID({ collection: 'users', id: idOf(order.createdBy), depth: 0, overrideAccess: true }).catch(() => null)
+          return { name: buyer?.name ?? '—', city: buyer?.email ?? null }
+        })()
+    const product = order.product ? await req.payload.findByID({ collection: 'products', id: idOf(order.product), depth: 0, locale: new URL(req.url ?? 'http://x').searchParams.get('lang') === 'en' ? 'en' : 'id', overrideAccess: true }).catch(() => null) : null
     const lang = new URL(req.url ?? 'http://x').searchParams.get('lang') === 'en' ? 'en' : 'id'
-    const bytes = await invoicePdf(order, school, lang)
+    const bytes = await invoicePdf({ ...order, productName: product?.name ?? null } as never, school as never, lang)
     const file = invoiceNumber(order).replace(/\//g, '-')
     return new Response(Buffer.from(bytes), { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${file}.pdf"`, 'Cache-Control': 'private, no-store' } })
   },
@@ -171,11 +183,27 @@ export const Orders: CollectionConfig = {
   slug: 'orders',
   admin: { defaultColumns: ['school', 'seats', 'amountIdr', 'status', 'createdAt'], group: 'Business', description: 'School licence payments. Payment gateway is a placeholder (test mode).' },
   access: { read: readOrders, create: () => false, update: ({ req }) => hasRole(req.user as U ?? {}, 'super_admin'), delete: () => false },
-  endpoints: [checkout, webhook, mockPay, invoice],
+  endpoints: [checkout, webhook, mockPay, invoice, buy, reportTransfer, confirmTransfer, rejectTransfer, refund],
   fields: [
-    { name: 'school', type: 'relationship', relationTo: 'schools', required: true, index: true },
-    { name: 'plan', type: 'select', required: true, options: Object.entries(PLANS).map(([value, p]) => ({ value, label: p.label.en })) },
-    { name: 'seats', type: 'number', required: true, min: 1 },
+    { name: 'school', type: 'relationship', relationTo: 'schools', index: true, admin: { description: 'For school licences' } },
+    { name: 'kind', type: 'select', defaultValue: 'school_licence', options: [{ value: 'school_licence', label: 'School licence' }, { value: 'test_voucher', label: 'AILIS test vouchers' }] },
+    { name: 'product', type: 'relationship', relationTo: 'products' },
+    { name: 'quantity', type: 'number', min: 1 },
+    { name: 'beneficiary', type: 'relationship', relationTo: 'users', admin: { description: 'The child a parent bought for' } },
+    { name: 'plan', type: 'select', options: Object.entries(PLANS).map(([value, p]) => ({ value, label: p.label.en })) },
+    { name: 'seats', type: 'number', min: 1 },
+    { name: 'months', type: 'number' },
+    {
+      type: 'collapsible',
+      label: 'Price breakdown',
+      fields: [
+        { name: 'subtotalIdr', type: 'number' },
+        { name: 'discountIdr', type: 'number' },
+        { name: 'promo', type: 'relationship', relationTo: 'promo-codes' },
+        { name: 'ppnIdr', label: 'PPN (Rp)', type: 'number' },
+        { name: 'uniqueCode', type: 'number', admin: { description: 'Added to the amount so a bank transfer can be matched' } },
+      ],
+    },
     { name: 'amountIdr', label: 'Amount (IDR)', type: 'number', required: true, min: 0 },
     {
       name: 'status',
@@ -183,8 +211,15 @@ export const Orders: CollectionConfig = {
       required: true,
       defaultValue: 'pending',
       index: true,
-      options: ['pending', 'paid', 'failed', 'expired'].map((v) => ({ value: v, label: v })),
+      options: ['pending', 'awaiting_confirmation', 'paid', 'failed', 'expired', 'refunded'].map((v) => ({ value: v, label: v.replace('_', ' ') })),
     },
+    { name: 'method', type: 'select', defaultValue: 'gateway', options: [{ value: 'gateway', label: 'Payment gateway' }, { value: 'bank_transfer', label: 'Bank transfer' }] },
+    { name: 'transferNote', type: 'textarea', admin: { description: 'What the buyer said about their transfer (sender name, bank, date)' } },
+    { name: 'confirmedBy', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },
+    { name: 'fulfilledAt', type: 'date', admin: { readOnly: true } },
+    { name: 'vouchers', type: 'relationship', relationTo: 'vouchers', hasMany: true, admin: { readOnly: true } },
+    { name: 'refundIdr', type: 'number' },
+    { name: 'refundedAt', type: 'date' },
     { name: 'provider', type: 'text', required: true },
     { name: 'providerRef', type: 'text', index: true },
     { name: 'paymentUrl', type: 'text' },

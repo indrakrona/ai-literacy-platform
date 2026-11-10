@@ -93,6 +93,8 @@ export interface Config {
     'kka-outcomes': KkaOutcome;
     'help-articles': HelpArticle;
     events: Event;
+    products: Product;
+    'promo-codes': PromoCode;
     'peer-reviews': PeerReview;
     'showcase-votes': ShowcaseVote;
     'support-tickets': SupportTicket;
@@ -152,6 +154,8 @@ export interface Config {
     'kka-outcomes': KkaOutcomesSelect<false> | KkaOutcomesSelect<true>;
     'help-articles': HelpArticlesSelect<false> | HelpArticlesSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
     'peer-reviews': PeerReviewsSelect<false> | PeerReviewsSelect<true>;
     'showcase-votes': ShowcaseVotesSelect<false> | ShowcaseVotesSelect<true>;
     'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
@@ -860,11 +864,40 @@ export interface Assignment {
  */
 export interface Order {
   id: number;
-  school: number | School;
-  plan: 'sekolah_tahunan';
-  seats: number;
+  /**
+   * For school licences
+   */
+  school?: (number | null) | School;
+  kind?: ('school_licence' | 'test_voucher') | null;
+  product?: (number | null) | Product;
+  quantity?: number | null;
+  /**
+   * The child a parent bought for
+   */
+  beneficiary?: (number | null) | User;
+  plan?: 'sekolah_tahunan' | null;
+  seats?: number | null;
+  months?: number | null;
+  subtotalIdr?: number | null;
+  discountIdr?: number | null;
+  promo?: (number | null) | PromoCode;
+  ppnIdr?: number | null;
+  /**
+   * Added to the amount so a bank transfer can be matched
+   */
+  uniqueCode?: number | null;
   amountIdr: number;
-  status: 'pending' | 'paid' | 'failed' | 'expired';
+  status: 'pending' | 'awaiting_confirmation' | 'paid' | 'failed' | 'expired' | 'refunded';
+  method?: ('gateway' | 'bank_transfer') | null;
+  /**
+   * What the buyer said about their transfer (sender name, bank, date)
+   */
+  transferNote?: string | null;
+  confirmedBy?: (number | null) | User;
+  fulfilledAt?: string | null;
+  vouchers?: (number | Voucher)[] | null;
+  refundIdr?: number | null;
+  refundedAt?: string | null;
   provider: string;
   providerRef?: string | null;
   paymentUrl?: string | null;
@@ -872,6 +905,71 @@ export interface Order {
   paidAt?: string | null;
   createdBy?: (number | null) | User;
   note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  kind: 'school_licence' | 'test_voucher';
+  priceIdr: number;
+  active?: boolean | null;
+  minQuantity?: number | null;
+  maxQuantity?: number | null;
+  /**
+   * Licences only
+   */
+  months?: number | null;
+  /**
+   * Shows “provisional price” until the business team sets final prices
+   */
+  placeholderPrice?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes".
+ */
+export interface PromoCode {
+  id: number;
+  code: string;
+  percentOff?: number | null;
+  amountOffIdr?: number | null;
+  /**
+   * Empty = everything
+   */
+  kinds?: ('school_licence' | 'test_voucher')[] | null;
+  validUntil?: string | null;
+  maxUses?: number | null;
+  minSubtotalIdr?: number | null;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers".
+ */
+export interface Voucher {
+  id: number;
+  code: string;
+  batch: string;
+  /**
+   * Only valid for this school’s sessions (empty = any session)
+   */
+  school?: (number | null) | School;
+  discountPercent: number;
+  maxUses: number;
+  expiresAt?: string | null;
+  active?: boolean | null;
+  createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1332,26 +1430,6 @@ export interface TestSession {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "vouchers".
- */
-export interface Voucher {
-  id: number;
-  code: string;
-  batch: string;
-  /**
-   * Only valid for this school’s sessions (empty = any session)
-   */
-  school?: (number | null) | School;
-  discountPercent: number;
-  maxUses: number;
-  expiresAt?: string | null;
-  active?: boolean | null;
-  createdBy?: (number | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "announcements".
  */
 export interface Announcement {
@@ -1783,7 +1861,10 @@ export interface Notification {
     | 'ticket_reply'
     | 'showcase_nominated'
     | 'showcase_published'
-    | 'peer_review';
+    | 'peer_review'
+    | 'order_paid'
+    | 'order_transfer_reported'
+    | 'order_rejected';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -2061,6 +2142,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'events';
         value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'promo-codes';
+        value: number | PromoCode;
       } | null)
     | ({
         relationTo: 'peer-reviews';
@@ -2562,10 +2651,27 @@ export interface ProjectBriefsSelect<T extends boolean = true> {
  */
 export interface OrdersSelect<T extends boolean = true> {
   school?: T;
+  kind?: T;
+  product?: T;
+  quantity?: T;
+  beneficiary?: T;
   plan?: T;
   seats?: T;
+  months?: T;
+  subtotalIdr?: T;
+  discountIdr?: T;
+  promo?: T;
+  ppnIdr?: T;
+  uniqueCode?: T;
   amountIdr?: T;
   status?: T;
+  method?: T;
+  transferNote?: T;
+  confirmedBy?: T;
+  fulfilledAt?: T;
+  vouchers?: T;
+  refundIdr?: T;
+  refundedAt?: T;
   provider?: T;
   providerRef?: T;
   paymentUrl?: T;
@@ -2929,6 +3035,40 @@ export interface EventsSelect<T extends boolean = true> {
         id?: T;
       };
   judges?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  kind?: T;
+  priceIdr?: T;
+  active?: T;
+  minQuantity?: T;
+  maxQuantity?: T;
+  months?: T;
+  placeholderPrice?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes_select".
+ */
+export interface PromoCodesSelect<T extends boolean = true> {
+  code?: T;
+  percentOff?: T;
+  amountOffIdr?: T;
+  kinds?: T;
+  validUntil?: T;
+  maxUses?: T;
+  minSubtotalIdr?: T;
+  active?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3324,6 +3464,15 @@ export interface PlatformSetting {
    * Shown to the person as the due date. Confirm the period with legal counsel (UU PDP).
    */
   dataRequestDays?: number | null;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  bankHolder?: string | null;
+  transferDays?: number | null;
+  /**
+   * Only if Impact Thinklab is a PKP; confirm the rate with your tax adviser
+   */
+  ppnEnabled?: boolean | null;
+  ppnRate?: number | null;
   /**
    * Shown at the top of every page while filled in, e.g. planned maintenance.
    */
@@ -3385,6 +3534,12 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   schoolDailyTokens?: T;
   dailyAiBudgetUsd?: T;
   dataRequestDays?: T;
+  bankName?: T;
+  bankAccount?: T;
+  bankHolder?: T;
+  transferDays?: T;
+  ppnEnabled?: T;
+  ppnRate?: T;
   maintenanceMessage?: T;
   updatedAt?: T;
   createdAt?: T;
