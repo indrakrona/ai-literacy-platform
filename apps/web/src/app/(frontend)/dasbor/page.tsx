@@ -186,6 +186,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
       : { understand: 'Understanding AI', use_create: 'Using & creating', evaluate: 'Evaluating', protect: 'Protecting', apply: 'Applying' }
     body = (
       <>
+        <Link href="/asesmen" className="w-fit text-sm font-semibold underline">{id ? 'Analitik asesmen lengkap: reliabilitas, pilihan jawaban, kesepakatan penilai, unduh data →' : 'Full assessment analytics: reliability, options, rater agreement, data downloads →'}</Link>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stat(id ? 'Tes selesai dinilai' : 'Tests scored', attempts.length)}
           {stat(id ? 'Butir dianalisis' : 'Items analysed', stats.length)}

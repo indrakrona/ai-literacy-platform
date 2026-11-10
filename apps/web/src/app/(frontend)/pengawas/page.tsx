@@ -75,7 +75,14 @@ export default async function ProctorPage({ searchParams }: { searchParams: Prom
                   <li key={a.id} className={`rounded-2xl border bg-white p-4 ${flags >= 3 || incidents.length ? 'border-danger/40' : 'border-line'}`}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold">{candidate?.name ?? `#${a.id}`}</p>
+                        <p className="font-semibold">
+                          {candidate?.name ?? `#${a.id}`}
+                          {(() => {
+                            const acc = (a.accommodations ?? {}) as { extraTimePercent?: number; largeText?: boolean; highContrast?: boolean; screenReader?: boolean }
+                            const parts = [acc.extraTimePercent ? `+${acc.extraTimePercent}% ${id ? 'waktu' : 'time'}` : '', acc.largeText ? (id ? 'teks besar' : 'large text') : '', acc.highContrast ? (id ? 'kontras tinggi' : 'high contrast') : '', acc.screenReader ? (id ? 'pembaca layar' : 'screen reader') : ''].filter(Boolean)
+                            return parts.length ? <span className="ml-2 rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold">{id ? 'Akomodasi' : 'Accommodation'}: {parts.join(', ')}</span> : null
+                          })()}
+                        </p>
                         <p className="text-sm text-muted">
                           {statusLabel[a.status] ?? a.status} · {id ? 'mulai' : 'started'} {time(a.startedAt)}
                           {a.status === 'in_progress' && ` · ${Math.ceil(left / 60000)} ${id ? 'menit tersisa' : 'min left'}`} · {answered}/{total} {id ? 'dijawab' : 'answered'}

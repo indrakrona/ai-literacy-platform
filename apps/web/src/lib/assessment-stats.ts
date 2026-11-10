@@ -78,3 +78,72 @@ export function itemStats(attempts: ScoredAttempt[], items: ItemInfo[], minN = 1
     return { id: item.id, code: item.code, n: rows.length, difficulty, discrimination, flags }
   })
 }
+
+const variance = (xs: number[]) => {
+  if (xs.length < 2) return 0
+  const m = mean(xs)
+  return xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1)
+}
+
+/**
+ * Cronbach's alpha (equals KR-20 for right/wrong items) over attempts that answered every item, with the
+ * standard error of measurement in percentage points of the total. null when there is too little data.
+ */
+export function reliability(attempts: ScoredAttempt[], items: ItemInfo[], minN = 10): { alpha: number; sem: number; n: number; k: number } | null {
+  const keys = items.map((i) => String(i.id))
+  const rows = attempts.filter((a) => keys.every((k) => typeof a.points[k] === 'number')).map((a) => keys.map((k, j) => a.points[k]! / (items[j]!.maxPoints || 1)))
+  const k = keys.length
+  if (rows.length < minN || k < 2) return null
+  const itemVar = keys.reduce((s, _, j) => s + variance(rows.map((r) => r[j]!)), 0)
+  const totals = rows.map((r) => r.reduce((a, c) => a + c, 0))
+  const totalVar = variance(totals)
+  if (!totalVar) return null
+  const alpha = (k / (k - 1)) * (1 - itemVar / totalVar)
+  const semPct = (Math.sqrt(totalVar) * Math.sqrt(Math.max(0, 1 - alpha)) / k) * 100
+  return { alpha, sem: semPct, n: rows.length, k }
+}
+
+/** Share of candidates choosing each original option of a choice item (and the share who skipped). */
+export function distractors(responses: { selected?: number[] }[], optionCount: number): { shares: number[]; skipped: number; n: number } {
+  const counts = Array.from({ length: optionCount }, () => 0)
+  let skipped = 0
+  for (const r of responses) {
+    if (!r.selected?.length) skipped++
+    for (const o of r.selected ?? []) if (o >= 0 && o < optionCount) counts[o]!++
+  }
+  const n = responses.length
+  return { shares: counts.map((c) => (n ? c / n : 0)), skipped: n ? skipped / n : 0, n }
+}
+
+/** Quadratic weighted kappa between two raters' scores on a 0..max scale (1 = perfect, 0 = chance). */
+export function weightedKappa(pairs: [number, number][], max: number): number | null {
+  if (pairs.length < 2 || max < 1) return null
+  const k = max + 1
+  const obs = Array.from({ length: k }, () => Array.from({ length: k }, () => 0))
+  const ra = Array.from({ length: k }, () => 0)
+  const rb = Array.from({ length: k }, () => 0)
+  for (const [a, b] of pairs) {
+    const x = Math.max(0, Math.min(max, Math.round(a)))
+    const y = Math.max(0, Math.min(max, Math.round(b)))
+    obs[x]![y]!++
+    ra[x]!++
+    rb[y]!++
+  }
+  const n = pairs.length
+  let num = 0
+  let den = 0
+  for (let i = 0; i < k; i++)
+    for (let j = 0; j < k; j++) {
+      const w = ((i - j) ** 2) / ((k - 1) ** 2)
+      num += w * obs[i]![j]!
+      den += w * ((ra[i]! * rb[j]!) / n)
+    }
+  return den ? 1 - num / den : 1
+}
+
+/** Overall percentage scores in 10-point bins (0–9, 10–19, … 90–100). */
+export function scoreHistogram(attempts: ScoredAttempt[]): number[] {
+  const bins = Array.from({ length: 10 }, () => 0)
+  for (const a of attempts) if (a.report) bins[Math.min(9, Math.floor((a.report.overall ?? 0) / 10))]!++
+  return bins
+}

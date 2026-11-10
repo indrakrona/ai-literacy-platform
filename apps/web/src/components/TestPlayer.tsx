@@ -18,7 +18,11 @@ interface Paper {
   deadline: string
   items: PaperItem[]
   responses: Record<string, { selected?: number[]; text?: string }>
+  accommodations?: { largeText?: boolean; highContrast?: boolean; screenReader?: boolean; extraTimePercent?: number } | null
 }
+
+/** Minutes left at which screen readers hear the time (the visible clock is not announced every second). */
+const ANNOUNCE_AT = [30, 10, 5, 1]
 
 export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
   const [paper, setPaper] = useState<Paper | null>(null)
@@ -33,6 +37,10 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [pending, setPending] = useState(0)
   const [offline, setOffline] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
+  const announced = useRef(new Set<number>())
+  const heading = useRef<HTMLHeadingElement | null>(null)
+  const firstRender = useRef(true)
   const storage = () => {
     try {
       return window.localStorage
@@ -152,6 +160,24 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
 
   const left = paper ? Math.max(0, new Date(paper.deadline).getTime() - now) : 0
   useEffect(() => {
+    if (!paper) return
+    const mins = Math.ceil(left / 60000)
+    for (const m of ANNOUNCE_AT) {
+      if (mins === m && !announced.current.has(m) && left > 0) {
+        announced.current.add(m)
+        setAnnouncement(`${t.test.timeLeft}: ${m} ${t.test.minutes}`)
+      }
+    }
+  }, [left, paper, t])
+  // Move focus to the question when changing questions, so keyboard and screen-reader users start there.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    heading.current?.focus()
+  }, [i])
+  useEffect(() => {
     if (paper && left === 0 && !closed) void submit()
   }, [left, paper, closed, submit])
   // When time is up but answers were stuck offline, keep trying to sync and submit once back online.
@@ -181,9 +207,16 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
     else void save(item.id, value)
   }
 
+  const acc = paper.accommodations ?? {}
+  const wrap = [acc.largeText ? 'text-xl [&_button]:text-xl [&_textarea]:text-xl' : '', acc.highContrast ? 'rounded-2xl bg-white p-3 text-black [&_*]:border-black [&_.text-muted]:text-black' : ''].join(' ')
+  const isMulti = item.type === 'multiple_choice'
   return (
-    <div className="flex flex-col gap-5">
-      {canFullscreen && !isFullscreen && (
+    <div className={`flex flex-col gap-5 ${wrap}`}>
+      <p className="sr-only" aria-live="assertive">{announcement}</p>
+      {(acc.extraTimePercent || acc.largeText || acc.highContrast || acc.screenReader) ? (
+        <p className="text-sm text-muted">{t.test.accommodated}</p>
+      ) : null}
+      {canFullscreen && !isFullscreen && !acc.screenReader && (
         <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 text-sm ${leftFullscreen ? 'border-danger/40 bg-danger/10' : 'border-line bg-paper'}`} role={leftFullscreen ? 'alert' : undefined}>
           {leftFullscreen && <p className="font-semibold">{t.test.fullscreenLeft}</p>}
           <button type="button" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper">{t.test.fullscreenStart}</button>
@@ -191,22 +224,23 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
       )}
       <div className="flex items-center justify-between text-sm font-semibold">
         <span>{fmt(t.test.question, { n: String(i + 1), total: String(paper.items.length) })}</span>
-        <span aria-live="polite" className={left < 5 * 60000 ? 'text-danger' : ''}>{t.test.timeLeft}: {mm}:{ss}</span>
+        <span role="timer" aria-label={`${t.test.timeLeft} ${mm}:${ss}`} className={left < 5 * 60000 ? 'text-danger' : ''}>{t.test.timeLeft}: {mm}:{ss}</span>
       </div>
-      <div className="flex flex-wrap gap-1.5" aria-label="Questions">
+      <nav className="flex flex-wrap gap-1.5" aria-label={t.test.questionNav}>
         {paper.items.map((it, n) => {
           const done = answers[String(it.id)]?.selected?.length || answers[String(it.id)]?.text
           return (
-            <button key={it.id} type="button" onClick={() => setI(n)} aria-current={n === i}
-              className={`size-8 rounded-lg text-sm font-semibold ${n === i ? 'bg-ink text-paper' : done ? 'bg-ok/20' : 'border border-line'}`}>
+            <button key={it.id} type="button" onClick={() => setI(n)} aria-current={n === i ? 'step' : undefined}
+              aria-label={`${fmt(t.test.question, { n: String(n + 1), total: String(paper.items.length) })}${done ? `, ${t.test.answered}` : ''}`}
+              className={`min-h-8 min-w-8 rounded-lg px-1 text-sm font-semibold ${n === i ? 'bg-ink text-paper' : done ? 'bg-ok/20' : 'border border-line'}`}>
               {n + 1}
             </button>
           )
         })}
-      </div>
+      </nav>
       <section className="rounded-3xl border border-line bg-white p-5">
         {item.scenario && <p className="mb-3 rounded-xl bg-paper p-3 text-muted">{item.scenario}</p>}
-        <p className="text-lg font-semibold whitespace-pre-line">{item.stem}</p>
+        <h2 ref={heading} tabIndex={-1} id={`stem-${item.id}`} className="text-lg font-semibold whitespace-pre-line outline-none">{item.stem}</h2>
         {item.type === 'performance_task' ? (
           <label className="mt-4 flex flex-col gap-1.5 text-sm font-semibold">
             {t.test.yourAnswer}
@@ -214,7 +248,8 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
               onChange={(e) => setAnswer({ text: e.target.value }, true)} />
           </label>
         ) : (
-          <div className="mt-4 flex flex-col gap-2" role={item.type === 'multiple_choice' ? 'group' : 'radiogroup'}>
+          <fieldset className="mt-4 flex flex-col gap-2" aria-labelledby={`stem-${item.id}`}>
+            {isMulti && <legend className="mb-1 text-sm text-muted">{t.test.chooseAll}</legend>}
             {item.options.map((o, oi) => {
               const on = a.selected?.includes(oi)
               const pick = () => {
@@ -226,13 +261,13 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
                 } else setAnswer({ selected: [oi] })
               }
               return (
-                <button key={oi} type="button" onClick={pick} aria-pressed={Boolean(on)}
-                  className={`rounded-xl border px-3.5 py-3 text-left ${on ? 'border-ink bg-ink text-paper' : 'border-line hover:border-ink'}`}>
-                  {o}
-                </button>
+                <label key={oi} className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand ${on ? 'border-ink bg-ink text-paper' : 'border-line hover:border-ink'}`}>
+                  <input type={isMulti ? 'checkbox' : 'radio'} name={`q-${item.id}`} checked={Boolean(on)} onChange={pick} className="mt-1 size-4 shrink-0 accent-brand-deep" />
+                  <span>{o}</span>
+                </label>
               )
             })}
-          </div>
+          </fieldset>
         )}
         <p className={`mt-3 text-xs ${offline || pending ? 'font-semibold text-danger' : 'text-muted'}`} aria-live="polite">
           {pending ? fmt(t.test.offlinePending, { n: String(pending) }) : offline ? t.test.offlineNoPending : saving ? t.test.saving : t.test.saved}

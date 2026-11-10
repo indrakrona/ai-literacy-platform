@@ -22,6 +22,7 @@ import * as migration_20261110_040704_certificates_booking from './20261110_0407
 import * as migration_20261110_045609_parents_announcements from './20261110_045609_parents_announcements';
 import * as migration_20261110_060908_school_reports_data_rights from './20261110_060908_school_reports_data_rights';
 import * as migration_20261110_091456_cms_workflow_help from './20261110_091456_cms_workflow_help';
+import * as migration_20261110_161506_accommodations from './20261110_161506_accommodations';
 
 export const migrations = [
   {
@@ -142,6 +143,11 @@ export const migrations = [
   {
     up: migration_20261110_091456_cms_workflow_help.up,
     down: migration_20261110_091456_cms_workflow_help.down,
-    name: '20261110_091456_cms_workflow_help'
+    name: '20261110_091456_cms_workflow_help',
+  },
+  {
+    up: migration_20261110_161506_accommodations.up,
+    down: migration_20261110_161506_accommodations.down,
+    name: '20261110_161506_accommodations'
   },
 ];

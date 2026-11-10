@@ -10,6 +10,8 @@ import { getSwitches } from '../lib/settings'
 import { audit, ipOf } from '../lib/audit'
 import { issueCertificate } from '../lib/certificates'
 import { bookingForStart } from '../lib/booking'
+import { accommodationsFor, effectiveMinutes } from './Accommodations'
+import { itemsCsv, loadAnalysis, ratingsCsv, responsesCsv } from '../lib/psychometrics'
 
 const GRACE_MS = 30_000
 /** Answers made before the deadline while offline may arrive this long after it (and are logged). */
@@ -91,6 +93,7 @@ const start: Endpoint = {
       ;[order[i], order[j]] = [order[j]!, order[i]!]
     }
     const now = Date.now()
+    const acc = await accommodationsFor(req.payload, Number(req.user.id))
     const formItemDocs = (await req.payload.find({ collection: 'test-items', overrideAccess: true, depth: 0, limit: order.length || 1, where: { id: { in: order } } })).docs
     const attempt = await req.payload.create({
       collection: 'test-attempts',
@@ -100,7 +103,8 @@ const start: Endpoint = {
         form: form.id,
         status: 'in_progress',
         startedAt: new Date(now).toISOString(),
-        deadline: new Date(now + form.timeLimitMinutes * 60_000).toISOString(),
+        deadline: new Date(now + effectiveMinutes(form.timeLimitMinutes, acc.extraTimePercent) * 60_000).toISOString(),
+        accommodations: { ...acc },
         itemOrder: order,
         optionOrder: optionOrdersFor(formItemDocs),
         responses: {},
@@ -127,6 +131,7 @@ const paper: Endpoint = {
     return Response.json({
       status: attempt.status,
       deadline: attempt.deadline,
+      accommodations: attempt.accommodations ?? null,
       items: items.map((it) => {
         const pi = toPaperItem(it)
         const o = orders[String(it.id)]
@@ -179,11 +184,35 @@ const integrity: Endpoint = {
     const counts = { tabHidden: prev.tabHidden ?? 0, pastes: prev.pastes ?? 0, fullscreenExits: prev.fullscreenExits ?? 0 }
     if (event === 'tab_hidden') counts.tabHidden++
     else if (event === 'paste') counts.pastes++
-    else if (event === 'fullscreen_exit') counts.fullscreenExits++
+    else if (event === 'fullscreen_exit') {
+      // Screen-reader users are not asked to stay in full screen.
+      if ((attempt.accommodations as { screenReader?: boolean } | null)?.screenReader) return Response.json({ ok: true, ignored: true })
+      counts.fullscreenExits++
+    }
     else return bad('Unknown event')
     const log = [...(prev.log ?? []), { at: new Date().toISOString(), event: String(event) }].slice(-200)
     await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { integrity: { ...counts, log } } })
     return Response.json({ ok: true })
+  },
+}
+
+/**
+ * GET /api/test-attempts/export?kind=responses|items|ratings&form=ID — CSV for the assessment lead (spec G14).
+ * Pseudonymous IDs only. Super admins and assessment authors; every export is audited.
+ */
+const exportData: Endpoint = {
+  path: '/export',
+  method: 'get',
+  handler: async (req) => {
+    if (!hasRole(req.user as { roles?: string[] }, 'super_admin', 'assessment_author')) return bad('Not allowed', 403)
+    const url = new URL(req.url ?? 'http://x')
+    const kind = url.searchParams.get('kind') ?? 'responses'
+    const form = Number(url.searchParams.get('form')) || undefined
+    if (!['responses', 'items', 'ratings'].includes(kind)) return bad('kind must be responses, items or ratings')
+    const a = await loadAnalysis(req.payload, form)
+    const body = kind === 'responses' ? await responsesCsv(req.payload, a) : kind === 'items' ? itemsCsv(a) : ratingsCsv(a)
+    await audit(req.payload, { actor: Number(req.user!.id), action: 'psychometric_export', collection: 'test-attempts', summary: `${kind}${form ? ` form ${form}` : ''}`, ip: ipOf(req) })
+    return new Response(body, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="ailis-${kind}${form ? `-form${form}` : ''}.csv"`, 'Cache-Control': 'private, no-store' } })
   },
 }
 
@@ -348,7 +377,7 @@ export const TestAttempts: CollectionConfig = {
     update: () => false,
     delete: ({ req }) => hasRole(req.user as { roles?: string[] }, 'super_admin'),
   },
-  endpoints: [start, paper, answer, integrity, submit, rate, incident, suggest],
+  endpoints: [start, paper, answer, integrity, submit, rate, incident, suggest, exportData],
   fields: [
     { name: 'candidate', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'form', type: 'relationship', relationTo: 'test-forms', required: true, index: true },
@@ -371,5 +400,6 @@ export const TestAttempts: CollectionConfig = {
     { name: 'incidents', type: 'json', admin: { description: 'Logged by the proctor' } },
     { name: 'aiSuggestions', type: 'json', admin: { description: 'AI-suggested rubric levels shown to adjudicating raters (advice only)' } },
     { name: 'report', type: 'json' },
+    { name: 'accommodations', type: 'json', admin: { description: 'Accommodations applied when the attempt started' } },
   ],
 }

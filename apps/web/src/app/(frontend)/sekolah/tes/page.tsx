@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { hasRole } from '@ailit/shared'
 import { Shell } from '../../../../components/Shell'
 import { Card, Notice } from '../../../../components/ui'
+import { AccommodationForm, RemoveAccommodation } from '../../../../components/forms/AccommodationForms'
 import { BookingAction, CreateSessionForm, SessionStatusToggle, VoucherBatchForm } from '../../../../components/forms/BookingForms'
 import { getDict } from '../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../lib/session'
@@ -31,6 +32,9 @@ export default async function SchoolTestsPage({ searchParams }: { searchParams: 
   const bookings = sessions.length
     ? (await payload.find({ collection: 'bookings', overrideAccess: true, depth: 1, limit: 2000, sort: 'createdAt', where: { and: [{ session: { in: sessions.map((s) => s.id) } }, { status: { in: [...HOLDS_SEAT] } }] } })).docs
     : []
+  const students = (await payload.find({ collection: 'users', overrideAccess: true, depth: 0, limit: 2000, sort: 'name', where: { and: [{ school: { equals: schoolId } }, { roles: { in: ['student', 'candidate'] } }] } })).docs.map((u) => ({ id: u.id, name: u.name }))
+  const studentName = new Map(students.map((s) => [s.id, s.name]))
+  const accs = (await payload.find({ collection: 'accommodations', overrideAccess: true, depth: 0, limit: 500, where: { school: { equals: schoolId } } })).docs
   const vouchers = (await payload.find({ collection: 'vouchers', overrideAccess: true, depth: 0, limit: 500, sort: '-createdAt', where: { school: { equals: schoolId } } })).docs
   const uses = await Promise.all(vouchers.map((v) => voucherUses(payload, v.id)))
   const batches = new Map<string, { codes: number; used: number; capacity: number; pct: number; expiresAt?: string | null }>()
@@ -106,6 +110,31 @@ export default async function SchoolTestsPage({ searchParams }: { searchParams: 
               </Card>
             )
           })}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">{id ? 'Akomodasi tes' : 'Test accommodations'}</h2>
+          <Card>
+            <p className="mb-4 text-sm text-muted">
+              {id
+                ? 'Untuk siswa yang membutuhkan waktu tambahan atau tampilan khusus. Berlaku otomatis saat siswa memulai tes; pengawas melihatnya di layar pengawasan.'
+                : 'For students who need extra time or a special display. Applied automatically when the student starts a test; proctors see it on their screen.'}
+            </p>
+            <AccommodationForm students={students} existing={accs.map((x) => ({ id: x.id, candidate: idOf(x.candidate)!, extraTimePercent: String(x.extraTimePercent ?? '0'), largeText: Boolean(x.largeText), highContrast: Boolean(x.highContrast), screenReader: Boolean(x.screenReader), validUntil: x.validUntil }))} locale={locale} />
+            {accs.length > 0 && (
+              <ul className="mt-5 divide-y divide-line text-sm">
+                {accs.map((x) => (
+                  <li key={x.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+                    <span>
+                      <span className="font-medium">{studentName.get(idOf(x.candidate)!) ?? '—'}</span>
+                      <span className="text-muted"> · {[Number(x.extraTimePercent) ? `+${x.extraTimePercent}%` : '', x.largeText ? (id ? 'teks besar' : 'large text') : '', x.highContrast ? (id ? 'kontras tinggi' : 'high contrast') : '', x.screenReader ? (id ? 'pembaca layar' : 'screen reader') : ''].filter(Boolean).join(', ') || '—'}{x.validUntil ? ` · ${id ? 's.d.' : 'until'} ${new Date(x.validUntil).toLocaleDateString(id ? 'id-ID' : 'en-GB')}` : ''}</span>
+                    </span>
+                    <RemoveAccommodation accId={x.id} locale={locale} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </section>
 
         <section className="flex flex-col gap-3">

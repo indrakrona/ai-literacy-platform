@@ -93,6 +93,7 @@ export interface Config {
     'kka-outcomes': KkaOutcome;
     'help-articles': HelpArticle;
     'support-tickets': SupportTicket;
+    accommodations: Accommodation;
     'data-requests': DataRequest;
     bookings: Booking;
     'lesson-progress': LessonProgress;
@@ -148,6 +149,7 @@ export interface Config {
     'kka-outcomes': KkaOutcomesSelect<false> | KkaOutcomesSelect<true>;
     'help-articles': HelpArticlesSelect<false> | HelpArticlesSelect<true>;
     'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
+    accommodations: AccommodationsSelect<false> | AccommodationsSelect<true>;
     'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
@@ -1242,6 +1244,18 @@ export interface TestAttempt {
     | number
     | boolean
     | null;
+  /**
+   * Accommodations applied when the attempt started
+   */
+  accommodations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1423,6 +1437,30 @@ export interface SupportTicket {
     | null;
   lastActivityAt?: string | null;
   resolvedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accommodations".
+ */
+export interface Accommodation {
+  id: number;
+  candidate: number | User;
+  school?: (number | null) | School;
+  extraTimePercent?: ('0' | '25' | '50' | '100') | null;
+  largeText?: boolean | null;
+  highContrast?: boolean | null;
+  /**
+   * Full screen is not required and leaving it is not logged
+   */
+  screenReader?: boolean | null;
+  /**
+   * Private: why it was granted (e.g. letter from the school counsellor). Never shown in reports.
+   */
+  reason?: string | null;
+  validUntil?: string | null;
+  grantedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1895,6 +1933,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'support-tickets';
         value: number | SupportTicket;
+      } | null)
+    | ({
+        relationTo: 'accommodations';
+        value: number | Accommodation;
       } | null)
     | ({
         relationTo: 'data-requests';
@@ -2730,6 +2772,23 @@ export interface SupportTicketsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accommodations_select".
+ */
+export interface AccommodationsSelect<T extends boolean = true> {
+  candidate?: T;
+  school?: T;
+  extraTimePercent?: T;
+  largeText?: T;
+  highContrast?: T;
+  screenReader?: T;
+  reason?: T;
+  validUntil?: T;
+  grantedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "data-requests_select".
  */
 export interface DataRequestsSelect<T extends boolean = true> {
@@ -2793,6 +2852,7 @@ export interface TestAttemptsSelect<T extends boolean = true> {
   incidents?: T;
   aiSuggestions?: T;
   report?: T;
+  accommodations?: T;
   updatedAt?: T;
   createdAt?: T;
 }
