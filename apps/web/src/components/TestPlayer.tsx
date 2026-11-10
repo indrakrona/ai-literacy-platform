@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { enqueue, flush, readQueue, type QueuedAnswer } from '../lib/offline-queue'
 import type { Dict } from '../i18n/dict'
 import { fmt } from '../i18n/dict'
 import { Button, Notice } from './ui'
@@ -30,12 +31,26 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [leftFullscreen, setLeftFullscreen] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [pending, setPending] = useState(0)
+  const [offline, setOffline] = useState(false)
+  const storage = () => {
+    try {
+      return window.localStorage
+    } catch {
+      return undefined
+    }
+  }
 
   useEffect(() => {
     api<Paper>(`/api/test-attempts/${attemptId}/paper`, { method: 'GET' }).then((r) => {
       if (!r.ok) return setClosed(true)
       setPaper(r.data)
-      setAnswers(r.data.responses ?? {})
+      // Answers given offline before a reload are newer than the server copy.
+      const local = readQueue(storage(), attemptId)
+      const merged = { ...(r.data.responses ?? {}) }
+      for (const [k, v] of Object.entries(local)) merged[k] = { ...merged[k], ...(v.selected ? { selected: v.selected } : {}), ...(v.text !== undefined ? { text: v.text } : {}) }
+      setAnswers(merged)
+      setPending(Object.keys(local).length)
       if (r.data.status !== 'in_progress') setClosed(true)
     })
     const tick = setInterval(() => setNow(Date.now()), 1000)
@@ -65,25 +80,86 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
     }
   }, [attemptId])
 
-  const save = useCallback(
-    async (itemId: number, value: { selected?: number[]; text?: string }) => {
-      setSaving(true)
-      const r = await api(`/api/test-attempts/${attemptId}/answer`, { body: { itemId, ...value } })
-      setSaving(false)
-      if (r.status === 409) setClosed(true)
+  /** Send one queued answer. True when stored; false on network/server trouble (it stays queued). */
+  const send = useCallback(
+    async (a: QueuedAnswer): Promise<boolean> => {
+      try {
+        const r = await api(`/api/test-attempts/${attemptId}/answer`, { body: a })
+        if (r.status === 409) {
+          setClosed(true)
+          return true // the test is closed; nothing more can be stored
+        }
+        if (r.ok) setOffline(false)
+        return r.ok
+      } catch {
+        setOffline(true)
+        return false
+      }
     },
     [attemptId],
   )
 
+  const syncAll = useCallback(async () => {
+    const left = await flush(storage(), attemptId, send)
+    setPending(left)
+    return left
+  }, [attemptId, send])
+
+  const save = useCallback(
+    async (itemId: number, value: { selected?: number[]; text?: string }) => {
+      setSaving(true)
+      enqueue(storage(), attemptId, { itemId, ...value, queuedAt: new Date().toISOString() })
+      await syncAll()
+      setSaving(false)
+    },
+    [attemptId, syncAll],
+  )
+
+  // Retry queued answers when the connection returns, and every 15 seconds while any are waiting.
+  useEffect(() => {
+    const onOnline = () => {
+      setOffline(false)
+      void syncAll()
+    }
+    const onOffline = () => setOffline(true)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    const retry = setInterval(() => {
+      if (Object.keys(readQueue(storage(), attemptId)).length) void syncAll()
+    }, 15_000)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+      clearInterval(retry)
+    }
+  }, [attemptId, syncAll])
+
+  const submitting = useRef(false)
   const submit = useCallback(async () => {
-    await api(`/api/test-attempts/${attemptId}/submit`)
-    window.location.href = `/tes/${attemptId}/hasil`
-  }, [attemptId])
+    if (submitting.current) return
+    submitting.current = true
+    try {
+      // Never submit with answers still on the device: they would be lost from scoring.
+      if ((await syncAll()) > 0) return
+      const r = await api(`/api/test-attempts/${attemptId}/submit`)
+      if (r.ok || r.status === 409) window.location.href = `/tes/${attemptId}/hasil`
+    } catch {
+      setOffline(true)
+    } finally {
+      submitting.current = false
+    }
+  }, [attemptId, syncAll])
 
   const left = paper ? Math.max(0, new Date(paper.deadline).getTime() - now) : 0
   useEffect(() => {
     if (paper && left === 0 && !closed) void submit()
   }, [left, paper, closed, submit])
+  // When time is up but answers were stuck offline, keep trying to sync and submit once back online.
+  useEffect(() => {
+    if (!paper || left > 0 || closed) return
+    const t = setInterval(() => void submit(), 10_000)
+    return () => clearInterval(t)
+  }, [paper, left, closed, submit])
 
   if (closed)
     return (
@@ -150,7 +226,7 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
                 } else setAnswer({ selected: [oi] })
               }
               return (
-                <button key={oi} type="button" onClick={pick} aria-pressed={on}
+                <button key={oi} type="button" onClick={pick} aria-pressed={Boolean(on)}
                   className={`rounded-xl border px-3.5 py-3 text-left ${on ? 'border-ink bg-ink text-paper' : 'border-line hover:border-ink'}`}>
                   {o}
                 </button>
@@ -158,7 +234,9 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
             })}
           </div>
         )}
-        <p className="mt-3 text-xs text-muted" aria-live="polite">{saving ? t.test.saving : t.test.saved}</p>
+        <p className={`mt-3 text-xs ${offline || pending ? 'font-semibold text-danger' : 'text-muted'}`} aria-live="polite">
+          {pending ? fmt(t.test.offlinePending, { n: String(pending) }) : offline ? t.test.offlineNoPending : saving ? t.test.saving : t.test.saved}
+        </p>
       </section>
       <div className="grid grid-cols-2 gap-3">
         <Button type="button" variant="secondary" disabled={i === 0} onClick={() => setI(i - 1)}>{t.test.prev}</Button>

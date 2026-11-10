@@ -687,6 +687,10 @@ export interface TestForm {
   status: 'draft' | 'active' | 'closed';
   timeLimitMinutes: number;
   /**
+   * Where this session takes place (optional)
+   */
+  school?: (number | null) | School;
+  /**
    * Two raters mark each answer blind; a third adjudicates gaps of 2+ points. Turn off only if one rater is available.
    */
   doubleMarking?: boolean | null;
@@ -702,6 +706,10 @@ export interface TestForm {
    * Proctor gives this code to candidates in the room.
    */
   accessCode?: string | null;
+  /**
+   * Only these proctors can supervise this session and log incidents.
+   */
+  proctors?: (number | User)[] | null;
   seed?: number | null;
   /**
    * Filled by Assemble
@@ -1796,6 +1804,7 @@ export interface TestFormsSelect<T extends boolean = true> {
   level?: T;
   status?: T;
   timeLimitMinutes?: T;
+  school?: T;
   doubleMarking?: T;
   blueprint?:
     | T
@@ -1805,6 +1814,7 @@ export interface TestFormsSelect<T extends boolean = true> {
       };
   itemStates?: T;
   accessCode?: T;
+  proctors?: T;
   seed?: T;
   items?: T;
   shortfall?: T;

@@ -4,6 +4,7 @@ import { Shell } from '../../../components/Shell'
 import { Card, inputClass } from '../../../components/ui'
 import { AutoRefresh, IncidentForm } from '../../../components/forms/ProctorForms'
 import { incidentLabel } from '../../../lib/incidents'
+import { canProctor } from '../../../lib/ailis'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 
@@ -19,7 +20,9 @@ export default async function ProctorPage({ searchParams }: { searchParams: Prom
   const id = locale === 'id'
   const code = String((await searchParams).kode ?? '').trim().toUpperCase()
   const payload = await getPayloadClient()
-  const form = code ? (await payload.find({ collection: 'test-forms', overrideAccess: true, depth: 0, limit: 1, where: { accessCode: { equals: code } } })).docs[0] : undefined
+  const found = code ? (await payload.find({ collection: 'test-forms', overrideAccess: true, depth: 0, limit: 1, where: { accessCode: { equals: code } } })).docs[0] : undefined
+  const form = canProctor(found, user) ? found : undefined
+  const assigned = (await payload.find({ collection: 'test-forms', overrideAccess: false, user, depth: 1, limit: 50, sort: '-updatedAt', where: { status: { equals: 'active' } } })).docs
   const attempts = form
     ? (await payload.find({ collection: 'test-attempts', overrideAccess: true, depth: 1, limit: 300, sort: 'startedAt', where: { form: { equals: form.id } } })).docs
     : []
@@ -38,7 +41,20 @@ export default async function ProctorPage({ searchParams }: { searchParams: Prom
           </label>
           <button className="rounded-xl bg-ink px-5 py-3 font-semibold text-paper">{id ? 'Buka' : 'Open'}</button>
         </form>
-        {code && !form && <Card><p className="text-muted">{id ? 'Tidak ada tes dengan kode ini.' : 'No test with this code.'}</p></Card>}
+        {!form && assigned.length > 0 && (
+          <Card>
+            <h2 className="text-lg font-semibold">{id ? 'Sesi yang Anda awasi' : 'Your sessions'}</h2>
+            <ul className="mt-2 divide-y divide-line text-sm">
+              {assigned.map((f) => (
+                <li key={f.id} className="flex flex-wrap justify-between gap-2 py-2">
+                  <a className="font-medium underline" href={`/pengawas?kode=${f.accessCode}`}>{f.name}</a>
+                  <span className="text-muted">{typeof f.school === 'object' && f.school ? f.school.name : ''} · <span className="font-mono">{f.accessCode}</span></span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        {code && !form && <Card><p className="text-muted">{found ? (id ? 'Anda tidak ditugaskan sebagai pengawas sesi ini.' : 'You are not assigned to proctor this session.') : id ? 'Tidak ada tes dengan kode ini.' : 'No test with this code.'}</p></Card>}
         {form && (
           <>
             <AutoRefresh />

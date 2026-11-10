@@ -1,6 +1,6 @@
 import type { CollectionConfig, Endpoint, PayloadRequest } from 'payload'
 import { hasRole } from '@ailit/shared'
-import { optionOrdersFor, scoreAttempt, toDisplayed, toOriginal, toPaperItem } from '../lib/ailis'
+import { canProctor, optionOrdersFor, scoreAttempt, toDisplayed, toOriginal, toPaperItem } from '../lib/ailis'
 import type { TestAttempt, TestItem } from '../payload-types'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
@@ -8,6 +8,8 @@ import { addMark, normalizeRating, resolve } from '../lib/marking'
 import { getGateway } from '../lib/ai'
 
 const GRACE_MS = 30_000
+/** Answers made before the deadline while offline may arrive this long after it (and are logged). */
+const OFFLINE_GRACE_MS = 10 * 60_000
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status })
 
@@ -124,8 +126,11 @@ const answer: Endpoint = {
   handler: async (req) => {
     const attempt = await ownAttempt(req)
     if (attempt instanceof Response) return attempt
-    if (!open(attempt)) return bad('Test is closed', 409)
     const b = await body(req)
+    const deadline = new Date(attempt.deadline).getTime()
+    const queuedAt = typeof b.queuedAt === 'string' ? Date.parse(b.queuedAt) : NaN
+    const lateSync = !open(attempt) && attempt.status === 'in_progress' && Number.isFinite(queuedAt) && queuedAt <= deadline && Date.now() <= deadline + OFFLINE_GRACE_MS
+    if (!open(attempt) && !lateSync) return bad('Test is closed', 409)
     const itemId = String(b.itemId ?? '')
     if (!(attempt.itemOrder as number[]).map(String).includes(itemId)) return bad('Item not in this test')
     const shown = Array.isArray(b.selected) ? b.selected.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < 10) : undefined
@@ -134,8 +139,13 @@ const answer: Endpoint = {
     const text = typeof b.text === 'string' ? b.text.slice(0, 20_000) : undefined
     const responses = { ...((attempt.responses ?? {}) as Record<string, unknown>) }
     responses[itemId] = { ...(responses[itemId] as object), ...(selected ? { selected } : {}), ...(text !== undefined ? { text } : {}), savedAt: new Date().toISOString() }
-    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { responses } })
-    return Response.json({ saved: true })
+    const data: Record<string, unknown> = { responses }
+    if (lateSync) {
+      const ig = (attempt.integrity ?? {}) as { log?: { at: string; event: string }[] } & Record<string, unknown>
+      data.integrity = { ...ig, lateSyncs: Number(ig.lateSyncs ?? 0) + 1, log: [...(ig.log ?? []), { at: new Date().toISOString(), event: 'late_sync' }].slice(-200) }
+    }
+    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data })
+    return Response.json({ saved: true, late: lateSync })
   },
 }
 
@@ -280,6 +290,8 @@ const incident: Endpoint = {
     if (!hasRole(u as { roles?: string[] }, 'proctor', 'super_admin')) return bad('Proctors only', 403)
     const attempt = await req.payload.findByID({ collection: 'test-attempts', id: Number(req.routeParams?.id), overrideAccess: true, depth: 0 }).catch(() => null)
     if (!attempt) return bad('Not found', 404)
+    const sessionForm = await req.payload.findByID({ collection: 'test-forms', id: typeof attempt.form === 'object' ? attempt.form.id : attempt.form, depth: 0, overrideAccess: true }).catch(() => null)
+    if (!canProctor(sessionForm, u)) return bad('You are not assigned to this session', 403)
     const b = await body(req)
     const type = INCIDENT_TYPES.find((t) => t === b.type)
     if (!type) return bad('Unknown incident type')

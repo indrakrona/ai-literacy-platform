@@ -85,3 +85,11 @@ export function optionOrdersFor(items: TestItem[], rand: () => number = Math.ran
   for (const it of items) if (it.type !== 'performance_task' && (it.options?.length ?? 0) > 1) out[String(it.id)] = shuffledOrder(it.options!.length, rand)
   return out
 }
+
+/** A proctor may supervise a session only when assigned to it; super admins always may. */
+export function canProctor(form: { proctors?: (number | { id: number })[] | null } | null | undefined, user: { id: number; roles?: string[] | null } | null | undefined): boolean {
+  if (!form || !user) return false
+  if (user.roles?.includes('super_admin')) return true
+  if (!user.roles?.includes('proctor')) return false
+  return (form.proctors ?? []).some((p) => (typeof p === 'object' ? p.id : p) === user.id)
+}

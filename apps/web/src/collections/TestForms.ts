@@ -26,7 +26,14 @@ export const TestForms: CollectionConfig = {
     hidden: ({ user }) => !hasRole(user as { roles?: string[] }, 'assessment_author', 'proctor', 'super_admin'),
   },
   access: {
-    read: roles('assessment_author', 'proctor', 'rater', 'super_admin'),
+    // Proctors see only the sessions they are assigned to.
+    read: ({ req }) => {
+      const u = req.user as { id: number; roles?: string[] } | null
+      if (!u) return false
+      if (hasRole(u, 'assessment_author', 'rater', 'super_admin')) return true
+      if (hasRole(u, 'proctor')) return { proctors: { contains: u.id } }
+      return false
+    },
     create: roles('assessment_author', 'super_admin'),
     update: roles('assessment_author', 'super_admin'),
     delete: roles('super_admin'),
@@ -56,6 +63,7 @@ export const TestForms: CollectionConfig = {
           options: ['draft', 'active', 'closed'].map((v) => ({ value: v, label: v })),
         },
         { name: 'timeLimitMinutes', type: 'number', required: true, defaultValue: 60, min: 5 },
+        { name: 'school', type: 'relationship', relationTo: 'schools', admin: { description: 'Where this session takes place (optional)' } },
         { name: 'doubleMarking', label: 'Double marking of written tasks', type: 'checkbox', defaultValue: true, admin: { description: 'Two raters mark each answer blind; a third adjudicates gaps of 2+ points. Turn off only if one rater is available.' } },
       ],
     },
@@ -81,6 +89,14 @@ export const TestForms: CollectionConfig = {
       unique: true,
       admin: { readOnly: true, position: 'sidebar', description: 'Proctor gives this code to candidates in the room.' },
       hooks: { beforeValidate: [({ value }) => value || generateJoinCode()] },
+    },
+    {
+      name: 'proctors',
+      type: 'relationship',
+      relationTo: 'users',
+      hasMany: true,
+      filterOptions: { roles: { contains: 'proctor' } },
+      admin: { position: 'sidebar', description: 'Only these proctors can supervise this session and log incidents.' },
     },
     { name: 'seed', type: 'number', admin: { readOnly: true, position: 'sidebar' } },
     { name: 'items', type: 'relationship', relationTo: 'test-items', hasMany: true, admin: { description: 'Filled by Assemble' } },

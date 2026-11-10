@@ -16,6 +16,7 @@ import * as migration_20261110_000448_gamification from './20261110_000448_gamif
 import * as migration_20261110_001722_ailis_integrity from './20261110_001722_ailis_integrity';
 import * as migration_20261110_002822_double_marking from './20261110_002822_double_marking';
 import * as migration_20261110_003906_ai_suggestions from './20261110_003906_ai_suggestions';
+import * as migration_20261110_005659_proctor_assignment from './20261110_005659_proctor_assignment';
 
 export const migrations = [
   {
@@ -106,6 +107,11 @@ export const migrations = [
   {
     up: migration_20261110_003906_ai_suggestions.up,
     down: migration_20261110_003906_ai_suggestions.down,
-    name: '20261110_003906_ai_suggestions'
+    name: '20261110_003906_ai_suggestions',
+  },
+  {
+    up: migration_20261110_005659_proctor_assignment.up,
+    down: migration_20261110_005659_proctor_assignment.down,
+    name: '20261110_005659_proctor_assignment'
   },
 ];

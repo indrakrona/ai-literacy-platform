@@ -133,6 +133,8 @@ const id = {
     domains: 'Skor per domain',
     integrityNote: 'Berpindah tab, menempel teks, dan keluar dari layar penuh dicatat selama tes.',
     fullscreenStart: 'Masuk layar penuh',
+    offlinePending: 'Koneksi terputus. {n} jawaban tersimpan di perangkat ini dan akan dikirim otomatis. Jangan tutup halaman ini.',
+    offlineNoPending: 'Koneksi terputus. Kamu tetap bisa menjawab; jawaban disimpan di perangkat ini sampai koneksi kembali.',
     fullscreenLeft: 'Anda keluar dari layar penuh. Kejadian ini dicatat. Kembali ke layar penuh untuk melanjutkan dengan tenang.',
   },
   home: {
@@ -297,6 +299,8 @@ const en: Dict = {
     domains: 'Score by domain',
     integrityNote: 'Switching tabs, pasting text and leaving full screen are recorded during the test.',
     fullscreenStart: 'Enter full screen',
+    offlinePending: 'Connection lost. {n} answers are saved on this device and will be sent automatically. Do not close this page.',
+    offlineNoPending: 'Connection lost. You can keep answering; answers are kept on this device until the connection returns.',
     fullscreenLeft: 'You left full screen. This has been recorded. Return to full screen to carry on.',
   },
   home: {

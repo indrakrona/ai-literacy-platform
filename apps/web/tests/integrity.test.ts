@@ -79,6 +79,10 @@ describe('AILIS attempt integrity', () => {
     expect(ig.log).toHaveLength(2)
 
     const proctor = await payload.create({ collection: 'users', overrideAccess: true, data: { name: 'P', email: `p${uniq()}@example.test`, password: 'Passw0rd!', roles: ['proctor'] } })
+    expect((await call('/:id/incident', proctor, { type: 'connection' }, attemptId)).status).toBe(403) // not assigned yet
+    expect((await payload.find({ collection: 'test-forms', overrideAccess: false, user: proctor, where: { id: { equals: form.id } } })).docs).toHaveLength(0)
+    await payload.update({ collection: 'test-forms', id: form.id, overrideAccess: true, data: { proctors: [proctor.id] } })
+    expect((await payload.find({ collection: 'test-forms', overrideAccess: false, user: proctor, where: { id: { equals: form.id } } })).docs).toHaveLength(1)
     expect((await call('/:id/incident', candidate, { type: 'other' }, attemptId)).status).toBe(403)
     expect((await call('/:id/incident', proctor, { type: 'bogus' }, attemptId)).status).toBe(400)
     expect((await call('/:id/incident', proctor, { type: 'connection', note: 'Wi-Fi putus 2 menit' }, attemptId)).data.count).toBe(1)
