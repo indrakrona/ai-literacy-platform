@@ -38,7 +38,7 @@ export type EventName = (typeof EVENT_NAMES)[number]
 /** Events the browser may send; everything else is recorded only by the server. */
 export const CLIENT_EVENTS: EventName[] = ['lesson_started', 'quiz_submitted', 'certificate_shared']
 
-const PROP_KEYS = ['lessonId', 'activityId', 'classId', 'briefId', 'attemptId', 'orderId', 'status', 'score', 'max', 'category', 'plan', 'seats', 'amountIdr', 'competency', 'bigIdea', 'decision', 'tokens'] as const
+const PROP_KEYS = ['lessonId', 'activityId', 'classId', 'briefId', 'attemptId', 'orderId', 'status', 'score', 'max', 'category', 'plan', 'seats', 'amountIdr', 'competency', 'bigIdea', 'decision', 'tokens', 'channel'] as const
 type Props = Partial<Record<(typeof PROP_KEYS)[number], string | number | boolean>>
 
 export type AgeBand = 'under_13' | '13_15' | '16_17' | '18_plus' | 'unknown'

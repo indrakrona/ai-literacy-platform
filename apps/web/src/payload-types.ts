@@ -86,6 +86,10 @@ export interface Config {
     'pilot-requests': PilotRequest;
     badges: Badge;
     challenges: Challenge;
+    certificates: Certificate;
+    'test-sessions': TestSession;
+    vouchers: Voucher;
+    bookings: Booking;
     'lesson-progress': LessonProgress;
     'test-attempts': TestAttempt;
     'ai-conversations': AiConversation;
@@ -132,6 +136,10 @@ export interface Config {
     'pilot-requests': PilotRequestsSelect<false> | PilotRequestsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
     challenges: ChallengesSelect<false> | ChallengesSelect<true>;
+    certificates: CertificatesSelect<false> | CertificatesSelect<true>;
+    'test-sessions': TestSessionsSelect<false> | TestSessionsSelect<true>;
+    vouchers: VouchersSelect<false> | VouchersSelect<true>;
+    bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
     'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
@@ -996,14 +1004,34 @@ export interface Challenge {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lesson-progress".
+ * via the `definition` "certificates".
  */
-export interface LessonProgress {
+export interface Certificate {
   id: number;
-  user: number | User;
-  lesson: number | Lesson;
-  status: 'started' | 'completed';
-  completedAt?: string | null;
+  code: string;
+  candidate: number | User;
+  attempt: number | TestAttempt;
+  level?: string | null;
+  band: number;
+  overall?: number | null;
+  subScores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Cut scores were provisional when issued
+   */
+  provisional?: boolean | null;
+  issuedAt: string;
+  expiresAt: string;
+  status: 'valid' | 'revoked';
+  revokedReason?: string | null;
+  revokedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1109,6 +1137,88 @@ export interface TestAttempt {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-sessions".
+ */
+export interface TestSession {
+  id: number;
+  /**
+   * e.g. AILIS SMA · Gelombang 1
+   */
+  title: string;
+  /**
+   * Once a form has sessions, candidates need a confirmed booking to start it
+   */
+  form: number | TestForm;
+  /**
+   * Leave empty for a session open to everyone
+   */
+  school?: (number | null) | School;
+  startsAt: string;
+  endsAt?: string | null;
+  /**
+   * Room and building, or "Online (proctored)"
+   */
+  location?: string | null;
+  seats: number;
+  /**
+   * 0 = covered by the school licence. Paid seats wait for payment confirmation.
+   */
+  priceIdr?: number | null;
+  status: 'open' | 'closed';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers".
+ */
+export interface Voucher {
+  id: number;
+  code: string;
+  batch: string;
+  /**
+   * Only valid for this school’s sessions (empty = any session)
+   */
+  school?: (number | null) | School;
+  discountPercent: number;
+  maxUses: number;
+  expiresAt?: string | null;
+  active?: boolean | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings".
+ */
+export interface Booking {
+  id: number;
+  session: number | TestSession;
+  candidate: number | User;
+  school?: (number | null) | School;
+  status: 'booked' | 'awaiting_payment' | 'attended' | 'cancelled';
+  voucher?: (number | null) | Voucher;
+  priceIdr?: number | null;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-progress".
+ */
+export interface LessonProgress {
+  id: number;
+  user: number | User;
+  lesson: number | Lesson;
+  status: 'started' | 'completed';
+  completedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1491,6 +1601,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'challenges';
         value: number | Challenge;
+      } | null)
+    | ({
+        relationTo: 'certificates';
+        value: number | Certificate;
+      } | null)
+    | ({
+        relationTo: 'test-sessions';
+        value: number | TestSession;
+      } | null)
+    | ({
+        relationTo: 'vouchers';
+        value: number | Voucher;
+      } | null)
+    | ({
+        relationTo: 'bookings';
+        value: number | Booking;
       } | null)
     | ({
         relationTo: 'lesson-progress';
@@ -2110,6 +2236,75 @@ export interface ChallengesSelect<T extends boolean = true> {
   endsAt?: T;
   participants?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "certificates_select".
+ */
+export interface CertificatesSelect<T extends boolean = true> {
+  code?: T;
+  candidate?: T;
+  attempt?: T;
+  level?: T;
+  band?: T;
+  overall?: T;
+  subScores?: T;
+  provisional?: T;
+  issuedAt?: T;
+  expiresAt?: T;
+  status?: T;
+  revokedReason?: T;
+  revokedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-sessions_select".
+ */
+export interface TestSessionsSelect<T extends boolean = true> {
+  title?: T;
+  form?: T;
+  school?: T;
+  startsAt?: T;
+  endsAt?: T;
+  location?: T;
+  seats?: T;
+  priceIdr?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers_select".
+ */
+export interface VouchersSelect<T extends boolean = true> {
+  code?: T;
+  batch?: T;
+  school?: T;
+  discountPercent?: T;
+  maxUses?: T;
+  expiresAt?: T;
+  active?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings_select".
+ */
+export interface BookingsSelect<T extends boolean = true> {
+  session?: T;
+  candidate?: T;
+  school?: T;
+  status?: T;
+  voucher?: T;
+  priceIdr?: T;
+  note?: T;
   updatedAt?: T;
   createdAt?: T;
 }

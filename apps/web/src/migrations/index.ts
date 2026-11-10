@@ -18,6 +18,7 @@ import * as migration_20261110_002822_double_marking from './20261110_002822_dou
 import * as migration_20261110_003906_ai_suggestions from './20261110_003906_ai_suggestions';
 import * as migration_20261110_005659_proctor_assignment from './20261110_005659_proctor_assignment';
 import * as migration_20261110_034050_platform_ops from './20261110_034050_platform_ops';
+import * as migration_20261110_040704_certificates_booking from './20261110_040704_certificates_booking';
 
 export const migrations = [
   {
@@ -118,6 +119,11 @@ export const migrations = [
   {
     up: migration_20261110_034050_platform_ops.up,
     down: migration_20261110_034050_platform_ops.down,
-    name: '20261110_034050_platform_ops'
+    name: '20261110_034050_platform_ops',
+  },
+  {
+    up: migration_20261110_040704_certificates_booking.up,
+    down: migration_20261110_040704_certificates_booking.down,
+    name: '20261110_040704_certificates_booking'
   },
 ];

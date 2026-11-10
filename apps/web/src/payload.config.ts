@@ -17,6 +17,8 @@ import { ConsentRequests } from './collections/ConsentRequests'
 import { LessonProgress } from './collections/LessonProgress'
 import { TestItems } from './collections/TestItems'
 import { TestForms } from './collections/TestForms'
+import { Certificates } from './collections/Certificates'
+import { Bookings, TestSessions, Vouchers } from './collections/TestSessions'
 import { TestAttempts } from './collections/TestAttempts'
 import { AiActivities } from './collections/AiActivities'
 import { AiConversations } from './collections/AiConversations'
@@ -50,7 +52,8 @@ export default buildConfig({
   },
   // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
   collections: [
-    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges].map(withAudit),
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges, Certificates, TestSessions, Vouchers].map(withAudit),
+    Bookings,
     LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,
   ],
   globals: [SiteSettings, GamificationSettings, PlatformSettings].map(withAuditGlobal),

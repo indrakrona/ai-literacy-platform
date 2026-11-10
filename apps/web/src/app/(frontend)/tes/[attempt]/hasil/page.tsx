@@ -4,11 +4,9 @@ import { Shell } from '../../../../../components/Shell'
 import { Card, Notice } from '../../../../../components/ui'
 import { getDict } from '../../../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../../../lib/session'
+import { BAND_NAMES, issueCertificate, statusOf, verifyUrl } from '../../../../../lib/certificates'
+import { CertificateShare } from '../../../../../components/forms/BookingForms'
 
-const BAND_NAMES = {
-  id: ['Belum terlihat', 'Sadar', 'Sadar', 'Sadar', 'Pengguna cakap', 'Pengguna cakap', 'Terampil', 'Terampil', 'Ahli', 'Ahli'],
-  en: ['Not yet shown', 'Aware', 'Aware', 'Aware', 'Capable user', 'Capable user', 'Skilled', 'Skilled', 'Expert', 'Expert'],
-}
 
 export default async function ResultPage({ params }: { params: Promise<{ attempt: string }> }) {
   const user = await getCurrentUser()
@@ -19,6 +17,11 @@ export default async function ResultPage({ params }: { params: Promise<{ attempt
   const attempt = await payload.findByID({ collection: 'test-attempts', id, overrideAccess: false, user, depth: 0 }).catch(() => null)
   if (!attempt) notFound()
   const report = attempt.report as null | { band: number; overall: number; subScores: Record<string, number>; provisional: boolean }
+  // Issued when the score is released; this also covers attempts scored before certificates existed.
+  const owner = (typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate) === user.id
+  const cert = report && owner ? await issueCertificate(payload, attempt.id) : null
+  const id_ = locale === 'id'
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString(id_ ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <Shell>
@@ -50,6 +53,21 @@ export default async function ResultPage({ params }: { params: Promise<{ attempt
                 ))}
               </ul>
             </Card>
+            {cert && statusOf(cert) !== 'revoked' && (
+              <Card>
+                <h2 className="font-semibold">{id_ ? 'Sertifikat' : 'Certificate'}</h2>
+                <p className="mt-1 text-sm text-muted">
+                  {id_ ? 'Kode' : 'Code'} <span className="font-mono font-semibold text-ink">{cert.code}</span> · {id_ ? 'berlaku sampai' : 'valid until'} {fmtDate(cert.expiresAt)}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {id_ ? 'Siapa pun dapat memeriksa keasliannya di ' : 'Anyone can check it is genuine at '}
+                  <a className="underline" href={`/verifikasi/${cert.code}`}>{verifyUrl(cert.code).replace(/^https?:\/\//, '')}</a>
+                </p>
+                <div className="mt-4">
+                  <CertificateShare code={cert.code} url={verifyUrl(cert.code)} locale={locale} />
+                </div>
+              </Card>
+            )}
           </>
         )}
       </div>

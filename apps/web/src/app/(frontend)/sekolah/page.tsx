@@ -55,6 +55,9 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
         <div>
           <p className="text-sm font-semibold tracking-wide text-brand-deep uppercase">{id ? 'Ruang Sekolah' : 'School space'}</p>
           <h1 className="text-3xl font-bold">{school.name}</h1>
+          <Link href={`/sekolah/tes${requested ? `?sekolah=${schoolId}` : ''}`} className="mt-1 inline-block text-sm font-semibold underline">
+            {id ? 'Tes AILIS: jadwal dan voucher →' : 'AILIS tests: dates and vouchers →'}
+          </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {stat(id ? 'Kelas' : 'Classes', totals.classes)}

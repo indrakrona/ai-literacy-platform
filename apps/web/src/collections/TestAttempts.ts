@@ -8,6 +8,8 @@ import { addMark, normalizeRating, resolve } from '../lib/marking'
 import { getGateway } from '../lib/ai'
 import { getSwitches } from '../lib/settings'
 import { audit, ipOf } from '../lib/audit'
+import { issueCertificate } from '../lib/certificates'
+import { bookingForStart } from '../lib/booking'
 
 const GRACE_MS = 30_000
 /** Answers made before the deadline while offline may arrive this long after it (and are logged). */
@@ -79,6 +81,10 @@ const start: Endpoint = {
     })
     if (existing.docs[0]) return Response.json({ attemptId: existing.docs[0].id, resumed: true })
 
+    // Scheduled forms need a confirmed booking (spec A4); the booking is then marked as attended.
+    const seat = await bookingForStart(req.payload, form.id, Number(req.user.id))
+    if (seat.required && !seat.bookingId) return Response.json({ error: 'booking_required', problem: 'booking_required' }, { status: 403 })
+
     const order = [...(form.items as (number | { id: number })[])].map((i) => (typeof i === 'object' ? i.id : i))
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -101,6 +107,7 @@ const start: Endpoint = {
         integrity: { tabHidden: 0, pastes: 0, fullscreenExits: 0, log: [] },
       },
     })
+    if (seat.bookingId) await req.payload.update({ collection: 'bookings', id: seat.bookingId, overrideAccess: true, data: { status: 'attended' } })
     await track(req.payload, { name: 'test_started', user: req.user as unknown as Actor, headers: req.headers, props: { attemptId: attempt.id } })
     return Response.json({ attemptId: attempt.id, resumed: false }, { status: 201 })
   },
@@ -198,6 +205,7 @@ const submit: Endpoint = {
     })
     const actor = req.user as unknown as Actor
     await track(req.payload, { name: 'test_submitted', user: actor, headers: req.headers, props: { attemptId: attempt.id } })
+    if (!pendingRatings) await issueCertificate(req.payload, attempt.id)
     if (!pendingRatings) await notify(req.payload, { userIds: [Number(req.user!.id)], kind: 'score_ready', link: `/tes/${attempt.id}/hasil`, email: false })
     if (!pendingRatings) await track(req.payload, { name: 'score_released', user: actor, headers: req.headers, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })
@@ -243,6 +251,7 @@ const rate: Endpoint = {
       data: { points, ratings, report, status: pendingRatings ? 'awaiting_rating' : 'scored' },
     })
     if (!pendingRatings) {
+      await issueCertificate(req.payload, attempt.id)
       const candidate = await req.payload.findByID({ collection: 'users', id: typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate, depth: 0, overrideAccess: true }).catch(() => null)
       await notify(req.payload, { userIds: [candidate?.id], kind: 'score_ready', link: `/tes/${attempt.id}/hasil` })
       await track(req.payload, { name: 'score_released', user: candidate, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })

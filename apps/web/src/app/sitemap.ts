@@ -11,5 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...pages.docs.map((p) => ({ url: p.slug === 'home' ? `${base}/` : `${base}/${p.slug}`, lastModified: p.updatedAt })),
     { url: `${base}/daftar` },
     { url: `${base}/masuk` },
+    { url: `${base}/verifikasi` },
   ]
 }
