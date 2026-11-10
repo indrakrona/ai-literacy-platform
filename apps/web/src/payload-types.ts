@@ -99,6 +99,7 @@ export interface Config {
     'showcase-votes': ShowcaseVote;
     'support-tickets': SupportTicket;
     accommodations: Accommodation;
+    'login-codes': LoginCode;
     'data-requests': DataRequest;
     bookings: Booking;
     'lesson-progress': LessonProgress;
@@ -160,6 +161,7 @@ export interface Config {
     'showcase-votes': ShowcaseVotesSelect<false> | ShowcaseVotesSelect<true>;
     'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
     accommodations: AccommodationsSelect<false> | AccommodationsSelect<true>;
+    'login-codes': LoginCodesSelect<false> | LoginCodesSelect<true>;
     'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
@@ -271,6 +273,10 @@ export interface User {
    */
   guardians?: (number | User)[] | null;
   parentLinkCode?: string | null;
+  /**
+   * Linked Google account
+   */
+  googleSub?: string | null;
   hideNameOnBoards?: boolean | null;
   /**
    * A parent allowed this under-18’s projects in the gallery
@@ -1702,6 +1708,21 @@ export interface Accommodation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-codes".
+ */
+export interface LoginCode {
+  id: number;
+  user: number | User;
+  codeHash: string;
+  channel?: ('email' | 'whatsapp') | null;
+  attempts?: number | null;
+  expiresAt: string;
+  usedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "data-requests".
  */
 export interface DataRequest {
@@ -2168,6 +2189,10 @@ export interface PayloadLockedDocument {
         value: number | Accommodation;
       } | null)
     | ({
+        relationTo: 'login-codes';
+        value: number | LoginCode;
+      } | null)
+    | ({
         relationTo: 'data-requests';
         value: number | DataRequest;
       } | null)
@@ -2271,6 +2296,7 @@ export interface UsersSelect<T extends boolean = true> {
   suspended?: T;
   guardians?: T;
   parentLinkCode?: T;
+  googleSub?: T;
   hideNameOnBoards?: T;
   galleryParentApproved?: T;
   portfolio?:
@@ -3139,6 +3165,20 @@ export interface AccommodationsSelect<T extends boolean = true> {
   reason?: T;
   validUntil?: T;
   grantedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-codes_select".
+ */
+export interface LoginCodesSelect<T extends boolean = true> {
+  user?: T;
+  codeHash?: T;
+  channel?: T;
+  attempts?: T;
+  expiresAt?: T;
+  usedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

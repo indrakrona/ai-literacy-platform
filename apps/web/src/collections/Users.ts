@@ -5,6 +5,7 @@ import { canAccessAdminPanel, fieldSuperAdminOnly, readUsers, selfOrSuperAdmin, 
 import { signupEndpoint } from '../endpoints/accounts'
 import { linkChild, makeParentCode, parentSignup, unlinkGuardian } from '../endpoints/parents'
 import { parentApprove, portfolioSettings } from './Engagement'
+import { googleCallback, googleStart, otpRequest, otpVerify } from '../endpoints/sign-in'
 import { escapeHtml } from '../lib/emails'
 
 const VALID_ROLES = new Set<string>(ROLES)
@@ -67,7 +68,7 @@ export const Users: CollectionConfig = {
       },
     },
   },
-  endpoints: [signupEndpoint, manageEndpoint, parentSignup, linkChild, makeParentCode, unlinkGuardian, parentApprove, portfolioSettings],
+  endpoints: [signupEndpoint, manageEndpoint, parentSignup, linkChild, makeParentCode, unlinkGuardian, parentApprove, portfolioSettings, otpRequest, otpVerify, googleStart, googleCallback],
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'roles', 'school'],
@@ -196,6 +197,7 @@ export const Users: CollectionConfig = {
       access: { read: ({ req, doc }) => Boolean(req.user && (req.user.id === doc?.id || hasRole(req.user as { roles?: string[] }, 'super_admin'))), update: fieldSuperAdminOnly },
       admin: { hidden: true },
     },
+    { name: 'googleSub', type: 'text', index: true, access: { read: ({ req }) => Boolean(req.user && (req.user as { roles?: string[] }).roles?.includes('super_admin')), update: fieldSuperAdminOnly }, admin: { readOnly: true, position: 'sidebar', description: 'Linked Google account' } },
     { name: 'hideNameOnBoards', label: 'Hide my name on team boards', type: 'checkbox', defaultValue: false },
     { name: 'galleryParentApproved', type: 'checkbox', defaultValue: false, access: { update: fieldSuperAdminOnly }, admin: { position: 'sidebar', description: 'A parent allowed this under-18’s projects in the gallery' } },
     {

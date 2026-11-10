@@ -23,6 +23,7 @@ import { Announcements } from './collections/Announcements'
 import { KkaOutcomes } from './collections/KkaOutcomes'
 import { HelpArticles, SupportTickets } from './collections/Support'
 import { Accommodations } from './collections/Accommodations'
+import { LoginCodes } from './endpoints/sign-in'
 import { Events, PeerReviews, ShowcaseVotes } from './collections/Engagement'
 import { Products, PromoCodes } from './collections/commerce-endpoints'
 import { DataRequests } from './collections/DataRequests'
@@ -66,6 +67,7 @@ export default buildConfig({
     ShowcaseVotes,
     SupportTickets,
     Accommodations,
+    LoginCodes,
     DataRequests,
     Bookings,
     LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,

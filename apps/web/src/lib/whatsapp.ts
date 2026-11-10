@@ -30,6 +30,11 @@ export const WA_TEMPLATES = {
     id: 'Halo {{1}}, ringkasan minggu ini dari AI Literacy: {{2}} Lihat detailnya: {{3}}',
     en: 'Hello {{1}}, this week on AI Literacy: {{2}} See the details: {{3}}',
   },
+  login_code: {
+    params: ['code'],
+    id: '{{1}} adalah kode masuk AI Literacy Anda. Berlaku 10 menit. Jangan bagikan kode ini kepada siapa pun.',
+    en: '{{1}} is your AI Literacy sign-in code. Valid for 10 minutes. Never share this code.',
+  },
   score_ready: {
     params: ['name', 'link'],
     id: 'Halo {{1}}, hasil tes AILIS-mu sudah keluar. Lihat di sini: {{2}}',

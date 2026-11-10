@@ -7,11 +7,12 @@
 | `ailit_consent_request` | A student under 18 signs up with a parent's number | Parent | 1 student's first name, 2 consent link |
 | `ailit_test_reminder` | 24 hours before a booked AILIS session | Candidate (if they turned on WhatsApp) | 1 first name, 2 session title, 3 date and time, 4 place |
 | `ailit_weekly_summary` | Sunday from 17:00 WIB | Parent (if they gave a number and kept WhatsApp on) | 1 parent's first name, 2 summary, 3 link |
+| `ailit_login_code` | Someone asks for a sign-in code with their phone number | That account's number | 1 six-digit code (category **Authentication**) |
 | `ailit_score_ready` | A rated AILIS result is released | Candidate (if they turned on WhatsApp) | 1 first name, 2 result link |
 
 Every template exists in Bahasa Indonesia (`id`) and English (`en`). The exact texts are in
 `apps/web/src/lib/whatsapp.ts` (`WA_TEMPLATES`); submit them to Meta word for word, with
-`{{1}}`, `{{2}}` … where the parameters go. Category: **Utility** for all four.
+`{{1}}`, `{{2}}` … where the parameters go. Category: **Utility**, except `ailit_login_code` (**Authentication**).
 
 In-app notifications and email are sent as well, so nothing depends on WhatsApp alone.
 
