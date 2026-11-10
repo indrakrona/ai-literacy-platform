@@ -14,6 +14,7 @@ import * as migration_20261109_223128_notifications_reports from './20261109_223
 import * as migration_20261109_224354_public_site from './20261109_224354_public_site';
 import * as migration_20261110_000448_gamification from './20261110_000448_gamification';
 import * as migration_20261110_001722_ailis_integrity from './20261110_001722_ailis_integrity';
+import * as migration_20261110_002822_double_marking from './20261110_002822_double_marking';
 
 export const migrations = [
   {
@@ -94,6 +95,11 @@ export const migrations = [
   {
     up: migration_20261110_001722_ailis_integrity.up,
     down: migration_20261110_001722_ailis_integrity.down,
-    name: '20261110_001722_ailis_integrity'
+    name: '20261110_001722_ailis_integrity',
+  },
+  {
+    up: migration_20261110_002822_double_marking.up,
+    down: migration_20261110_002822_double_marking.down,
+    name: '20261110_002822_double_marking'
   },
 ];

@@ -686,6 +686,10 @@ export interface TestForm {
   level: 'smp' | 'sma_smk' | 'adult';
   status: 'draft' | 'active' | 'closed';
   timeLimitMinutes: number;
+  /**
+   * Two raters mark each answer blind; a third adjudicates gaps of 2+ points. Turn off only if one rater is available.
+   */
+  doubleMarking?: boolean | null;
   blueprint: {
     itemsPerDomain: number;
     performanceTasks: number;
@@ -1780,6 +1784,7 @@ export interface TestFormsSelect<T extends boolean = true> {
   level?: T;
   status?: T;
   timeLimitMinutes?: T;
+  doubleMarking?: T;
   blueprint?:
     | T
     | {

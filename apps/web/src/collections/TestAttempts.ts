@@ -4,6 +4,7 @@ import { optionOrdersFor, scoreAttempt, toDisplayed, toOriginal, toPaperItem } f
 import type { TestAttempt, TestItem } from '../payload-types'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
+import { addMark, normalizeRating, resolve } from '../lib/marking'
 
 const GRACE_MS = 30_000
 
@@ -197,8 +198,20 @@ const rate: Endpoint = {
     const max = Math.max(0, ...(item.rubric ?? []).map((r) => r.points))
     const pts = Number(b.points)
     if (!Number.isFinite(pts) || pts < 0 || pts > max) return bad(`points must be between 0 and ${max}`)
-    const ratings = { ...((attempt.ratings ?? {}) as Record<string, unknown>), [String(item.id)]: { points: pts, rater: req.user!.id, at: new Date().toISOString() } }
-    const merged = { ...attempt, points: { ...((attempt.points ?? {}) as Record<string, number>), [String(item.id)]: pts } }
+    // Double marking: two blind marks; a third rater adjudicates when they differ by 2 or more points.
+    const form = await req.payload.findByID({ collection: 'test-forms', id: typeof attempt.form === 'object' ? attempt.form.id : attempt.form, depth: 0, overrideAccess: true }).catch(() => null)
+    const double = form?.doubleMarking !== false
+    const key = String(item.id)
+    const allRatings = { ...((attempt.ratings ?? {}) as Record<string, unknown>) }
+    const added = addMark(normalizeRating(allRatings[key]), req.user!.id as number, pts, double)
+    if (!added.ok) return bad(added.reason, 409)
+    const state = resolve(added.marks, double)
+    allRatings[key] = { marks: added.marks, status: state.status, final: state.final }
+    const ratings = allRatings
+    const pointsNow = { ...((attempt.points ?? {}) as Record<string, number>) }
+    if (state.final !== undefined) pointsNow[key] = state.final
+    else delete pointsNow[key]
+    const merged = { ...attempt, points: pointsNow }
     const { points, pendingRatings, report } = scoreAttempt(items, merged)
     await req.payload.update({
       collection: 'test-attempts',
@@ -211,7 +224,7 @@ const rate: Endpoint = {
       await notify(req.payload, { userIds: [candidate?.id], kind: 'score_ready', link: `/tes/${attempt.id}/hasil` })
       await track(req.payload, { name: 'score_released', user: candidate, props: { attemptId: attempt.id, score: (report as { band?: number } | null)?.band ?? 0 } })
     }
-    return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored' })
+    return Response.json({ status: pendingRatings ? 'awaiting_rating' : 'scored', itemStatus: state.status })
   },
 }
 

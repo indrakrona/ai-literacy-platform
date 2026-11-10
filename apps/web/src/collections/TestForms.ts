@@ -56,6 +56,7 @@ export const TestForms: CollectionConfig = {
           options: ['draft', 'active', 'closed'].map((v) => ({ value: v, label: v })),
         },
         { name: 'timeLimitMinutes', type: 'number', required: true, defaultValue: 60, min: 5 },
+        { name: 'doubleMarking', label: 'Double marking of written tasks', type: 'checkbox', defaultValue: true, admin: { description: 'Two raters mark each answer blind; a third adjudicates gaps of 2+ points. Turn off only if one rater is available.' } },
       ],
     },
     {
