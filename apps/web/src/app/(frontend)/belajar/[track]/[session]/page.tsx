@@ -28,7 +28,7 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
       locale,
       overrideAccess: false,
       user,
-      draft: Boolean(user?.roles?.includes('content_editor') || user?.roles?.includes('super_admin')),
+      draft: Boolean(user?.roles?.some((r) => ['content_editor', 'content_reviewer', 'super_admin'].includes(r))),
       where: { and: [{ unit: { in: units.docs.map((u) => u.id) } }, { order: { equals: n } }] },
       limit: 1,
     })

@@ -11,7 +11,7 @@ import { sendWhatsApp, type WaTemplate } from './whatsapp'
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn', 'content_review', 'content_decision', 'ticket_new', 'ticket_reply'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -72,6 +72,22 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   consent_withdrawn: {
     id: { title: 'Izin orang tua ditarik', body: 'Kamu tetap dapat membaca materi. AI Lab, proyek dan tes tidak aktif sampai izin diberikan lagi.' },
     en: { title: 'Parent permission withdrawn', body: 'You can still read the lessons. The AI Lab, projects and tests are off until permission is given again.' },
+  },
+  content_review: {
+    id: { title: 'Konten menunggu telaah: {title}', body: 'Buka ruang telaah untuk menyetujui atau meminta perbaikan.' },
+    en: { title: 'Content to review: {title}', body: 'Open the review workspace to approve it or request changes.' },
+  },
+  content_decision: {
+    id: { title: 'Hasil telaah: {title}', body: '{decision}. Catatan penelaah: {note}' },
+    en: { title: 'Review result: {title}', body: '{decision}. Reviewer’s note: {note}' },
+  },
+  ticket_new: {
+    id: { title: 'Tiket bantuan baru: {subject}', body: '{who} · {category}' },
+    en: { title: 'New support ticket: {subject}', body: '{who} · {category}' },
+  },
+  ticket_reply: {
+    id: { title: 'Balasan untuk tiket Anda: {subject}', body: '{excerpt}' },
+    en: { title: 'Reply to your ticket: {subject}', body: '{excerpt}' },
   },
   pilot_request: {
     id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },

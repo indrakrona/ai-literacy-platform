@@ -12,6 +12,7 @@ import { Classes } from './collections/Classes'
 import { Tracks } from './collections/Tracks'
 import { Units } from './collections/Units'
 import { Lessons } from './collections/Lessons'
+import { withApprovalWorkflow } from './lib/workflow'
 import { Media } from './collections/Media'
 import { ConsentRequests } from './collections/ConsentRequests'
 import { LessonProgress } from './collections/LessonProgress'
@@ -20,6 +21,7 @@ import { TestForms } from './collections/TestForms'
 import { Certificates } from './collections/Certificates'
 import { Announcements } from './collections/Announcements'
 import { KkaOutcomes } from './collections/KkaOutcomes'
+import { HelpArticles, SupportTickets } from './collections/Support'
 import { DataRequests } from './collections/DataRequests'
 import { runJobs } from './endpoints/parents'
 import { Bookings, TestSessions, Vouchers } from './collections/TestSessions'
@@ -56,7 +58,8 @@ export default buildConfig({
   },
   // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
   collections: [
-    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes].map(withAudit),
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, withApprovalWorkflow(Lessons), Media, TestItems, TestForms, withApprovalWorkflow(AiActivities), Assignments, withApprovalWorkflow(ProjectBriefs), Orders, Reports, withApprovalWorkflow(Pages), PilotRequests, withApprovalWorkflow(Badges, { titleField: 'name' }), Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes, HelpArticles].map(withAudit),
+    SupportTickets,
     DataRequests,
     Bookings,
     LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,

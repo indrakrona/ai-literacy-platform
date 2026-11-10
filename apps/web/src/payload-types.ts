@@ -91,6 +91,8 @@ export interface Config {
     vouchers: Voucher;
     announcements: Announcement;
     'kka-outcomes': KkaOutcome;
+    'help-articles': HelpArticle;
+    'support-tickets': SupportTicket;
     'data-requests': DataRequest;
     bookings: Booking;
     'lesson-progress': LessonProgress;
@@ -144,6 +146,8 @@ export interface Config {
     vouchers: VouchersSelect<false> | VouchersSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'kka-outcomes': KkaOutcomesSelect<false> | KkaOutcomesSelect<true>;
+    'help-articles': HelpArticlesSelect<false> | HelpArticlesSelect<true>;
+    'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
     'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
@@ -223,6 +227,7 @@ export interface User {
     | 'school_admin'
     | 'candidate'
     | 'content_editor'
+    | 'content_reviewer'
     | 'assessment_author'
     | 'rater'
     | 'proctor'
@@ -426,10 +431,6 @@ export interface Lesson {
       )[]
     | null;
   inCoreVersion?: boolean | null;
-  /**
-   * Draft → In review → Approved, then publish.
-   */
-  reviewState?: ('draft' | 'in_review' | 'approved') | null;
   objective?: string | null;
   activity?: string | null;
   content?: {
@@ -472,6 +473,22 @@ export interface Lesson {
       }[]
     | null;
   video?: (number | null) | Media;
+  /**
+   * Draft → In review → Approved, then publish. Use the review workspace (/konten) to submit and approve.
+   */
+  reviewState?: ('draft' | 'in_review' | 'changes_requested' | 'approved') | null;
+  submittedBy?: (number | null) | User;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  reviewHistory?:
+    | {
+        action: string;
+        by?: (number | null) | User;
+        note?: string | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -519,8 +536,25 @@ export interface AiActivity {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Draft → In review → Approved, then publish. Use the review workspace (/konten) to submit and approve.
+   */
+  reviewState?: ('draft' | 'in_review' | 'changes_requested' | 'approved') | null;
+  submittedBy?: (number | null) | User;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  reviewHistory?:
+    | {
+        action: string;
+        by?: (number | null) | User;
+        note?: string | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -567,8 +601,25 @@ export interface ProjectBrief {
     description?: string | null;
     id?: string | null;
   }[];
+  /**
+   * Draft → In review → Approved, then publish. Use the review workspace (/konten) to submit and approve.
+   */
+  reviewState?: ('draft' | 'in_review' | 'changes_requested' | 'approved') | null;
+  submittedBy?: (number | null) | User;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  reviewHistory?:
+    | {
+        action: string;
+        by?: (number | null) | User;
+        note?: string | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -946,6 +997,22 @@ export interface Page {
           }
       )[]
     | null;
+  /**
+   * Draft → In review → Approved, then publish. Use the review workspace (/konten) to submit and approve.
+   */
+  reviewState?: ('draft' | 'in_review' | 'changes_requested' | 'approved') | null;
+  submittedBy?: (number | null) | User;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  reviewHistory?:
+    | {
+        action: string;
+        by?: (number | null) | User;
+        note?: string | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1000,6 +1067,22 @@ export interface Badge {
   bigIdea?: ('discover' | 'understand' | 'create' | 'protect' | 'thrive') | null;
   order?: number | null;
   active?: boolean | null;
+  /**
+   * Draft → In review → Approved, then publish. Use the review workspace (/konten) to submit and approve.
+   */
+  reviewState?: ('draft' | 'in_review' | 'changes_requested' | 'approved') | null;
+  submittedBy?: (number | null) | User;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  reviewHistory?:
+    | {
+        action: string;
+        by?: (number | null) | User;
+        note?: string | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1293,6 +1376,58 @@ export interface KkaOutcome {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "help-articles".
+ */
+export interface HelpArticle {
+  id: number;
+  title: string;
+  slug: string;
+  category: 'getting_started' | 'students' | 'teachers' | 'parents' | 'schools' | 'tests' | 'privacy';
+  order?: number | null;
+  published?: boolean | null;
+  /**
+   * One sentence shown in lists and search results
+   */
+  summary?: string | null;
+  /**
+   * Plain text. Blank lines start new paragraphs; lines starting with "- " become a list.
+   */
+  body: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-tickets".
+ */
+export interface SupportTicket {
+  id: number;
+  subject: string;
+  category: 'account' | 'learning' | 'test' | 'school' | 'privacy' | 'other';
+  status: 'open' | 'waiting' | 'resolved';
+  requester?: (number | null) | User;
+  guestEmail?: string | null;
+  guestName?: string | null;
+  messages?:
+    | {
+        body: string;
+        by?: (number | null) | User;
+        fromStaff?: boolean | null;
+        /**
+         * Team-only note, never shown to the requester
+         */
+        internal?: boolean | null;
+        at: string;
+        id?: string | null;
+      }[]
+    | null;
+  lastActivityAt?: string | null;
+  resolvedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "data-requests".
  */
 export interface DataRequest {
@@ -1478,7 +1613,11 @@ export interface Notification {
     | 'child_linked'
     | 'licence_expiring'
     | 'data_request'
-    | 'consent_withdrawn';
+    | 'consent_withdrawn'
+    | 'content_review'
+    | 'content_decision'
+    | 'ticket_new'
+    | 'ticket_reply';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -1750,6 +1889,14 @@ export interface PayloadLockedDocument {
         value: number | KkaOutcome;
       } | null)
     | ({
+        relationTo: 'help-articles';
+        value: number | HelpArticle;
+      } | null)
+    | ({
+        relationTo: 'support-tickets';
+        value: number | SupportTicket;
+      } | null)
+    | ({
         relationTo: 'data-requests';
         value: number | DataRequest;
       } | null)
@@ -1974,7 +2121,6 @@ export interface LessonsSelect<T extends boolean = true> {
   competency?: T;
   alsoCovers?: T;
   inCoreVersion?: T;
-  reviewState?: T;
   objective?: T;
   activity?: T;
   content?: T;
@@ -1996,6 +2142,19 @@ export interface LessonsSelect<T extends boolean = true> {
         id?: T;
       };
   video?: T;
+  reviewState?: T;
+  submittedBy?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        note?: T;
+        at?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2133,8 +2292,22 @@ export interface AiActivitiesSelect<T extends boolean = true> {
         text?: T;
         id?: T;
       };
+  reviewState?: T;
+  submittedBy?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        note?: T;
+        at?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2170,8 +2343,22 @@ export interface ProjectBriefsSelect<T extends boolean = true> {
         description?: T;
         id?: T;
       };
+  reviewState?: T;
+  submittedBy?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        note?: T;
+        at?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2325,6 +2512,19 @@ export interface PagesSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
+  reviewState?: T;
+  submittedBy?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        note?: T;
+        at?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2365,6 +2565,19 @@ export interface BadgesSelect<T extends boolean = true> {
   bigIdea?: T;
   order?: T;
   active?: T;
+  reviewState?: T;
+  submittedBy?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        note?: T;
+        at?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2471,6 +2684,47 @@ export interface KkaOutcomesSelect<T extends boolean = true> {
   checkedBy?: T;
   checkedAt?: T;
   note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "help-articles_select".
+ */
+export interface HelpArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  category?: T;
+  order?: T;
+  published?: T;
+  summary?: T;
+  body?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-tickets_select".
+ */
+export interface SupportTicketsSelect<T extends boolean = true> {
+  subject?: T;
+  category?: T;
+  status?: T;
+  requester?: T;
+  guestEmail?: T;
+  guestName?: T;
+  messages?:
+    | T
+    | {
+        body?: T;
+        by?: T;
+        fromStaff?: T;
+        internal?: T;
+        at?: T;
+        id?: T;
+      };
+  lastActivityAt?: T;
+  resolvedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2873,10 +3127,19 @@ export interface TaskSchedulePublish {
   input: {
     type?: ('publish' | 'unpublish') | null;
     locale?: string | null;
-    doc?: {
-      relationTo: 'lessons';
-      value: number | Lesson;
-    } | null;
+    doc?:
+      | ({
+          relationTo: 'lessons';
+          value: number | Lesson;
+        } | null)
+      | ({
+          relationTo: 'ai-activities';
+          value: number | AiActivity;
+        } | null)
+      | ({
+          relationTo: 'project-briefs';
+          value: number | ProjectBrief;
+        } | null);
     global?: string | null;
     user?: {
       relationTo: 'users';

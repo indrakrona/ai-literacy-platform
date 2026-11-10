@@ -53,6 +53,7 @@ export async function seedAiActivities(payload: Payload) {
     const data = {
       title: a.title, slug: a.slug, competency: a.competency as never, goal: a.goal, instructions: a.instructions,
       tier: a.tier, messageLimit: 12, starterPrompts: a.starters.map((text) => ({ text })), reflection: a.reflection.map((text) => ({ text })),
+      _status: 'published' as const, reviewState: 'approved' as const,
     }
     const act = existing.docs[0]
       ? await payload.update({ collection: 'ai-activities', id: existing.docs[0].id, locale: 'id', data })

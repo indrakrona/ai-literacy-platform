@@ -17,7 +17,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { t, locale } = await getDict()
   const id = locale === 'id'
   const payload = await getPayloadClient()
-  const brief = (await payload.find({ collection: 'project-briefs', locale, where: { slug: { equals: slug } }, limit: 1, user, overrideAccess: false })).docs[0]
+  const brief = (await payload.find({ collection: 'project-briefs', locale, where: { slug: { equals: slug } }, limit: 1, user, overrideAccess: false, draft: Boolean(user?.roles?.some((r) => ['content_editor', 'content_reviewer', 'super_admin'].includes(r))) })).docs[0]
   if (!brief) notFound()
   const isStudent = hasRole(user, 'student')
   const classes = isStudent

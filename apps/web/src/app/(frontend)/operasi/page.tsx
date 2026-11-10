@@ -9,11 +9,13 @@ import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { getSwitches } from '../../../lib/settings'
 import { AI_COST_PER_MTOK_USD } from '../../../lib/metrics'
 import { ProcessDataRequest } from '../../../components/forms/DataRightsForms'
+import { TICKET_STATUS } from '../../../collections/Support'
 
 const TABS = [
   { key: 'pengguna', id: 'Pengguna', en: 'Users' },
   { key: 'ai', id: 'Monitor AI', en: 'AI monitor' },
   { key: 'audit', id: 'Log audit', en: 'Audit log' },
+  { key: 'tiket', id: 'Tiket bantuan', en: 'Support tickets' },
   { key: 'data', id: 'Permintaan data', en: 'Data requests' },
   { key: 'cadangan', id: 'Cadangan', en: 'Backups' },
 ] as const
@@ -155,6 +157,29 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
           ))}</tbody>
         </table></div>
         <p className="mt-2 text-xs text-muted">{id ? 'Log hanya bisa ditambah, tidak bisa diubah atau dihapus. Nilai data tidak disimpan, hanya nama kolom yang berubah.' : 'The log is append-only. Values are not stored, only which fields changed.'}</p>
+      </Card>
+    )
+  } else if (tab === 'tiket') {
+    const tickets = await payload.find({ collection: 'support-tickets', overrideAccess: true, depth: 1, limit: 100, sort: '-lastActivityAt' })
+    const order = { open: 0, waiting: 1, resolved: 2 } as Record<string, number>
+    const rows = [...tickets.docs].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3))
+    body = (
+      <Card>
+        <h2 className="text-lg font-semibold">{id ? `Tiket menunggu tim (${rows.filter((t) => t.status === 'open').length})` : `Tickets waiting for the team (${rows.filter((t) => t.status === 'open').length})`}</h2>
+        <p className="mt-1 text-sm text-muted">{id ? 'Janji balasan: 2 hari kerja. Artikel bantuan dikelola di panel admin (Communication › Help articles).' : 'Reply promise: 2 working days. Help articles are managed in the admin panel (Communication › Help articles).'}</p>
+        {rows.length === 0 ? <p className="mt-3 text-sm text-muted">{id ? 'Belum ada tiket.' : 'No tickets yet.'}</p> : (
+          <ul className="mt-3 divide-y divide-line">
+            {rows.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+                <span>
+                  <Link href={`/bantuan/tiket/${t.id}`} className="font-medium underline">{t.subject}</Link>
+                  <span className="text-sm text-muted"> · {typeof t.requester === 'object' && t.requester ? t.requester.name : t.guestEmail} · {t.category}</span>
+                </span>
+                <span className={`text-sm ${t.status === 'open' ? 'font-semibold' : 'text-muted'}`}>{TICKET_STATUS[t.status]?.[locale] ?? t.status} · {t.lastActivityAt ? fmtTime(t.lastActivityAt) : ''}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
     )
   } else if (tab === 'data') {

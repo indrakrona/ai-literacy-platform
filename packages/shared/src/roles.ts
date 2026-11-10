@@ -9,6 +9,7 @@ export const ROLES = [
   'school_admin',
   'candidate',
   'content_editor',
+  'content_reviewer',
   'assessment_author',
   'rater',
   'proctor',
@@ -24,6 +25,7 @@ export const ROLE_LABELS: Record<Role, { en: string; id: string }> = {
   school_admin: { en: 'School admin', id: 'Admin sekolah' },
   candidate: { en: 'Test candidate', id: 'Peserta tes' },
   content_editor: { en: 'Content editor', id: 'Editor konten' },
+  content_reviewer: { en: 'Content reviewer', id: 'Penelaah konten' },
   assessment_author: { en: 'Assessment author / reviewer', id: 'Penulis / penelaah soal' },
   rater: { en: 'Rater / moderator', id: 'Penilai / moderator' },
   proctor: { en: 'Proctor', id: 'Pengawas' },
@@ -33,6 +35,7 @@ export const ROLE_LABELS: Record<Role, { en: string; id: string }> = {
 /** Roles allowed into the Payload admin panel at all. */
 export const ADMIN_PANEL_ROLES: readonly Role[] = [
   'content_editor',
+  'content_reviewer',
   'assessment_author',
   'rater',
   'super_admin',

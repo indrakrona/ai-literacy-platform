@@ -21,6 +21,7 @@ import * as migration_20261110_034050_platform_ops from './20261110_034050_platf
 import * as migration_20261110_040704_certificates_booking from './20261110_040704_certificates_booking';
 import * as migration_20261110_045609_parents_announcements from './20261110_045609_parents_announcements';
 import * as migration_20261110_060908_school_reports_data_rights from './20261110_060908_school_reports_data_rights';
+import * as migration_20261110_091456_cms_workflow_help from './20261110_091456_cms_workflow_help';
 
 export const migrations = [
   {
@@ -136,6 +137,11 @@ export const migrations = [
   {
     up: migration_20261110_060908_school_reports_data_rights.up,
     down: migration_20261110_060908_school_reports_data_rights.down,
-    name: '20261110_060908_school_reports_data_rights'
+    name: '20261110_060908_school_reports_data_rights',
+  },
+  {
+    up: migration_20261110_091456_cms_workflow_help.up,
+    down: migration_20261110_091456_cms_workflow_help.down,
+    name: '20261110_091456_cms_workflow_help'
   },
 ];

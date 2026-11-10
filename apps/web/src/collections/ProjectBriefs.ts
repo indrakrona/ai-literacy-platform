@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { COMPETENCIES } from '@ailit/shared'
-import { roles } from '../access'
+import { roles, signedInPublishedOrStaff } from '../access'
 
 export const SMK_MAJORS = [
   { value: 'akuntansi', label: 'Akuntansi dan Keuangan Lembaga' },
@@ -18,10 +18,11 @@ export const SMK_MAJORS = [
 export const ProjectBriefs: CollectionConfig = {
   slug: 'project-briefs',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'level', 'smkMajor', 'competency'], group: 'Learning' },
+  versions: { drafts: { autosave: true, schedulePublish: true }, maxPerDoc: 30 },
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: roles('content_editor', 'teacher', 'super_admin'),
-    update: roles('content_editor', 'super_admin'),
+    read: signedInPublishedOrStaff,
+    create: roles('content_editor', 'content_reviewer', 'teacher', 'super_admin'),
+    update: roles('content_editor', 'content_reviewer', 'super_admin'),
     delete: roles('super_admin'),
   },
   fields: [

@@ -164,6 +164,8 @@ export async function seedProjectBriefs(payload: Payload) {
       deliverables: b.deliverables,
       allowTeams: b.allowTeams ?? true,
       rubric: b.rubric.map(([criterion, description]) => ({ criterion, description })),
+      _status: 'published' as const,
+      reviewState: 'approved' as const,
     }
     const existing = await payload.find({ collection: 'project-briefs', where: { slug: { equals: b.slug } }, limit: 1, depth: 0 })
     const doc = existing.docs[0]

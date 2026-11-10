@@ -1,15 +1,16 @@
 import type { CollectionConfig } from 'payload'
 import { COMPETENCIES } from '@ailit/shared'
-import { roles } from '../access'
+import { roles, signedInPublishedOrStaff } from '../access'
 
 /** AI Lab activity settings, edited in the CMS (spec D1). */
 export const AiActivities: CollectionConfig = {
   slug: 'ai-activities',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'competency', 'tier', 'messageLimit'], group: 'Learning' },
+  versions: { drafts: { autosave: true, schedulePublish: true }, maxPerDoc: 30 },
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: roles('content_editor', 'super_admin'),
-    update: roles('content_editor', 'super_admin'),
+    read: signedInPublishedOrStaff,
+    create: roles('content_editor', 'content_reviewer', 'super_admin'),
+    update: roles('content_editor', 'content_reviewer', 'super_admin'),
     delete: roles('super_admin'),
   },
   fields: [

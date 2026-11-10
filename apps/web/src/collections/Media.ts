@@ -7,8 +7,8 @@ export const Media: CollectionConfig = {
   access: {
     read: () => true,
     create: anyoneLoggedIn,
-    update: roles('content_editor', 'super_admin'),
-    delete: roles('content_editor', 'super_admin'),
+    update: roles('content_editor', 'content_reviewer', 'super_admin'),
+    delete: roles('content_editor', 'content_reviewer', 'super_admin'),
   },
   upload: {
     // Phone-first sizes; originals kept for print.

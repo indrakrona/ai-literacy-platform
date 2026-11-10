@@ -31,7 +31,7 @@ export const XpEvents: CollectionConfig = {
 export const Badges: CollectionConfig = {
   slug: 'badges',
   admin: { group: 'Gamification', useAsTitle: 'name', defaultColumns: ['icon', 'name', 'criterion', 'target', 'active'] },
-  access: { read: () => true, create: roles('content_editor', 'super_admin'), update: roles('content_editor', 'super_admin'), delete: roles('super_admin') },
+  access: { read: () => true, create: roles('content_editor', 'content_reviewer', 'super_admin'), update: roles('content_editor', 'content_reviewer', 'super_admin'), delete: roles('super_admin') },
   fields: [
     { name: 'slug', type: 'text', required: true, unique: true },
     { type: 'row', fields: [{ name: 'icon', type: 'text', required: true, admin: { description: 'One emoji, e.g. 🛡️' } }, { name: 'name', type: 'text', required: true, localized: true }] },

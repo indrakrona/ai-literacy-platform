@@ -27,7 +27,14 @@ export const selfOrSuperAdmin: Access = ({ req }) => {
 
 /** Published content is public; drafts only for content staff. */
 export const publishedOrStaff: Access = ({ req }) => {
-  if (hasRole(asUser(req.user), 'content_editor', 'super_admin')) return true
+  if (hasRole(asUser(req.user), 'content_editor', 'content_reviewer', 'super_admin')) return true
+  return { _status: { equals: 'published' } }
+}
+
+/** Signed-in users see published items; content staff also see drafts. */
+export const signedInPublishedOrStaff: Access = ({ req }) => {
+  if (!req.user) return false
+  if (hasRole(asUser(req.user), 'content_editor', 'content_reviewer', 'super_admin')) return true
   return { _status: { equals: 'published' } }
 }
 

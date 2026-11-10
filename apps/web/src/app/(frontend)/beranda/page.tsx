@@ -33,6 +33,11 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold">{fmt(t.home.hello, { name: user.name.split(' ')[0] ?? user.name })}</h1>
         <Announcements user={user} locale={locale} limit={2} />
+        {user.roles?.some((r) => ['content_editor', 'content_reviewer'].includes(r)) && (
+          <Link href="/konten" className="rounded-2xl border border-line bg-white p-4 font-semibold hover:border-ink">
+            {locale === 'id' ? 'Ruang telaah konten →' : 'Content review workspace →'}
+          </Link>
+        )}
         {user.consentStatus === 'pending' && <Notice tone="warn" title={t.home.pendingTitle}>{t.home.pendingBody}</Notice>}
         {user.consentStatus === 'declined' && <Notice tone="warn" title={t.home.declinedTitle}>{t.home.declinedBody}</Notice>}
         <Card>

@@ -12,7 +12,7 @@ export default async function LabPage({ params }: { params: Promise<{ slug: stri
   const { slug } = await params
   const { t, locale } = await getDict()
   const payload = await getPayloadClient()
-  const activity = (await payload.find({ collection: 'ai-activities', locale, where: { slug: { equals: slug } }, limit: 1, user, overrideAccess: false })).docs[0]
+  const activity = (await payload.find({ collection: 'ai-activities', locale, where: { slug: { equals: slug } }, limit: 1, user, overrideAccess: false, draft: Boolean(user?.roles?.some((r) => ['content_editor', 'content_reviewer', 'super_admin'].includes(r))) })).docs[0]
   if (!activity) notFound()
   const locked = hasRole(user, 'student') && !hasFullAccess(user)
 

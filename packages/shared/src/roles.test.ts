@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { hasRole, isSuperAdmin, ROLES } from './roles'
 
 describe('roles', () => {
-  it('has the ten roles from the spec', () => {
-    expect(ROLES).toHaveLength(10)
+  it('has the spec roles plus content reviewer', () => {
+    expect(ROLES).toHaveLength(11)
   })
   it('matches any of the given roles', () => {
     expect(hasRole({ roles: ['teacher'] }, 'teacher', 'school_admin')).toBe(true)

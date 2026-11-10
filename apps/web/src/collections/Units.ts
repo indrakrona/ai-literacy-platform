@@ -9,8 +9,8 @@ export const Units: CollectionConfig = {
   defaultSort: 'order',
   access: {
     read: publishedOrStaff,
-    create: roles('content_editor', 'super_admin'),
-    update: roles('content_editor', 'super_admin'),
+    create: roles('content_editor', 'content_reviewer', 'super_admin'),
+    update: roles('content_editor', 'content_reviewer', 'super_admin'),
     delete: roles('super_admin'),
   },
   fields: [
