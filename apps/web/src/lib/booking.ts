@@ -1,7 +1,7 @@
 /**
  * AILIS test booking (spec A4): test sessions with dates and seats, candidates book a seat, vouchers
- * discount or cover the fee. Seat and voucher limits are decided by booking order (lowest id wins), so two
- * people taking the last seat at the same moment cannot both get it.
+ * discount or cover the fee. Bookings are taken one at a time under a database lock, so two people taking
+ * the last seat (or the last use of a voucher) at the same moment cannot both get it.
  */
 import type { Payload } from 'payload'
 
@@ -52,30 +52,60 @@ export const PROBLEM_TEXT: Record<string, { id: string; en: string }> = {
   voucher_unknown: { id: 'Kode voucher tidak ditemukan.', en: 'Voucher code not found.' },
   inactive: { id: 'Voucher ini tidak aktif.', en: 'This voucher is not active.' },
   expired: { id: 'Voucher ini sudah kedaluwarsa.', en: 'This voucher has expired.' },
+  busy: { id: 'Sedang ramai. Coba lagi sebentar.', en: 'Busy right now. Please try again in a moment.' },
   used_up: { id: 'Voucher ini sudah habis dipakai.', en: 'This voucher has been used up.' },
 }
 
-/** Seats taken in a session (optionally only bookings up to a given id). */
-export async function seatsTaken(payload: Payload, sessionId: number, upToId?: number): Promise<number> {
+/** Seats taken in a session. */
+export async function seatsTaken(payload: Payload, sessionId: number): Promise<number> {
   const and: Record<string, unknown>[] = [{ session: { equals: sessionId } }, { status: { in: [...HOLDS_SEAT] } }]
-  if (upToId) and.push({ id: { less_than_equal: upToId } })
   return (await payload.count({ collection: 'bookings', overrideAccess: true, where: { and } as never })).totalDocs
 }
 
-export async function voucherUses(payload: Payload, voucherId: number, upToId?: number): Promise<number> {
+export async function voucherUses(payload: Payload, voucherId: number): Promise<number> {
   const and: Record<string, unknown>[] = [{ voucher: { equals: voucherId } }, { status: { in: [...HOLDS_SEAT] } }]
-  if (upToId) and.push({ id: { less_than_equal: upToId } })
   return (await payload.count({ collection: 'bookings', overrideAccess: true, where: { and } as never })).totalDocs
 }
+
+const BOOKING_LOCK = 4_242_001 // any constant; shared by every booking
+
+/**
+ * Run fn while holding a Postgres advisory lock. Each Payload write inside commits on its own, so the next
+ * booking (which waits for the lock) sees it. Waiters retry with try-lock instead of blocking, so they do not
+ * hold pool connections the lock holder needs. Without a Postgres pool (other adapters) fn simply runs.
+ */
+export async function withBookingLock<T>(payload: Payload, fn: () => Promise<T>, timeoutMs = 15_000): Promise<T | typeof LOCK_BUSY> {
+  type Client = { query: (sql: string, args?: unknown[]) => Promise<{ rows: { ok: boolean }[] }>; release: () => void }
+  const pool = (payload.db as unknown as { pool?: { connect: () => Promise<Client> } }).pool
+  if (!pool) return fn()
+  const until = Date.now() + timeoutMs
+  while (Date.now() < until) {
+    const client = await pool.connect()
+    let locked = false
+    try {
+      locked = Boolean((await client.query('select pg_try_advisory_lock($1) as ok', [BOOKING_LOCK])).rows[0]?.ok)
+      if (locked) return await fn()
+    } finally {
+      if (locked) await client.query('select pg_advisory_unlock($1)', [BOOKING_LOCK]).catch(() => {})
+      client.release()
+    }
+    await new Promise((r) => setTimeout(r, 20 + Math.random() * 60))
+  }
+  return LOCK_BUSY
+}
+export const LOCK_BUSY = Symbol('busy')
 
 /**
  * Book a seat. Returns the booking, or a problem key from PROBLEM_TEXT. A free (or fully covered) seat is
  * booked at once; otherwise it is held as awaiting payment until the school or team confirms payment.
  */
-export async function bookSeat(
-  payload: Payload,
-  opts: { sessionId: number; user: { id: number; school?: unknown }; voucherCode?: string | null; now?: Date },
-): Promise<{ ok: true; booking: { id: number; status: string; priceIdr: number } } | { ok: false; problem: string }> {
+type BookResult = { ok: true; booking: { id: number; status: string; priceIdr: number } } | { ok: false; problem: string }
+
+export function bookSeat(payload: Payload, opts: { sessionId: number; user: { id: number; school?: unknown }; voucherCode?: string | null; now?: Date }): Promise<BookResult> {
+  return withBookingLock(payload, () => bookSeatLocked(payload, opts)).then((r) => (r === LOCK_BUSY ? { ok: false as const, problem: 'busy' } : r))
+}
+
+async function bookSeatLocked(payload: Payload, opts: { sessionId: number; user: { id: number; school?: unknown }; voucherCode?: string | null; now?: Date }): Promise<BookResult> {
   const now = opts.now ?? new Date()
   const session = await payload.findByID({ collection: 'test-sessions', id: opts.sessionId, depth: 0, overrideAccess: true }).catch(() => null)
   if (!session) return { ok: false, problem: 'closed' }
@@ -107,13 +137,6 @@ export async function bookSeat(
     overrideAccess: true,
     data: { session: session.id, candidate: opts.user.id, voucher: voucher?.id, priceIdr, status: priceIdr === 0 ? 'booked' : 'awaiting_payment' },
   })
-  // Lowest id wins: if someone else got in first, give the seat (or the voucher use) back.
-  const lostSeat = (await seatsTaken(payload, session.id, booking.id)) > session.seats
-  const lostVoucher = voucher ? (await voucherUses(payload, voucher.id, booking.id)) > (voucher.maxUses ?? 1) : false
-  if (lostSeat || lostVoucher) {
-    await payload.update({ collection: 'bookings', id: booking.id, overrideAccess: true, data: { status: 'cancelled', note: lostSeat ? 'seat taken first' : 'voucher used first' } })
-    return { ok: false, problem: lostSeat ? 'full' : 'used_up' }
-  }
   return { ok: true, booking: { id: booking.id, status: booking.status, priceIdr } }
 }
 

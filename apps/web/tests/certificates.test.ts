@@ -178,11 +178,13 @@ describe('test booking and vouchers', () => {
 
   it('never sells more seats than a session has, even when people book at the same moment', async () => {
     const s = await school()
-    const users = await Promise.all(Array.from({ length: 6 }, () => mk(['student'], { school: s.id })))
+    // More concurrent bookings than database connections in the pool, to prove waiters do not starve the lock holder.
+    const users = await Promise.all(Array.from({ length: 16 }, () => mk(['student'], { school: s.id })))
     const session = await payload.create({ collection: 'test-sessions', overrideAccess: true, data: { title: 'Rush', form: (await form()).id, school: s.id, startsAt: future(1), seats: 3, priceIdr: 0, status: 'open' } })
     const results = await Promise.all(users.map((u) => call(TestSessions, '/:id/book', u, {}, { id: session.id })))
     const ok = results.filter((r) => r.status === 201).length
-    expect(ok).toBeLessThanOrEqual(3)
+    expect(ok).toBe(3)
+    expect(results.filter((r) => r.data?.problem === 'full')).toHaveLength(13)
     const held = await payload.count({ collection: 'bookings', overrideAccess: true, where: { and: [{ session: { equals: session.id } }, { status: { in: ['booked', 'awaiting_payment', 'attended'] } }] } })
     expect(held.totalDocs).toBe(ok)
   })
