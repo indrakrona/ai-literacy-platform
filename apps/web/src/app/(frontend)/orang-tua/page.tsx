@@ -5,6 +5,7 @@ import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { Announcements } from '../../../components/Announcements'
 import { LinkChildForm, UnlinkButton } from '../../../components/forms/ParentForms'
+import { RequestChildDeletion, WithdrawConsent } from '../../../components/forms/DataRightsForms'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { childProgress, childrenOf, LINK_PROBLEMS, weekLine } from '../../../lib/parents'
@@ -133,7 +134,9 @@ export default async function ParentPage() {
                 )}
               </section>
             </div>
-            <div className="mt-5">
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+              {c.consentStatus === 'granted' && <WithdrawConsent childId={c.id} childName={c.name.split(' ')[0] ?? c.name} locale={locale} />}
+              <RequestChildDeletion childId={c.id} childName={c.name.split(' ')[0] ?? c.name} locale={locale} />
               <UnlinkButton
                 childId={c.id}
                 label={id ? 'Berhenti memantau anak ini' : 'Stop following this child'}

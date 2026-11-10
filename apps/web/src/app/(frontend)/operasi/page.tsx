@@ -8,13 +8,17 @@ import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { getSwitches } from '../../../lib/settings'
 import { AI_COST_PER_MTOK_USD } from '../../../lib/metrics'
+import { ProcessDataRequest } from '../../../components/forms/DataRightsForms'
 
 const TABS = [
   { key: 'pengguna', id: 'Pengguna', en: 'Users' },
   { key: 'ai', id: 'Monitor AI', en: 'AI monitor' },
   { key: 'audit', id: 'Log audit', en: 'Audit log' },
+  { key: 'data', id: 'Permintaan data', en: 'Data requests' },
   { key: 'cadangan', id: 'Cadangan', en: 'Backups' },
 ] as const
+
+const idOfReq = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : v)
 
 type Search = { tab?: string; q?: string; peran?: string; aksi?: string }
 
@@ -131,7 +135,7 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
     const and: Where[] = []
     if (sp.aksi) and.push({ action: { equals: sp.aksi } })
     const logs = await payload.find({ collection: 'audit-logs', overrideAccess: true, depth: 1, limit: 100, sort: '-createdAt', where: and.length ? { and } : {} })
-    const actions = ['login', 'create', 'update', 'delete', 'view_as', 'suspend', 'unsuspend', 'set_roles', 'reset_link', 'rate', 'grade', 'regrade', 'incident', 'consent_granted', 'consent_declined']
+    const actions = ['login', 'create', 'update', 'delete', 'view_as', 'suspend', 'unsuspend', 'set_roles', 'reset_link', 'rate', 'grade', 'regrade', 'incident', 'consent_granted', 'consent_declined', 'consent_withdrawn', 'data_export', 'data_deletion_requested', 'data_erased', 'data_deletion_rejected']
     body = (
       <Card>
         <div className="flex flex-wrap gap-2">
@@ -152,6 +156,49 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
         </table></div>
         <p className="mt-2 text-xs text-muted">{id ? 'Log hanya bisa ditambah, tidak bisa diubah atau dihapus. Nilai data tidak disimpan, hanya nama kolom yang berubah.' : 'The log is append-only. Values are not stored, only which fields changed.'}</p>
       </Card>
+    )
+  } else if (tab === 'data') {
+    const reqs = await payload.find({ collection: 'data-requests', overrideAccess: true, depth: 1, limit: 100, sort: 'dueAt', where: { type: { equals: 'deletion' } } })
+    const open = reqs.docs.filter((r) => r.status === 'open')
+    const closed = reqs.docs.filter((r) => r.status !== 'open').slice(0, 30)
+    const now = Date.now()
+    const name = (v: unknown) => (v && typeof v === 'object' ? (v as { name: string; email?: string }).name : '—')
+    body = (
+      <div className="flex flex-col gap-4">
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? `Permintaan penghapusan terbuka (${open.length})` : `Open deletion requests (${open.length})`}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {id
+              ? 'Menghapus: isi pribadi dihapus (percakapan AI, kemajuan, proyek pribadi, pemberitahuan), sertifikat dicabut, hasil tes disimpan tanpa identitas untuk statistik, akun diganti "Pengguna dihapus". Tidak dapat dibatalkan.'
+              : 'Erasing deletes personal content (AI chats, progress, solo projects, notifications), revokes certificates, keeps test results without identity for statistics, and replaces the account with "Deleted user". It cannot be undone.'}
+          </p>
+          {open.length === 0 ? <p className="mt-3 text-sm text-muted">{id ? 'Tidak ada.' : 'None.'}</p> : (
+            <ul className="mt-3 divide-y divide-line">
+              {open.map((r) => {
+                const late = new Date(r.dueAt).getTime() < now
+                return (
+                  <li key={r.id} className="flex flex-col gap-2 py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="font-medium">{name(r.user)}{idOfReq(r.requestedBy) !== idOfReq(r.user) ? <span className="text-muted">{id ? ` · diminta oleh ${name(r.requestedBy)}` : ` · asked by ${name(r.requestedBy)}`}</span> : null}</span>
+                      <span className={`text-sm ${late ? 'font-semibold text-danger' : 'text-muted'}`}>{late ? (id ? 'Lewat tenggat · ' : 'Overdue · ') : ''}{id ? 'tenggat' : 'due'} {fmtTime(r.dueAt)}</span>
+                    </div>
+                    {r.reason && <p className="text-sm text-muted">“{r.reason}”</p>}
+                    <ProcessDataRequest requestId={r.id} locale={locale} />
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Card>
+        {closed.length > 0 && (
+          <Card>
+            <h2 className="font-semibold">{id ? 'Selesai' : 'Closed'}</h2>
+            <ul className="mt-2 text-sm">
+              {closed.map((r) => <li key={r.id} className="flex justify-between gap-2 border-b border-line py-1.5"><span>{name(r.user)}</span><span className="text-muted">{r.status} · {r.resolvedAt ? fmtTime(r.resolvedAt) : ''}</span></li>)}
+            </ul>
+          </Card>
+        )}
+      </div>
     )
   } else {
     body = (

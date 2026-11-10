@@ -11,7 +11,7 @@ import { sendWhatsApp, type WaTemplate } from './whatsapp'
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -60,6 +60,18 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   child_linked: {
     id: { title: 'Orang tua terhubung', body: '{parent} sekarang dapat melihat kemajuan belajarmu (bukan isi percakapan AI Lab).' },
     en: { title: 'Parent connected', body: '{parent} can now see your learning progress (not your AI Lab chats).' },
+  },
+  licence_expiring: {
+    id: { title: 'Lisensi {school} berakhir dalam {days} hari', body: 'Lisensi berakhir pada {date}. Perpanjang agar siswa tetap dapat belajar tanpa terputus.' },
+    en: { title: '{school} licence ends in {days} days', body: 'The licence ends on {date}. Renew it so students can keep learning without a break.' },
+  },
+  data_request: {
+    id: { title: 'Permintaan penghapusan data baru', body: 'Selesaikan sebelum {due}.' },
+    en: { title: 'New data deletion request', body: 'Complete it before {due}.' },
+  },
+  consent_withdrawn: {
+    id: { title: 'Izin orang tua ditarik', body: 'Kamu tetap dapat membaca materi. AI Lab, proyek dan tes tidak aktif sampai izin diberikan lagi.' },
+    en: { title: 'Parent permission withdrawn', body: 'You can still read the lessons. The AI Lab, projects and tests are off until permission is given again.' },
   },
   pilot_request: {
     id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },

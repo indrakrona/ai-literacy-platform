@@ -102,5 +102,6 @@ export async function runScheduledJobs(payload: Payload, now = new Date(), opts:
   const reminders = await runTestReminders(payload, now)
   const summaries = await runWeeklySummaries(payload, now, { force: opts.forceWeekly })
   const announcements = await (await import('../collections/Announcements')).notifyDueAnnouncements(payload, now)
-  return { reminders, summaries, announcements }
+  const licences = await (await import('./invoices')).runLicenceReminders(payload, now)
+  return { reminders, summaries, announcements, licences }
 }

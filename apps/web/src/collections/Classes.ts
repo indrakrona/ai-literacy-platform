@@ -40,6 +40,12 @@ export const Classes: CollectionConfig = {
     { name: 'name', type: 'text', required: true, admin: { description: 'e.g. 8B or XI IPA 2' } },
     { name: 'school', type: 'relationship', relationTo: 'schools', required: true, index: true },
     {
+      name: 'grade',
+      type: 'select',
+      options: ['7', '8', '9', '10', '11', '12'].map((g) => ({ value: g, label: `Kelas ${g}` })),
+      admin: { description: 'Used for school reports. If empty, it is read from the class name (e.g. 8B, XI IPA 2).' },
+    },
+    {
       name: 'academicYear',
       type: 'text',
       required: true,

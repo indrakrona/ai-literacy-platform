@@ -39,6 +39,7 @@ export const Schools: CollectionConfig = {
         { name: 'endsAt', type: 'date' },
       ],
     },
+    { name: 'licenceReminders', type: 'text', admin: { hidden: true } },
     {
       name: 'classes',
       type: 'join',

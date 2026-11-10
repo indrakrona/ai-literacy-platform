@@ -195,6 +195,7 @@ export const Users: CollectionConfig = {
       access: { read: ({ req, doc }) => Boolean(req.user && (req.user.id === doc?.id || hasRole(req.user as { roles?: string[] }, 'super_admin'))), update: fieldSuperAdminOnly },
       admin: { hidden: true },
     },
+    { name: 'deletedAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { readOnly: true, position: 'sidebar', condition: (d) => Boolean(d?.deletedAt), description: 'Erased at the person’s request' } },
     { name: 'parentLinkExpiresAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { hidden: true } },
     { name: 'lastWeeklySummaryAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { readOnly: true, position: 'sidebar', condition: (data) => hasRole(data as { roles?: string[] }, 'parent') } },
   ],

@@ -19,6 +19,8 @@ import { TestItems } from './collections/TestItems'
 import { TestForms } from './collections/TestForms'
 import { Certificates } from './collections/Certificates'
 import { Announcements } from './collections/Announcements'
+import { KkaOutcomes } from './collections/KkaOutcomes'
+import { DataRequests } from './collections/DataRequests'
 import { runJobs } from './endpoints/parents'
 import { Bookings, TestSessions, Vouchers } from './collections/TestSessions'
 import { TestAttempts } from './collections/TestAttempts'
@@ -54,7 +56,8 @@ export default buildConfig({
   },
   // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
   collections: [
-    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges, Certificates, TestSessions, Vouchers, Announcements].map(withAudit),
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes].map(withAudit),
+    DataRequests,
     Bookings,
     LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,
   ],

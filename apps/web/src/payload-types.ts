@@ -90,6 +90,8 @@ export interface Config {
     'test-sessions': TestSession;
     vouchers: Voucher;
     announcements: Announcement;
+    'kka-outcomes': KkaOutcome;
+    'data-requests': DataRequest;
     bookings: Booking;
     'lesson-progress': LessonProgress;
     'test-attempts': TestAttempt;
@@ -141,6 +143,8 @@ export interface Config {
     'test-sessions': TestSessionsSelect<false> | TestSessionsSelect<true>;
     vouchers: VouchersSelect<false> | VouchersSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
+    'kka-outcomes': KkaOutcomesSelect<false> | KkaOutcomesSelect<true>;
+    'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
@@ -250,6 +254,10 @@ export interface User {
    */
   guardians?: (number | User)[] | null;
   parentLinkCode?: string | null;
+  /**
+   * Erased at the person’s request
+   */
+  deletedAt?: string | null;
   parentLinkExpiresAt?: string | null;
   lastWeeklySummaryAt?: string | null;
   updatedAt: string;
@@ -291,6 +299,7 @@ export interface School {
     startsAt?: string | null;
     endsAt?: string | null;
   };
+  licenceReminders?: string | null;
   classes?: {
     docs?: (number | Class)[];
     hasNextPage?: boolean;
@@ -310,6 +319,10 @@ export interface Class {
    */
   name: string;
   school: number | School;
+  /**
+   * Used for school reports. If empty, it is read from the class name (e.g. 8B, XI IPA 2).
+   */
+  grade?: ('7' | '8' | '9' | '10' | '11' | '12') | null;
   academicYear: string;
   track?: (number | null) | Track;
   /**
@@ -613,7 +626,8 @@ export interface ConsentRequest {
   guardianEmail?: string | null;
   guardianPhone?: string | null;
   token: string;
-  status: 'pending' | 'granted' | 'declined' | 'expired';
+  status: 'pending' | 'granted' | 'declined' | 'expired' | 'withdrawn';
+  withdrawnAt?: string | null;
   expiresAt?: string | null;
   decidedAt?: string | null;
   consentVersion: string;
@@ -1228,6 +1242,75 @@ export interface Announcement {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kka-outcomes".
+ */
+export interface KkaOutcome {
+  id: number;
+  /**
+   * e.g. D-LEKA-1
+   */
+  code: string;
+  phase: 'D' | 'E' | 'F';
+  element: 'bk' | 'ld' | 'leka' | 'ppka' | 'ap' | 'ad';
+  /**
+   * The learning outcome, as worded in the official Capaian Pembelajaran
+   */
+  description: string;
+  /**
+   * Empty = this programme does not cover the outcome (shown as a gap in reports)
+   */
+  competencies?:
+    | (
+        | 'DIS-1'
+        | 'DIS-2'
+        | 'DIS-3'
+        | 'UND-1'
+        | 'UND-2'
+        | 'UND-3'
+        | 'CRE-1'
+        | 'CRE-2'
+        | 'CRE-3'
+        | 'PRO-1'
+        | 'PRO-2'
+        | 'PRO-3'
+        | 'THR-1'
+        | 'THR-2'
+        | 'THR-3'
+      )[]
+    | null;
+  status: 'draft' | 'checked';
+  /**
+   * Teacher name and school
+   */
+  checkedBy?: string | null;
+  checkedAt?: string | null;
+  /**
+   * Reviewer notes
+   */
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "data-requests".
+ */
+export interface DataRequest {
+  id: number;
+  user: number | User;
+  requestedBy?: (number | null) | User;
+  type: 'access' | 'deletion';
+  status: 'open' | 'done' | 'rejected' | 'cancelled';
+  reason?: string | null;
+  dueAt: string;
+  resolvedAt?: string | null;
+  resolvedBy?: (number | null) | User;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "bookings".
  */
 export interface Booking {
@@ -1392,7 +1475,10 @@ export interface Notification {
     | 'announcement'
     | 'test_reminder'
     | 'weekly_summary'
-    | 'child_linked';
+    | 'child_linked'
+    | 'licence_expiring'
+    | 'data_request'
+    | 'consent_withdrawn';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -1660,6 +1746,14 @@ export interface PayloadLockedDocument {
         value: number | Announcement;
       } | null)
     | ({
+        relationTo: 'kka-outcomes';
+        value: number | KkaOutcome;
+      } | null)
+    | ({
+        relationTo: 'data-requests';
+        value: number | DataRequest;
+      } | null)
+    | ({
         relationTo: 'bookings';
         value: number | Booking;
       } | null)
@@ -1759,6 +1853,7 @@ export interface UsersSelect<T extends boolean = true> {
   suspended?: T;
   guardians?: T;
   parentLinkCode?: T;
+  deletedAt?: T;
   parentLinkExpiresAt?: T;
   lastWeeklySummaryAt?: T;
   updatedAt?: T;
@@ -1796,6 +1891,7 @@ export interface SchoolsSelect<T extends boolean = true> {
         startsAt?: T;
         endsAt?: T;
       };
+  licenceReminders?: T;
   classes?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1807,6 +1903,7 @@ export interface SchoolsSelect<T extends boolean = true> {
 export interface ClassesSelect<T extends boolean = true> {
   name?: T;
   school?: T;
+  grade?: T;
   academicYear?: T;
   track?: T;
   joinCode?: T;
@@ -1826,6 +1923,7 @@ export interface ConsentRequestsSelect<T extends boolean = true> {
   guardianPhone?: T;
   token?: T;
   status?: T;
+  withdrawnAt?: T;
   expiresAt?: T;
   decidedAt?: T;
   consentVersion?: T;
@@ -2361,6 +2459,40 @@ export interface AnnouncementsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kka-outcomes_select".
+ */
+export interface KkaOutcomesSelect<T extends boolean = true> {
+  code?: T;
+  phase?: T;
+  element?: T;
+  description?: T;
+  competencies?: T;
+  status?: T;
+  checkedBy?: T;
+  checkedAt?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "data-requests_select".
+ */
+export interface DataRequestsSelect<T extends boolean = true> {
+  user?: T;
+  requestedBy?: T;
+  type?: T;
+  status?: T;
+  reason?: T;
+  dueAt?: T;
+  resolvedAt?: T;
+  resolvedBy?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "bookings_select".
  */
 export interface BookingsSelect<T extends boolean = true> {
@@ -2654,6 +2786,10 @@ export interface PlatformSetting {
   schoolDailyTokens?: number | null;
   dailyAiBudgetUsd?: number | null;
   /**
+   * Shown to the person as the due date. Confirm the period with legal counsel (UU PDP).
+   */
+  dataRequestDays?: number | null;
+  /**
    * Shown at the top of every page while filled in, e.g. planned maintenance.
    */
   maintenanceMessage?: string | null;
@@ -2713,6 +2849,7 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   studentDailyMessages?: T;
   schoolDailyTokens?: T;
   dailyAiBudgetUsd?: T;
+  dataRequestDays?: T;
   maintenanceMessage?: T;
   updatedAt?: T;
   createdAt?: T;

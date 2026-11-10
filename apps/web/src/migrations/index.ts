@@ -20,6 +20,7 @@ import * as migration_20261110_005659_proctor_assignment from './20261110_005659
 import * as migration_20261110_034050_platform_ops from './20261110_034050_platform_ops';
 import * as migration_20261110_040704_certificates_booking from './20261110_040704_certificates_booking';
 import * as migration_20261110_045609_parents_announcements from './20261110_045609_parents_announcements';
+import * as migration_20261110_060908_school_reports_data_rights from './20261110_060908_school_reports_data_rights';
 
 export const migrations = [
   {
@@ -130,6 +131,11 @@ export const migrations = [
   {
     up: migration_20261110_045609_parents_announcements.up,
     down: migration_20261110_045609_parents_announcements.down,
-    name: '20261110_045609_parents_announcements'
+    name: '20261110_045609_parents_announcements',
+  },
+  {
+    up: migration_20261110_060908_school_reports_data_rights.up,
+    down: migration_20261110_060908_school_reports_data_rights.down,
+    name: '20261110_060908_school_reports_data_rights'
   },
 ];

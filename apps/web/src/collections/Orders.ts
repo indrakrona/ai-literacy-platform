@@ -2,6 +2,7 @@ import type { Access, CollectionConfig, Endpoint, Payload, PayloadRequest } from
 import { hasRole } from '@ailit/shared'
 import { getPaymentProvider, mockPaymentsAllowed, mockSign, PLANS, quote, type PlanKey, type WebhookEvent } from '../lib/payments'
 import { track, type Actor } from '../lib/analytics'
+import { invoiceNumber, invoicePdf } from '../lib/invoices'
 
 const idOf = (v: unknown): number => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 const bad = (error: string, status = 400) => Response.json({ error }, { status })
@@ -147,11 +148,30 @@ const mockPay: Endpoint = {
   },
 }
 
+/** GET /api/orders/:id/invoice?lang=id|en — invoice PDF for the school's admins (proforma while unpaid). */
+const invoice: Endpoint = {
+  path: '/:id/invoice',
+  method: 'get',
+  handler: async (req) => {
+    const u = req.user as U
+    if (!u) return bad('Sign in first', 401)
+    const order = await req.payload.findByID({ collection: 'orders', id: Number(req.routeParams?.id), depth: 0, overrideAccess: true }).catch(() => null)
+    if (!order) return bad('Not found', 404)
+    const own = hasRole(u, 'school_admin') && idOf(u.school) === idOf(order.school)
+    if (!own && !hasRole(u, 'super_admin')) return bad('Not allowed', 403)
+    const school = await req.payload.findByID({ collection: 'schools', id: idOf(order.school), depth: 0, overrideAccess: true })
+    const lang = new URL(req.url ?? 'http://x').searchParams.get('lang') === 'en' ? 'en' : 'id'
+    const bytes = await invoicePdf(order, school, lang)
+    const file = invoiceNumber(order).replace(/\//g, '-')
+    return new Response(Buffer.from(bytes), { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${file}.pdf"`, 'Cache-Control': 'private, no-store' } })
+  },
+}
+
 export const Orders: CollectionConfig = {
   slug: 'orders',
   admin: { defaultColumns: ['school', 'seats', 'amountIdr', 'status', 'createdAt'], group: 'Business', description: 'School licence payments. Payment gateway is a placeholder (test mode).' },
   access: { read: readOrders, create: () => false, update: ({ req }) => hasRole(req.user as U ?? {}, 'super_admin'), delete: () => false },
-  endpoints: [checkout, webhook, mockPay],
+  endpoints: [checkout, webhook, mockPay, invoice],
   fields: [
     { name: 'school', type: 'relationship', relationTo: 'schools', required: true, index: true },
     { name: 'plan', type: 'select', required: true, options: Object.entries(PLANS).map(([value, p]) => ({ value, label: p.label.en })) },

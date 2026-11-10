@@ -11,6 +11,7 @@ import { formatIdr, getPaymentProvider, PLANS, PRICES_ARE_PLACEHOLDERS } from '.
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { schoolOverview } from '../../../lib/school'
+import { daysLeft } from '../../../lib/invoices'
 
 /** School admin space: classes, rosters and parent consent at a glance (spec I1–I2). */
 export default async function SchoolAdminPage({ searchParams }: { searchParams: Promise<{ sekolah?: string }> }) {
@@ -38,6 +39,7 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
   const announcements = (await payload.find({ collection: 'announcements', overrideAccess: true, depth: 0, locale, limit: 10, sort: '-startsAt', where: { and: [{ scope: { equals: 'school' } }, { school: { equals: schoolId } }] } })).docs
   const lic = school.licence ?? {}
   const licActive = Boolean(lic.endsAt && new Date(lic.endsAt) > new Date())
+  const left = daysLeft(lic.endsAt)
   const plan = PLANS.sekolah_tahunan
   const provider = getPaymentProvider()
   const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString(id ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—')
@@ -60,6 +62,9 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
           <Link href={`/sekolah/tes${requested ? `?sekolah=${schoolId}` : ''}`} className="mt-1 inline-block text-sm font-semibold underline">
             {id ? 'Tes AILIS: jadwal dan voucher →' : 'AILIS tests: dates and vouchers →'}
           </Link>
+          <Link href={`/sekolah/laporan${requested ? `?sekolah=${schoolId}` : ''}`} className="mt-1 ml-4 inline-block text-sm font-semibold underline">
+            {id ? 'Laporan sekolah →' : 'School report →'}
+          </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {stat(id ? 'Kelas' : 'Classes', totals.classes)}
@@ -74,8 +79,13 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
           </Notice>
         )}
 
+        {licActive && left !== null && left <= 60 && (
+          <Notice tone="warn" title={id ? `Lisensi berakhir dalam ${left} hari` : `The licence ends in ${left} days`}>
+            {id ? 'Perpanjang di bawah agar siswa tetap dapat belajar tanpa terputus. Kursi dan masa aktif ditambahkan dari tanggal berakhir saat ini.' : 'Renew below so students keep learning without a break. Seats and time are added from the current end date.'}
+          </Notice>
+        )}
         <Card>
-          <h2 className="text-lg font-semibold">{id ? 'Lisensi sekolah' : 'School licence'}</h2>
+          <h2 id="lisensi" className="text-lg font-semibold">{id ? 'Lisensi sekolah' : 'School licence'}</h2>
           {licActive ? (
             <p className="mt-1">
               {id ? 'Aktif sampai' : 'Active until'} <strong>{fmtDate(lic.endsAt)}</strong> · {totals.students}/{lic.seats ?? 0} {id ? 'kursi siswa terpakai' : 'student seats used'}
@@ -104,6 +114,7 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
                   <span>
                     {formatIdr(o.amountIdr)} · {statusLabel[o.status] ?? o.status}
                     {o.status === 'pending' && o.paymentUrl && <> · <Link className="underline" href={o.paymentUrl}>{id ? 'bayar' : 'pay'}</Link></>}
+                    {['paid', 'pending'].includes(o.status) && <> · <a className="underline" href={`/api/orders/${o.id}/invoice?lang=${locale}`}>{o.status === 'paid' ? 'invoice' : id ? 'proforma' : 'proforma'}</a></>}
                   </span>
                 </li>
               ))}

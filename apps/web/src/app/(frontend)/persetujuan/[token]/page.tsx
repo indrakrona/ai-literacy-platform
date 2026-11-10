@@ -1,6 +1,7 @@
 import { Shell } from '../../../../components/Shell'
 import { Card, Notice } from '../../../../components/ui'
 import { ConsentForm } from '../../../../components/forms/ConsentForm'
+import { WithdrawConsent } from '../../../../components/forms/DataRightsForms'
 import { getDict } from '../../../../i18n/server'
 import { fmt } from '../../../../i18n/dict'
 import { getPayloadClient } from '../../../../lib/session'
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ConsentPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
-  const { t } = await getDict()
+  const { t, locale } = await getDict()
   const payload = await getPayloadClient()
   const found = await payload.find({
     collection: 'consent-requests',
@@ -25,6 +26,19 @@ export default async function ConsentPage({ params }: { params: Promise<{ token:
   let body: React.ReactNode
   if (!r || !student) body = <Notice tone="warn" title={t.consent.invalid} />
   else if (expired) body = <Notice tone="warn" title={t.consent.expired} />
+  else if (r.status === 'granted')
+    body = (
+      <div className="flex flex-col gap-4">
+        <Notice tone="ok" title={t.consent.already} />
+        <p className="text-sm text-muted">
+          {locale === 'id'
+            ? 'Anda dapat menarik izin kapan saja. AI Lab, proyek dan tes akan dinonaktifkan; materi tetap bisa dibaca.'
+            : 'You can withdraw permission at any time. The AI Lab, projects and tests will be turned off; lessons stay readable.'}
+        </p>
+        <WithdrawConsent token={token} childName={student.name.split(' ')[0] ?? student.name} locale={locale} />
+        <a href={`/daftar/orang-tua?token=${encodeURIComponent(token)}`} className="text-sm underline">{t.consent.followCta}</a>
+      </div>
+    )
   else if (r.status !== 'pending') body = <Notice title={t.consent.already} />
   else
     body = (

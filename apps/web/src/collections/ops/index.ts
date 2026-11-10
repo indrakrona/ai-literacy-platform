@@ -42,6 +42,7 @@ export const PlatformSettings: GlobalConfig = {
         { name: 'dailyAiBudgetUsd', label: 'Platform AI budget per day (USD, alert only)', type: 'number', min: 0, defaultValue: 20 },
       ],
     },
+    { name: 'dataRequestDays', label: 'Days to complete a data deletion request', type: 'number', min: 1, max: 30, defaultValue: 3, admin: { description: 'Shown to the person as the due date. Confirm the period with legal counsel (UU PDP).' } },
     { name: 'maintenanceMessage', label: 'Banner for all users', type: 'textarea', localized: true, admin: { description: 'Shown at the top of every page while filled in, e.g. planned maintenance.' } },
   ],
 }

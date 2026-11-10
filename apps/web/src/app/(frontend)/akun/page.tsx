@@ -7,6 +7,7 @@ import { AccountForm } from '../../../components/forms/AccountForm'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { ParentCodeButton, UnlinkButton } from '../../../components/forms/ParentForms'
+import { MyDataPanel } from '../../../components/forms/DataRightsForms'
 
 export default async function AccountPage() {
   const user = await getCurrentUser()
@@ -18,6 +19,7 @@ export default async function AccountPage() {
   const guardianIds = (user.guardians ?? []).map((g) => (typeof g === 'object' ? g.id : g))
   const guardians = guardianIds.length ? (await payload.find({ collection: 'users', overrideAccess: true, depth: 0, limit: 10, where: { id: { in: guardianIds } } })).docs : []
   const adult = !user.dateOfBirth || !needsGuardianConsent(user.dateOfBirth)
+  const openDeletion = (await payload.find({ collection: 'data-requests', overrideAccess: true, depth: 0, limit: 1, where: { and: [{ user: { equals: user.id } }, { type: { equals: 'deletion' } }, { status: { equals: 'open' } }] } })).docs[0]
   return (
     <Shell>
       <Card>
@@ -58,6 +60,15 @@ export default async function AccountPage() {
           </Card>
         </div>
       )}
+      <div className="mt-5">
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Data saya' : 'My data'}</h2>
+          <p className="mt-1 mb-4 text-sm text-muted">
+            {id ? 'Sesuai UU Pelindungan Data Pribadi, kamu dapat mengunduh atau meminta penghapusan datamu.' : 'Under Indonesia’s personal data protection law (UU PDP), you can download your data or ask for it to be deleted.'}
+          </p>
+          <MyDataPanel openRequest={openDeletion ? { id: openDeletion.id, dueAt: openDeletion.dueAt } : null} locale={locale} />
+        </Card>
+      </div>
       {hasRole(user, 'parent') && (
         <p className="mt-5 text-sm">
           <Link href="/orang-tua" className="font-semibold underline">{id ? 'Buka Ruang Orang Tua →' : 'Open the parent space →'}</Link>
