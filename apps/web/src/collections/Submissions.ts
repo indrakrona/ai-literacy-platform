@@ -2,6 +2,7 @@ import type { Access, CollectionConfig, Endpoint, PayloadRequest, Where } from '
 import { hasFullAccess, hasRole } from '@ailit/shared'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
+import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
 
 const idOf = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 
@@ -86,6 +87,10 @@ const submit: Endpoint = {
         link: `/guru/kelas/${klass.id}/nilai`,
       })
     }
+    if (!prev) {
+      const rules = await getRules(req.payload)
+      for (const m of members) await award(req.payload, { userId: m, source: 'project_submitted', sourceId: doc.id, bigIdea: bigIdeaFromCompetency(brief.competency), xp: rules.projectSubmitted })
+    }
     if (!prev) await track(req.payload, { name: 'project_submitted', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, competency: brief.competency } })
     return Response.json({ id: doc.id, status: doc.status })
   },
@@ -122,6 +127,11 @@ const grade: Endpoint = {
       vars: { brief: brief.title, total: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 },
       link: `/proyek/${brief.slug}`,
     })
+    if (firstGrade) {
+      const rules = await getRules(req.payload)
+      const total = scores.reduce((a, c) => a + c, 0)
+      for (const m of (sub.members ?? []).map(idOf)) await award(req.payload, { userId: m, source: 'project_graded', sourceId: sub.id, bigIdea: bigIdeaFromCompetency(brief.competency), xp: total * rules.projectGradedPerPoint })
+    }
     await track(req.payload, { name: 'project_graded', user: user as unknown as Actor, headers: req.headers, props: { briefId: brief.id, score: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 } })
     return Response.json({ id: doc.id, status: doc.status, total: scores.reduce((a, c) => a + c, 0), max: scores.length * 4 })
   },

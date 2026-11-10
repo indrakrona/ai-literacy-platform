@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, Endpoint } from 'payload'
 import { hasRole } from '@ailit/shared'
 import { track, type Actor } from '../lib/analytics'
+import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
 
 const ownOrAdmin: Access = ({ req }) => {
   if (!req.user) return false
@@ -42,6 +43,8 @@ const completeEndpoint: Endpoint = {
       ? await req.payload.update({ collection: 'lesson-progress', id: existing.docs[0].id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'lesson-progress', overrideAccess: true, data })
     if (!existing.docs[0] || existing.docs[0].status !== 'completed') {
+      const rules = await getRules(req.payload)
+      await award(req.payload, { userId, source: 'lesson_complete', sourceId: lessonId, bigIdea: bigIdeaFromCompetency(lesson.docs[0].competency), xp: rules.lessonComplete })
       await track(req.payload, { name: 'lesson_completed', user: req.user as unknown as Actor, headers: req.headers, props: { lessonId } })
     }
     return Response.json({ id: doc.id, status: doc.status })

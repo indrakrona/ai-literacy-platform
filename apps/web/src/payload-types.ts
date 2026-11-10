@@ -90,6 +90,10 @@ export interface Config {
     reports: Report;
     pages: Page;
     'pilot-requests': PilotRequest;
+    'xp-events': XpEvent;
+    badges: Badge;
+    'user-badges': UserBadge;
+    challenges: Challenge;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -131,6 +135,10 @@ export interface Config {
     reports: ReportsSelect<false> | ReportsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'pilot-requests': PilotRequestsSelect<false> | PilotRequestsSelect<true>;
+    'xp-events': XpEventsSelect<false> | XpEventsSelect<true>;
+    badges: BadgesSelect<false> | BadgesSelect<true>;
+    'user-badges': UserBadgesSelect<false> | UserBadgesSelect<true>;
+    challenges: ChallengesSelect<false> | ChallengesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -143,9 +151,11 @@ export interface Config {
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('id' | 'en') | ('id' | 'en')[];
   globals: {
     'site-settings': SiteSetting;
+    gamification: Gamification;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    gamification: GamificationSelect<false> | GamificationSelect<true>;
   };
   locale: 'id' | 'en';
   widgets: {
@@ -942,7 +952,8 @@ export interface Notification {
     | 'consent_granted'
     | 'consent_declined'
     | 'report_received'
-    | 'pilot_request';
+    | 'pilot_request'
+    | 'badge_earned';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -1130,6 +1141,91 @@ export interface PilotRequest {
   locale?: string | null;
   status: 'new' | 'contacted' | 'meeting' | 'accepted' | 'declined';
   internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events".
+ */
+export interface XpEvent {
+  id: number;
+  user: number | User;
+  source:
+    | 'lesson_complete'
+    | 'quiz_perfect'
+    | 'ai_lab_session'
+    | 'project_submitted'
+    | 'project_graded'
+    | 'challenge_complete';
+  sourceId: string;
+  bigIdea: 'discover' | 'understand' | 'create' | 'protect' | 'thrive';
+  xp: number;
+  /**
+   * user:source:sourceId — prevents double awards
+   */
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges".
+ */
+export interface Badge {
+  id: number;
+  slug: string;
+  /**
+   * One emoji, e.g. 🛡️
+   */
+  icon: string;
+  name: string;
+  description?: string | null;
+  criterion:
+    | 'lessons_total'
+    | 'lessons_in_big_idea'
+    | 'level_in_big_idea'
+    | 'all_big_ideas_level'
+    | 'projects_graded'
+    | 'ai_lab_sessions'
+    | 'challenges_completed';
+  target: number;
+  bigIdea?: ('discover' | 'understand' | 'create' | 'protect' | 'thrive') | null;
+  order?: number | null;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-badges".
+ */
+export interface UserBadge {
+  id: number;
+  user: number | User;
+  badge: number | Badge;
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "challenges".
+ */
+export interface Challenge {
+  id: number;
+  title: string;
+  description?: string | null;
+  class: number | Class;
+  /**
+   * Leave empty for any lesson
+   */
+  bigIdea?: ('discover' | 'understand' | 'create' | 'protect' | 'thrive') | null;
+  target: number;
+  startsAt: string;
+  endsAt: string;
+  participants?: (number | User)[] | null;
+  createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1340,6 +1436,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pilot-requests';
         value: number | PilotRequest;
+      } | null)
+    | ({
+        relationTo: 'xp-events';
+        value: number | XpEvent;
+      } | null)
+    | ({
+        relationTo: 'badges';
+        value: number | Badge;
+      } | null)
+    | ({
+        relationTo: 'user-badges';
+        value: number | UserBadge;
+      } | null)
+    | ({
+        relationTo: 'challenges';
+        value: number | Challenge;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1992,6 +2104,65 @@ export interface PilotRequestsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events_select".
+ */
+export interface XpEventsSelect<T extends boolean = true> {
+  user?: T;
+  source?: T;
+  sourceId?: T;
+  bigIdea?: T;
+  xp?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges_select".
+ */
+export interface BadgesSelect<T extends boolean = true> {
+  slug?: T;
+  icon?: T;
+  name?: T;
+  description?: T;
+  criterion?: T;
+  target?: T;
+  bigIdea?: T;
+  order?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-badges_select".
+ */
+export interface UserBadgesSelect<T extends boolean = true> {
+  user?: T;
+  badge?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "challenges_select".
+ */
+export interface ChallengesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  class?: T;
+  bigIdea?: T;
+  target?: T;
+  startsAt?: T;
+  endsAt?: T;
+  participants?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -2088,6 +2259,31 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gamification".
+ */
+export interface Gamification {
+  id: number;
+  lessonComplete?: number | null;
+  quizPerfect?: number | null;
+  aiLabSession?: number | null;
+  projectSubmitted?: number | null;
+  projectGradedPerPoint?: number | null;
+  challengeComplete?: number | null;
+  /**
+   * First row is level 1 (0 XP). Applies to new awards; earned XP is kept.
+   */
+  levelThresholds?:
+    | {
+        xp: number;
+        name?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
@@ -2099,6 +2295,28 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | T
     | {
         email?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gamification_select".
+ */
+export interface GamificationSelect<T extends boolean = true> {
+  lessonComplete?: T;
+  quizPerfect?: T;
+  aiLabSession?: T;
+  projectSubmitted?: T;
+  projectGradedPerPoint?: T;
+  challengeComplete?: T;
+  levelThresholds?:
+    | T
+    | {
+        xp?: T;
+        name?: T;
         id?: T;
       };
   updatedAt?: T;

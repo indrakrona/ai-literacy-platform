@@ -1,6 +1,7 @@
 import type { CollectionConfig, Endpoint } from 'payload'
 import { hasRole } from '@ailit/shared'
 import { CLIENT_EVENTS, EVENT_NAMES, track, type Actor, type EventName } from '../lib/analytics'
+import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
 
 /** POST /api/analytics-events/track {name, track?, props?} — the few events only the browser knows about. */
 const trackEndpoint: Endpoint = {
@@ -23,6 +24,15 @@ const trackEndpoint: Endpoint = {
       track: typeof b.track === 'string' ? b.track.slice(0, 80) : null,
       props: b.props && typeof b.props === 'object' ? (b.props as Record<string, unknown>) : undefined,
     })
+    // A quiz answered all correctly earns XP once per lesson (low stakes; the quiz runs in the browser).
+    const p = (b.props ?? {}) as { lessonId?: unknown; score?: unknown; max?: unknown }
+    if (name === 'quiz_submitted' && Number(p.max) > 0 && Number(p.score) === Number(p.max)) {
+      const lesson = await req.payload.findByID({ collection: 'lessons', id: Number(p.lessonId), depth: 0, overrideAccess: true }).catch(() => null)
+      if (lesson && (lesson.quiz?.length ?? 0) === Number(p.max)) {
+        const rules = await getRules(req.payload)
+        await award(req.payload, { userId: Number(req.user.id), source: 'quiz_perfect', sourceId: lesson.id, bigIdea: bigIdeaFromCompetency(lesson.competency), xp: rules.quizPerfect })
+      }
+    }
     return Response.json({ ok: true })
   },
 }

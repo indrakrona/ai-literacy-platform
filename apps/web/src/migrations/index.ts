@@ -12,6 +12,7 @@ import * as migration_20261109_171317_payments_placeholder from './20261109_1713
 import * as migration_20261109_172648_analytics from './20261109_172648_analytics';
 import * as migration_20261109_223128_notifications_reports from './20261109_223128_notifications_reports';
 import * as migration_20261109_224354_public_site from './20261109_224354_public_site';
+import * as migration_20261110_000448_gamification from './20261110_000448_gamification';
 
 export const migrations = [
   {
@@ -82,6 +83,11 @@ export const migrations = [
   {
     up: migration_20261109_224354_public_site.up,
     down: migration_20261109_224354_public_site.down,
-    name: '20261109_224354_public_site'
+    name: '20261109_224354_public_site',
+  },
+  {
+    up: migration_20261110_000448_gamification.up,
+    down: migration_20261110_000448_gamification.down,
+    name: '20261110_000448_gamification'
   },
 ];

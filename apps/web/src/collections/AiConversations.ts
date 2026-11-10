@@ -2,6 +2,7 @@ import type { Access, CollectionConfig, Endpoint, Where } from 'payload'
 import { hasFullAccess, hasRole } from '@ailit/shared'
 import { getGateway } from '../lib/ai'
 import { track, type Actor } from '../lib/analytics'
+import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
 
 /** Students read their own; teachers read their classes' students; staff read all (spec D5). */
 const readConversations: Access = async ({ req }) => {
@@ -93,6 +94,10 @@ const send: Endpoint = {
       ? await req.payload.update({ collection: 'ai-conversations', id: convo.id, overrideAccess: true, data })
       : await req.payload.create({ collection: 'ai-conversations', overrideAccess: true, data })
     const actor = user as unknown as Actor
+    if (outcome.status === 'answered') {
+      const rules = await getRules(req.payload)
+      await award(req.payload, { userId: user.id, source: 'ai_lab_session', sourceId: saved.id, bigIdea: bigIdeaFromCompetency(activity.competency), xp: rules.aiLabSession })
+    }
     const ev = { activityId: activity.id, status: outcome.status, tokens: outcome.status === 'answered' ? outcome.inputTokens + outcome.outputTokens : 0 }
     await track(req.payload, { name: 'ai_message_sent', user: actor, headers: req.headers, props: ev })
     if (outcome.status === 'shield') await track(req.payload, { name: 'shield_blocked', user: actor, headers: req.headers, props: { activityId: activity.id } })

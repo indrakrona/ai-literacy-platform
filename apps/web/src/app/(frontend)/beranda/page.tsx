@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
+import { ProgressPanel } from '../../../components/ProgressPanel'
 import { getDict } from '../../../i18n/server'
 import { fmt } from '../../../i18n/dict'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
@@ -67,6 +68,7 @@ export default async function DashboardPage() {
             </ul>
           </Card>
         )}
+        {isStudent && <ProgressPanel payload={payload} userId={user.id} classIds={classes.docs.map((c) => c.id)} locale={locale} />}
         <div className="flex flex-wrap gap-3">
         <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
         {user.roles?.includes('super_admin') && (
