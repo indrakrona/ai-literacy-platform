@@ -10,5 +10,7 @@ export async function getPayloadClient() {
 export async function getCurrentUser() {
   const payload = await getPayloadClient()
   const { user } = await payload.auth({ headers: await headers() })
-  return user ?? null
+  // A suspended account loses access at once, even with a session cookie still valid.
+  if (!user || (user as { suspended?: boolean }).suspended) return null
+  return user
 }

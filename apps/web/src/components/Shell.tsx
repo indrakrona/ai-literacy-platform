@@ -7,16 +7,19 @@ import { LogoutButton } from './forms/LogoutButton'
 import { PublicNav } from './site/PublicNav'
 import { Footer } from './site/Footer'
 import { getSiteChrome } from '../lib/site'
+import { getSwitches } from '../lib/settings'
 
 export async function Shell({ children, narrow = true }: { children: React.ReactNode; narrow?: boolean }) {
   const { locale, t } = await getDict()
   const user = await getCurrentUser()
   const chrome = user ? null : await getSiteChrome(locale)
+  const banner = (await getSwitches(await getPayloadClient(), locale)).maintenanceMessage
   const unread = user
     ? (await (await getPayloadClient()).count({ collection: 'notifications', overrideAccess: true, where: { and: [{ user: { equals: user.id } }, { readAt: { exists: false } }] } }).catch(() => ({ totalDocs: 0 }))).totalDocs
     : 0
   return (
     <div className="min-h-screen">
+      {banner && <div role="status" className="bg-brand-deep px-4 py-2 text-center text-sm font-semibold text-white">{banner}</div>}
       <header className="border-b border-line bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Link href={user ? '/beranda' : '/'} className="text-lg font-bold">

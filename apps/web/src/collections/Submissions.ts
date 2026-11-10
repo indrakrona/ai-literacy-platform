@@ -3,6 +3,8 @@ import { hasFullAccess, hasRole } from '@ailit/shared'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
 import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
+import { getSwitches } from '../lib/settings'
+import { audit, ipOf } from '../lib/audit'
 
 const idOf = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 
@@ -36,6 +38,7 @@ const submit: Endpoint = {
   handler: async (req) => {
     const user = req.user as { id: number; roles?: string[]; consentStatus?: string } | null
     if (!user || !hasRole(user, 'student')) return bad('Students only', 403)
+    if (!(await getSwitches(req.payload)).projectsEnabled) return bad('Pengiriman proyek sedang ditutup sementara. / Project submissions are temporarily closed.', 503)
     if (!hasFullAccess(user)) return bad('Parent or guardian permission is needed to submit projects', 403)
     const b = await readBody(req)
     const text = typeof b.text === 'string' ? b.text.trim().slice(0, 20_000) : ''
@@ -121,6 +124,7 @@ const grade: Endpoint = {
       data: { scores, feedback, status: 'graded', gradedBy: user.id, gradedAt: new Date().toISOString() },
     })
     const firstGrade = sub.status !== 'graded'
+    await audit(req.payload, { actor: user.id, action: firstGrade ? 'grade' : 'regrade', collection: 'submissions', docId: sub.id, summary: `scores ${scores.join('/')}`, ip: ipOf(req) })
     await notify(req.payload, {
       userIds: firstGrade ? (sub.members ?? []).map(idOf) : [],
       kind: 'project_graded',

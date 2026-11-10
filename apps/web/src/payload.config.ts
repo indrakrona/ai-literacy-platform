@@ -33,6 +33,8 @@ import { SiteSettings } from './globals/SiteSettings'
 import { Badges, Challenges, GamificationSettings, UserBadges, XpEvents } from './collections/gamification'
 import { migrations } from './migrations'
 import { emailAdapter } from './lib/email-adapter'
+import { withAudit, withAuditGlobal } from './lib/audit'
+import { AuditLogs, PlatformSettings } from './collections/ops'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -46,8 +48,12 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(dirname) },
     meta: { titleSuffix: ' · AI Literacy Admin' },
   },
-  collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, LessonProgress, Media, TestItems, TestForms, TestAttempts, AiActivities, AiConversations, Assignments, ProjectBriefs, Submissions, Orders, AnalyticsEvents, Notifications, Reports, Pages, PilotRequests, XpEvents, Badges, UserBadges, Challenges],
-  globals: [SiteSettings, GamificationSettings],
+  // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
+  collections: [
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, Media, TestItems, TestForms, AiActivities, Assignments, ProjectBriefs, Orders, Reports, Pages, PilotRequests, Badges, Challenges].map(withAudit),
+    LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,
+  ],
+  globals: [SiteSettings, GamificationSettings, PlatformSettings].map(withAuditGlobal),
   email: emailAdapter(),
   editor: lexicalEditor(),
   localization: {

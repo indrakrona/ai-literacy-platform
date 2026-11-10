@@ -37,7 +37,7 @@ function usageStore(payload: Payload): UsageStore {
 }
 
 /** Real Claude when ANTHROPIC_API_KEY is set; otherwise the free mock provider. */
-export function getGateway(payload: Payload, conversationMessages = DEFAULT_LIMITS.conversationMessages) {
+export function getGateway(payload: Payload, conversationMessages = DEFAULT_LIMITS.conversationMessages, limits: { studentDailyMessages?: number; schoolDailyTokens?: number } = {}) {
   const provider = process.env.ANTHROPIC_API_KEY ? new AnthropicProvider(process.env.ANTHROPIC_API_KEY) : new MockProvider()
-  return new AIGateway(provider, usageStore(payload), { ...DEFAULT_LIMITS, conversationMessages })
+  return new AIGateway(provider, usageStore(payload), { ...DEFAULT_LIMITS, ...limits, conversationMessages })
 }

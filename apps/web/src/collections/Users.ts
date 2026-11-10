@@ -1,8 +1,52 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig, type Endpoint } from 'payload'
+import { audit, ipOf } from '../lib/audit'
 import { ROLES, ROLE_LABELS, hasRole, needsGuardianConsent, normalizeIdPhone } from '@ailit/shared'
 import { canAccessAdminPanel, fieldSuperAdminOnly, readUsers, selfOrSuperAdmin, superAdminOnly } from '../access'
 import { signupEndpoint } from '../endpoints/accounts'
 import { escapeHtml } from '../lib/emails'
+
+const VALID_ROLES = new Set<string>(ROLES)
+
+/** POST /api/users/:id/manage {action, roles?} — super admin user management, every action audited (spec N1). */
+const manageEndpoint: Endpoint = {
+  path: '/:id/manage',
+  method: 'post',
+  handler: async (req) => {
+    const admin = req.user as { id: number; roles?: string[] } | null
+    if (!hasRole(admin as { roles?: string[] }, 'super_admin')) return Response.json({ error: 'Not allowed' }, { status: 403 })
+    const target = await req.payload.findByID({ collection: 'users', id: Number(req.routeParams?.id), depth: 0, overrideAccess: true }).catch(() => null)
+    if (!target) return Response.json({ error: 'Not found' }, { status: 404 })
+    let b: { action?: unknown; roles?: unknown } = {}
+    try {
+      b = ((req.json ? await req.json() : {}) ?? {}) as typeof b
+    } catch {
+      /* empty */
+    }
+    const log = (action: string, summary?: string) => audit(req.payload, { actor: admin!.id, action, collection: 'users', docId: target.id, summary, ip: ipOf(req) })
+    if (b.action === 'suspend' || b.action === 'unsuspend') {
+      if (target.id === admin!.id) return Response.json({ error: 'You cannot suspend yourself' }, { status: 400 })
+      await req.payload.update({ collection: 'users', id: target.id, overrideAccess: true, data: { suspended: b.action === 'suspend' } })
+      await log(b.action)
+      return Response.json({ ok: true })
+    }
+    if (b.action === 'set_roles') {
+      const roles = Array.isArray(b.roles) ? [...new Set(b.roles.map(String).filter((r) => VALID_ROLES.has(r)))] : []
+      if (!roles.length) return Response.json({ error: 'Choose at least one role' }, { status: 400 })
+      if (target.id === admin!.id && !roles.includes('super_admin')) return Response.json({ error: 'You cannot remove your own super admin role' }, { status: 400 })
+      await req.payload.update({ collection: 'users', id: target.id, overrideAccess: true, data: { roles: roles as never } })
+      await log('set_roles', `${(target.roles ?? []).join(',')} → ${roles.join(',')}`)
+      return Response.json({ ok: true, roles })
+    }
+    if (b.action === 'reset_link') {
+      // A link the admin passes on personally (WhatsApp, in person) while no email provider is set.
+      const token = await req.payload.forgotPassword({ collection: 'users', data: { email: target.email }, disableEmail: true })
+      await log('reset_link')
+      const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      return Response.json({ link: `${base}/atur-sandi?token=${token}` })
+    }
+    return Response.json({ error: 'Unknown action' }, { status: 400 })
+  },
+}
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -21,7 +65,7 @@ export const Users: CollectionConfig = {
       },
     },
   },
-  endpoints: [signupEndpoint],
+  endpoints: [signupEndpoint, manageEndpoint],
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'roles', 'school'],
@@ -36,6 +80,19 @@ export const Users: CollectionConfig = {
     create: superAdminOnly,
   },
   hooks: {
+    // Suspended accounts cannot sign in (spec N1).
+    beforeLogin: [
+      ({ user }) => {
+        if ((user as { suspended?: boolean }).suspended) throw new APIError('Akun ini ditangguhkan. Hubungi sekolah atau tim AI Literacy. / This account is suspended.', 403, undefined, true)
+        return user
+      },
+    ],
+    afterLogin: [
+      async ({ req, user }) => {
+        await audit(req.payload, { actor: Number(user.id), action: 'login', collection: 'users', docId: user.id, ip: ipOf(req) }, req)
+        return user
+      },
+    ],
     beforeChange: [
       ({ data, originalDoc }) => {
         // Under-18s never appear in public galleries (spec: Non-functional > Child safety).
@@ -107,6 +164,14 @@ export const Users: CollectionConfig = {
       ],
       access: { update: fieldSuperAdminOnly },
       admin: { position: 'sidebar' },
+    },
+    {
+      name: 'suspended',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      access: { update: fieldSuperAdminOnly },
+      admin: { position: 'sidebar', description: 'Blocks sign-in. Set from Operations › Users.' },
     },
     {
       name: 'guardians',

@@ -74,26 +74,27 @@ export interface Config {
     tracks: Track;
     units: Unit;
     lessons: Lesson;
-    'lesson-progress': LessonProgress;
     media: Media;
     'test-items': TestItem;
     'test-forms': TestForm;
-    'test-attempts': TestAttempt;
     'ai-activities': AiActivity;
-    'ai-conversations': AiConversation;
     assignments: Assignment;
     'project-briefs': ProjectBrief;
-    submissions: Submission;
     orders: Order;
-    'analytics-events': AnalyticsEvent;
-    notifications: Notification;
     reports: Report;
     pages: Page;
     'pilot-requests': PilotRequest;
-    'xp-events': XpEvent;
     badges: Badge;
-    'user-badges': UserBadge;
     challenges: Challenge;
+    'lesson-progress': LessonProgress;
+    'test-attempts': TestAttempt;
+    'ai-conversations': AiConversation;
+    submissions: Submission;
+    'analytics-events': AnalyticsEvent;
+    notifications: Notification;
+    'xp-events': XpEvent;
+    'user-badges': UserBadge;
+    'audit-logs': AuditLog;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -119,26 +120,27 @@ export interface Config {
     tracks: TracksSelect<false> | TracksSelect<true>;
     units: UnitsSelect<false> | UnitsSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
-    'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'test-items': TestItemsSelect<false> | TestItemsSelect<true>;
     'test-forms': TestFormsSelect<false> | TestFormsSelect<true>;
-    'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
     'ai-activities': AiActivitiesSelect<false> | AiActivitiesSelect<true>;
-    'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'project-briefs': ProjectBriefsSelect<false> | ProjectBriefsSelect<true>;
-    submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
-    'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
-    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     reports: ReportsSelect<false> | ReportsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'pilot-requests': PilotRequestsSelect<false> | PilotRequestsSelect<true>;
-    'xp-events': XpEventsSelect<false> | XpEventsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
-    'user-badges': UserBadgesSelect<false> | UserBadgesSelect<true>;
     challenges: ChallengesSelect<false> | ChallengesSelect<true>;
+    'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
+    'test-attempts': TestAttemptsSelect<false> | TestAttemptsSelect<true>;
+    'ai-conversations': AiConversationsSelect<false> | AiConversationsSelect<true>;
+    submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
+    'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'xp-events': XpEventsSelect<false> | XpEventsSelect<true>;
+    'user-badges': UserBadgesSelect<false> | UserBadgesSelect<true>;
+    'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -152,10 +154,12 @@ export interface Config {
   globals: {
     'site-settings': SiteSetting;
     gamification: Gamification;
+    'platform-settings': PlatformSetting;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     gamification: GamificationSelect<false> | GamificationSelect<true>;
+    'platform-settings': PlatformSettingsSelect<false> | PlatformSettingsSelect<true>;
   };
   locale: 'id' | 'en';
   widgets: {
@@ -227,6 +231,10 @@ export interface User {
    */
   showInShowcase?: boolean | null;
   consentStatus?: ('not_required' | 'pending' | 'granted' | 'declined') | null;
+  /**
+   * Blocks sign-in. Set from Operations › Users.
+   */
+  suspended?: boolean | null;
   guardians?: (number | User)[] | null;
   updatedAt: string;
   createdAt: string;
@@ -600,19 +608,6 @@ export interface ConsentRequest {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lesson-progress".
- */
-export interface LessonProgress {
-  id: number;
-  user: number | User;
-  lesson: number | Lesson;
-  status: 'started' | 'completed';
-  completedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "test-items".
  */
 export interface TestItem {
@@ -732,144 +727,6 @@ export interface TestForm {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "test-attempts".
- */
-export interface TestAttempt {
-  id: number;
-  candidate: number | User;
-  form: number | TestForm;
-  status: 'in_progress' | 'awaiting_rating' | 'scored';
-  startedAt: string;
-  deadline: string;
-  submittedAt?: string | null;
-  itemOrder:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  responses?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  points?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  ratings?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Shuffled answer order per item for this candidate
-   */
-  optionOrder?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  integrity?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Logged by the proctor
-   */
-  incidents?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * AI-suggested rubric levels shown to adjudicating raters (advice only)
-   */
-  aiSuggestions?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  report?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ai-conversations".
- */
-export interface AiConversation {
-  id: number;
-  user: number | User;
-  activity: number | AiActivity;
-  school?: (number | null) | School;
-  messages:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  flags?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  flagged?: boolean | null;
-  tokens?: number | null;
-  provider?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "assignments".
  */
 export interface Assignment {
@@ -879,39 +736,6 @@ export interface Assignment {
   dueDate: string;
   note?: string | null;
   assignedBy?: (number | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "submissions".
- */
-export interface Submission {
-  id: number;
-  brief: number | ProjectBrief;
-  class: number | Class;
-  members: (number | User)[];
-  text: string;
-  links?:
-    | {
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  status: 'submitted' | 'graded';
-  submittedAt?: string | null;
-  scores?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  feedback?: string | null;
-  gradedBy?: (number | null) | User;
-  gradedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -935,77 +759,6 @@ export interface Order {
   paidAt?: string | null;
   createdBy?: (number | null) | User;
   note?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Pseudonymous product events. No names, emails or exact ages.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "analytics-events".
- */
-export interface AnalyticsEvent {
-  id: number;
-  name:
-    | 'signed_up'
-    | 'consent_requested'
-    | 'consent_given'
-    | 'class_joined'
-    | 'lesson_started'
-    | 'lesson_completed'
-    | 'quiz_submitted'
-    | 'ai_message_sent'
-    | 'ai_message_flagged'
-    | 'shield_blocked'
-    | 'project_submitted'
-    | 'project_graded'
-    | 'badge_earned'
-    | 'challenge_joined'
-    | 'test_started'
-    | 'test_submitted'
-    | 'score_released'
-    | 'certificate_shared'
-    | 'checkout_started'
-    | 'payment_completed';
-  aid: string;
-  role?: string | null;
-  school?: number | null;
-  track?: string | null;
-  ageBand?: string | null;
-  device?: string | null;
-  props?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "notifications".
- */
-export interface Notification {
-  id: number;
-  user: number | User;
-  kind:
-    | 'assignment_new'
-    | 'submission_received'
-    | 'project_graded'
-    | 'score_ready'
-    | 'consent_granted'
-    | 'consent_declined'
-    | 'report_received'
-    | 'pilot_request'
-    | 'badge_earned';
-  title: string;
-  body?: string | null;
-  link?: string | null;
-  readAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1194,30 +947,6 @@ export interface PilotRequest {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "xp-events".
- */
-export interface XpEvent {
-  id: number;
-  user: number | User;
-  source:
-    | 'lesson_complete'
-    | 'quiz_perfect'
-    | 'ai_lab_session'
-    | 'project_submitted'
-    | 'project_graded'
-    | 'challenge_complete';
-  sourceId: string;
-  bigIdea: 'discover' | 'understand' | 'create' | 'protect' | 'thrive';
-  xp: number;
-  /**
-   * user:source:sourceId — prevents double awards
-   */
-  key: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "badges".
  */
 export interface Badge {
@@ -1246,18 +975,6 @@ export interface Badge {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-badges".
- */
-export interface UserBadge {
-  id: number;
-  user: number | User;
-  badge: number | Badge;
-  key: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "challenges".
  */
 export interface Challenge {
@@ -1274,6 +991,312 @@ export interface Challenge {
   endsAt: string;
   participants?: (number | User)[] | null;
   createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-progress".
+ */
+export interface LessonProgress {
+  id: number;
+  user: number | User;
+  lesson: number | Lesson;
+  status: 'started' | 'completed';
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-attempts".
+ */
+export interface TestAttempt {
+  id: number;
+  candidate: number | User;
+  form: number | TestForm;
+  status: 'in_progress' | 'awaiting_rating' | 'scored';
+  startedAt: string;
+  deadline: string;
+  submittedAt?: string | null;
+  itemOrder:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  responses?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  points?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  ratings?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Shuffled answer order per item for this candidate
+   */
+  optionOrder?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  integrity?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Logged by the proctor
+   */
+  incidents?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * AI-suggested rubric levels shown to adjudicating raters (advice only)
+   */
+  aiSuggestions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  report?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-conversations".
+ */
+export interface AiConversation {
+  id: number;
+  user: number | User;
+  activity: number | AiActivity;
+  school?: (number | null) | School;
+  messages:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flagged?: boolean | null;
+  tokens?: number | null;
+  provider?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "submissions".
+ */
+export interface Submission {
+  id: number;
+  brief: number | ProjectBrief;
+  class: number | Class;
+  members: (number | User)[];
+  text: string;
+  links?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'submitted' | 'graded';
+  submittedAt?: string | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  feedback?: string | null;
+  gradedBy?: (number | null) | User;
+  gradedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Pseudonymous product events. No names, emails or exact ages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events".
+ */
+export interface AnalyticsEvent {
+  id: number;
+  name:
+    | 'signed_up'
+    | 'consent_requested'
+    | 'consent_given'
+    | 'class_joined'
+    | 'lesson_started'
+    | 'lesson_completed'
+    | 'quiz_submitted'
+    | 'ai_message_sent'
+    | 'ai_message_flagged'
+    | 'shield_blocked'
+    | 'project_submitted'
+    | 'project_graded'
+    | 'badge_earned'
+    | 'challenge_joined'
+    | 'test_started'
+    | 'test_submitted'
+    | 'score_released'
+    | 'certificate_shared'
+    | 'checkout_started'
+    | 'payment_completed';
+  aid: string;
+  role?: string | null;
+  school?: number | null;
+  track?: string | null;
+  ageBand?: string | null;
+  device?: string | null;
+  props?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  kind:
+    | 'assignment_new'
+    | 'submission_received'
+    | 'project_graded'
+    | 'score_ready'
+    | 'consent_granted'
+    | 'consent_declined'
+    | 'report_received'
+    | 'pilot_request'
+    | 'badge_earned';
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events".
+ */
+export interface XpEvent {
+  id: number;
+  user: number | User;
+  source:
+    | 'lesson_complete'
+    | 'quiz_perfect'
+    | 'ai_lab_session'
+    | 'project_submitted'
+    | 'project_graded'
+    | 'challenge_complete';
+  sourceId: string;
+  bigIdea: 'discover' | 'understand' | 'create' | 'protect' | 'thrive';
+  xp: number;
+  /**
+   * user:source:sourceId — prevents double awards
+   */
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-badges".
+ */
+export interface UserBadge {
+  id: number;
+  user: number | User;
+  badge: number | Badge;
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs".
+ */
+export interface AuditLog {
+  id: number;
+  actor?: (number | null) | User;
+  action: string;
+  targetCollection?: string | null;
+  docId?: string | null;
+  summary?: string | null;
+  ip?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1422,10 +1445,6 @@ export interface PayloadLockedDocument {
         value: number | Lesson;
       } | null)
     | ({
-        relationTo: 'lesson-progress';
-        value: number | LessonProgress;
-      } | null)
-    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -1438,16 +1457,8 @@ export interface PayloadLockedDocument {
         value: number | TestForm;
       } | null)
     | ({
-        relationTo: 'test-attempts';
-        value: number | TestAttempt;
-      } | null)
-    | ({
         relationTo: 'ai-activities';
         value: number | AiActivity;
-      } | null)
-    | ({
-        relationTo: 'ai-conversations';
-        value: number | AiConversation;
       } | null)
     | ({
         relationTo: 'assignments';
@@ -1458,20 +1469,8 @@ export interface PayloadLockedDocument {
         value: number | ProjectBrief;
       } | null)
     | ({
-        relationTo: 'submissions';
-        value: number | Submission;
-      } | null)
-    | ({
         relationTo: 'orders';
         value: number | Order;
-      } | null)
-    | ({
-        relationTo: 'analytics-events';
-        value: number | AnalyticsEvent;
-      } | null)
-    | ({
-        relationTo: 'notifications';
-        value: number | Notification;
       } | null)
     | ({
         relationTo: 'reports';
@@ -1486,20 +1485,48 @@ export interface PayloadLockedDocument {
         value: number | PilotRequest;
       } | null)
     | ({
-        relationTo: 'xp-events';
-        value: number | XpEvent;
-      } | null)
-    | ({
         relationTo: 'badges';
         value: number | Badge;
+      } | null)
+    | ({
+        relationTo: 'challenges';
+        value: number | Challenge;
+      } | null)
+    | ({
+        relationTo: 'lesson-progress';
+        value: number | LessonProgress;
+      } | null)
+    | ({
+        relationTo: 'test-attempts';
+        value: number | TestAttempt;
+      } | null)
+    | ({
+        relationTo: 'ai-conversations';
+        value: number | AiConversation;
+      } | null)
+    | ({
+        relationTo: 'submissions';
+        value: number | Submission;
+      } | null)
+    | ({
+        relationTo: 'analytics-events';
+        value: number | AnalyticsEvent;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'xp-events';
+        value: number | XpEvent;
       } | null)
     | ({
         relationTo: 'user-badges';
         value: number | UserBadge;
       } | null)
     | ({
-        relationTo: 'challenges';
-        value: number | Challenge;
+        relationTo: 'audit-logs';
+        value: number | AuditLog;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1558,6 +1585,7 @@ export interface UsersSelect<T extends boolean = true> {
   notifyWhatsApp?: T;
   showInShowcase?: T;
   consentStatus?: T;
+  suspended?: T;
   guardians?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1702,18 +1730,6 @@ export interface LessonsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lesson-progress_select".
- */
-export interface LessonProgressSelect<T extends boolean = true> {
-  user?: T;
-  lesson?: T;
-  status?: T;
-  completedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -1823,29 +1839,6 @@ export interface TestFormsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "test-attempts_select".
- */
-export interface TestAttemptsSelect<T extends boolean = true> {
-  candidate?: T;
-  form?: T;
-  status?: T;
-  startedAt?: T;
-  deadline?: T;
-  submittedAt?: T;
-  itemOrder?: T;
-  responses?: T;
-  points?: T;
-  ratings?: T;
-  optionOrder?: T;
-  integrity?: T;
-  incidents?: T;
-  aiSuggestions?: T;
-  report?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ai-activities_select".
  */
 export interface AiActivitiesSelect<T extends boolean = true> {
@@ -1868,22 +1861,6 @@ export interface AiActivitiesSelect<T extends boolean = true> {
         text?: T;
         id?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ai-conversations_select".
- */
-export interface AiConversationsSelect<T extends boolean = true> {
-  user?: T;
-  activity?: T;
-  school?: T;
-  messages?: T;
-  flags?: T;
-  flagged?: T;
-  tokens?: T;
-  provider?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1926,30 +1903,6 @@ export interface ProjectBriefsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "submissions_select".
- */
-export interface SubmissionsSelect<T extends boolean = true> {
-  brief?: T;
-  class?: T;
-  members?: T;
-  text?: T;
-  links?:
-    | T
-    | {
-        url?: T;
-        id?: T;
-      };
-  status?: T;
-  submittedAt?: T;
-  scores?: T;
-  feedback?: T;
-  gradedBy?: T;
-  gradedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
@@ -1965,36 +1918,6 @@ export interface OrdersSelect<T extends boolean = true> {
   paidAt?: T;
   createdBy?: T;
   note?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "analytics-events_select".
- */
-export interface AnalyticsEventsSelect<T extends boolean = true> {
-  name?: T;
-  aid?: T;
-  role?: T;
-  school?: T;
-  track?: T;
-  ageBand?: T;
-  device?: T;
-  props?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "notifications_select".
- */
-export interface NotificationsSelect<T extends boolean = true> {
-  user?: T;
-  kind?: T;
-  title?: T;
-  body?: T;
-  link?: T;
-  readAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2158,20 +2081,6 @@ export interface PilotRequestsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "xp-events_select".
- */
-export interface XpEventsSelect<T extends boolean = true> {
-  user?: T;
-  source?: T;
-  sourceId?: T;
-  bigIdea?: T;
-  xp?: T;
-  key?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "badges_select".
  */
 export interface BadgesSelect<T extends boolean = true> {
@@ -2189,17 +2098,6 @@ export interface BadgesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-badges_select".
- */
-export interface UserBadgesSelect<T extends boolean = true> {
-  user?: T;
-  badge?: T;
-  key?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "challenges_select".
  */
 export interface ChallengesSelect<T extends boolean = true> {
@@ -2212,6 +2110,150 @@ export interface ChallengesSelect<T extends boolean = true> {
   endsAt?: T;
   participants?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-progress_select".
+ */
+export interface LessonProgressSelect<T extends boolean = true> {
+  user?: T;
+  lesson?: T;
+  status?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-attempts_select".
+ */
+export interface TestAttemptsSelect<T extends boolean = true> {
+  candidate?: T;
+  form?: T;
+  status?: T;
+  startedAt?: T;
+  deadline?: T;
+  submittedAt?: T;
+  itemOrder?: T;
+  responses?: T;
+  points?: T;
+  ratings?: T;
+  optionOrder?: T;
+  integrity?: T;
+  incidents?: T;
+  aiSuggestions?: T;
+  report?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-conversations_select".
+ */
+export interface AiConversationsSelect<T extends boolean = true> {
+  user?: T;
+  activity?: T;
+  school?: T;
+  messages?: T;
+  flags?: T;
+  flagged?: T;
+  tokens?: T;
+  provider?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "submissions_select".
+ */
+export interface SubmissionsSelect<T extends boolean = true> {
+  brief?: T;
+  class?: T;
+  members?: T;
+  text?: T;
+  links?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
+  status?: T;
+  submittedAt?: T;
+  scores?: T;
+  feedback?: T;
+  gradedBy?: T;
+  gradedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events_select".
+ */
+export interface AnalyticsEventsSelect<T extends boolean = true> {
+  name?: T;
+  aid?: T;
+  role?: T;
+  school?: T;
+  track?: T;
+  ageBand?: T;
+  device?: T;
+  props?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  kind?: T;
+  title?: T;
+  body?: T;
+  link?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events_select".
+ */
+export interface XpEventsSelect<T extends boolean = true> {
+  user?: T;
+  source?: T;
+  sourceId?: T;
+  bigIdea?: T;
+  xp?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-badges_select".
+ */
+export interface UserBadgesSelect<T extends boolean = true> {
+  user?: T;
+  badge?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs_select".
+ */
+export interface AuditLogsSelect<T extends boolean = true> {
+  actor?: T;
+  action?: T;
+  targetCollection?: T;
+  docId?: T;
+  summary?: T;
+  ip?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2338,6 +2380,26 @@ export interface Gamification {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platform-settings".
+ */
+export interface PlatformSetting {
+  id: number;
+  signupsOpen?: boolean | null;
+  aiLabEnabled?: boolean | null;
+  testsEnabled?: boolean | null;
+  projectsEnabled?: boolean | null;
+  studentDailyMessages?: number | null;
+  schoolDailyTokens?: number | null;
+  dailyAiBudgetUsd?: number | null;
+  /**
+   * Shown at the top of every page while filled in, e.g. planned maintenance.
+   */
+  maintenanceMessage?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
@@ -2373,6 +2435,23 @@ export interface GamificationSelect<T extends boolean = true> {
         name?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platform-settings_select".
+ */
+export interface PlatformSettingsSelect<T extends boolean = true> {
+  signupsOpen?: T;
+  aiLabEnabled?: T;
+  testsEnabled?: T;
+  projectsEnabled?: T;
+  studentDailyMessages?: T;
+  schoolDailyTokens?: T;
+  dailyAiBudgetUsd?: T;
+  maintenanceMessage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -6,6 +6,8 @@ import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
 import { addMark, normalizeRating, resolve } from '../lib/marking'
 import { getGateway } from '../lib/ai'
+import { getSwitches } from '../lib/settings'
+import { audit, ipOf } from '../lib/audit'
 
 const GRACE_MS = 30_000
 /** Answers made before the deadline while offline may arrive this long after it (and are logged). */
@@ -54,6 +56,7 @@ const start: Endpoint = {
   method: 'post',
   handler: async (req) => {
     if (!req.user) return bad('Sign in first', 401)
+    if (!(await getSwitches(req.payload)).testsEnabled) return bad('Tes AILIS sedang ditutup sementara. / AILIS tests are temporarily closed.', 503)
     const { accessCode } = await body(req)
     const code = String(accessCode ?? '').trim().toUpperCase()
     const form = (
@@ -227,6 +230,7 @@ const rate: Endpoint = {
     const state = resolve(added.marks, double)
     allRatings[key] = { marks: added.marks, status: state.status, final: state.final }
     const ratings = allRatings
+    await audit(req.payload, { actor: Number(req.user!.id), action: 'rate', collection: 'test-attempts', docId: attempt.id, summary: `item ${key}: ${pts} points (${state.status})`, ip: ipOf(req) })
     const pointsNow = { ...((attempt.points ?? {}) as Record<string, number>) }
     if (state.final !== undefined) pointsNow[key] = state.final
     else delete pointsNow[key]
@@ -306,6 +310,7 @@ const incident: Endpoint = {
     const note = typeof b.note === 'string' ? b.note.trim().slice(0, 1000) : ''
     const incidents = [...((attempt.incidents ?? []) as unknown[]), { at: new Date().toISOString(), by: u!.id, type, note }]
     await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { incidents } })
+    await audit(req.payload, { actor: u!.id, action: 'incident', collection: 'test-attempts', docId: attempt.id, summary: type, ip: ipOf(req) })
     return Response.json({ ok: true, count: incidents.length })
   },
 }

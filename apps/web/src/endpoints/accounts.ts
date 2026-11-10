@@ -5,6 +5,8 @@ import { importRoster } from '../lib/roster'
 import { consentDecisionSchema, importSchema, joinClassSchema, signupSchema, zodMessage } from './validation'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
+import { getSwitches } from '../lib/settings'
+import { audit, ipOf } from '../lib/audit'
 
 const MIN_STUDENT_AGE = 10
 const MIN_CANDIDATE_AGE = 15
@@ -50,6 +52,7 @@ export const signupEndpoint: Endpoint = {
   path: '/signup',
   method: 'post',
   handler: async (req) => {
+    if (!(await getSwitches(req.payload)).signupsOpen) return bad('Pendaftaran mandiri sedang ditutup. Minta akun melalui sekolah Anda. / Self sign-up is closed; ask your school for an account.', 403)
     const parsed = signupSchema.safeParse(await readJson(req))
     if (!parsed.success) return bad(zodMessage(parsed.error))
     const input = parsed.data
@@ -169,6 +172,7 @@ export const consentDecideEndpoint: Endpoint = {
       return bad(result.reason, status)
     }
     await notify(req.payload, { userIds: [Number(result.studentId)], kind: result.decision === 'granted' ? 'consent_granted' : 'consent_declined', link: '/beranda' })
+    await audit(req.payload, { action: `consent_${result.decision}`, collection: 'users', docId: result.studentId, summary: 'decided by guardian via consent link', ip: ipOf(req) })
     if (result.decision === 'granted') {
       const student = await req.payload.findByID({ collection: 'users', id: result.studentId, depth: 0, overrideAccess: true }).catch(() => null)
       await track(req.payload, { name: 'consent_given', user: student, headers: req.headers })

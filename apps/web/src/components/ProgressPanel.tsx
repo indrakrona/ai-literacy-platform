@@ -5,7 +5,7 @@ import { JoinChallengeButton } from './forms/ChallengeForms'
 import { challengeProgress, progressOf } from '../lib/gamification'
 
 /** A student's own progress: levels per big idea, badges and class challenges. Never compared with others. */
-export async function ProgressPanel({ payload, userId, classIds, locale }: { payload: Payload; userId: number; classIds: number[]; locale: 'id' | 'en' }) {
+export async function ProgressPanel({ payload, userId, classIds, locale, title }: { payload: Payload; userId: number; classIds: number[]; locale: 'id' | 'en'; title?: string }) {
   const id = locale === 'id'
   const { xp, levels, total } = await progressOf(payload, userId)
   const badges = (await payload.find({ collection: 'badges', locale, overrideAccess: true, depth: 0, limit: 100, sort: 'order', where: { active: { equals: true } } })).docs
@@ -24,7 +24,7 @@ export async function ProgressPanel({ payload, userId, classIds, locale }: { pay
     <section id="kemajuan" className="flex flex-col gap-4">
       <Card>
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold">{id ? 'Kemajuanku' : 'My progress'}</h2>
+          <h2 className="text-lg font-semibold">{title ?? (id ? 'Kemajuanku' : 'My progress')}</h2>
           <p className="text-sm text-muted tabular-nums">{total} XP</p>
         </div>
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">

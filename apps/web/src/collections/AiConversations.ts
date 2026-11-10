@@ -3,6 +3,7 @@ import { hasFullAccess, hasRole } from '@ailit/shared'
 import { getGateway } from '../lib/ai'
 import { track, type Actor } from '../lib/analytics'
 import { award, bigIdeaFromCompetency, getRules } from '../lib/gamification'
+import { getSwitches } from '../lib/settings'
 
 /** Students read their own; teachers read their classes' students; staff read all (spec D5). */
 const readConversations: Access = async ({ req }) => {
@@ -61,7 +62,9 @@ const send: Endpoint = {
       .map(({ role, content }) => ({ role, content }))
     const schoolId = typeof user.school === 'object' ? user.school?.id : user.school
 
-    const gateway = getGateway(req.payload, activity.messageLimit)
+    const switches = await getSwitches(req.payload)
+    if (!switches.aiLabEnabled) return Response.json({ error: 'AI Lab sedang dinonaktifkan sementara oleh admin. / The AI Lab is temporarily switched off.' }, { status: 503 })
+    const gateway = getGateway(req.payload, activity.messageLimit, { studentDailyMessages: switches.studentDailyMessages, schoolDailyTokens: switches.schoolDailyTokens })
     const outcome = await gateway.chat({
       userId: String(user.id),
       schoolId: schoolId ? String(schoolId) : undefined,

@@ -91,6 +91,7 @@ services:
     entrypoint: >
       sh -c "while true; do
                pg_dump -h db -U ailit -Fc ailit > /backups/ailit-$$(date +%F).dump;
+               find /backups -name 'ailit-*.dump' -mtime +14 -delete;
                sleep 86400; done"
 
 volumes:
