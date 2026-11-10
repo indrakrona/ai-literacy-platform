@@ -1,3 +1,4 @@
+import { nominate, showcaseConsent, vote } from './Engagement'
 import type { Access, CollectionConfig, Endpoint, PayloadRequest, Where } from 'payload'
 import { hasFullAccess, hasRole } from '@ailit/shared'
 import { track, type Actor } from '../lib/analytics'
@@ -145,7 +146,7 @@ export const Submissions: CollectionConfig = {
   slug: 'submissions',
   admin: { defaultColumns: ['brief', 'class', 'status', 'submittedAt'], group: 'Learning' },
   access: { read: readSubmissions, create: () => false, update: () => false, delete: ({ req }) => hasRole(req.user as { roles?: string[] }, 'super_admin') },
-  endpoints: [submit, grade],
+  endpoints: [submit, grade, nominate, showcaseConsent, vote],
   fields: [
     { name: 'brief', type: 'relationship', relationTo: 'project-briefs', required: true, index: true },
     { name: 'class', type: 'relationship', relationTo: 'classes', required: true, index: true },
@@ -158,5 +159,18 @@ export const Submissions: CollectionConfig = {
     { name: 'feedback', type: 'textarea' },
     { name: 'gradedBy', type: 'relationship', relationTo: 'users' },
     { name: 'gradedAt', type: 'date' },
+    {
+      type: 'collapsible',
+      label: 'Showcase and events',
+      admin: { initCollapsed: true },
+      fields: [
+        { name: 'showcase', type: 'select', defaultValue: 'none', index: true, options: [{ value: 'none', label: 'Not in the gallery' }, { value: 'nominated', label: 'Nominated (waiting for consent)' }, { value: 'published', label: 'In the gallery' }] },
+        { name: 'showcaseAgreed', type: 'relationship', relationTo: 'users', hasMany: true, admin: { readOnly: true, description: 'Members who agreed to the gallery' } },
+        { name: 'showcaseAt', type: 'date', admin: { readOnly: true } },
+        { name: 'votes', type: 'number', defaultValue: 0, admin: { readOnly: true } },
+        { name: 'event', type: 'relationship', relationTo: 'events', index: true },
+        { name: 'judgeScores', type: 'json', admin: { readOnly: true } },
+      ],
+    },
   ],
 }

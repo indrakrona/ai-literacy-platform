@@ -92,6 +92,9 @@ export interface Config {
     announcements: Announcement;
     'kka-outcomes': KkaOutcome;
     'help-articles': HelpArticle;
+    events: Event;
+    'peer-reviews': PeerReview;
+    'showcase-votes': ShowcaseVote;
     'support-tickets': SupportTicket;
     accommodations: Accommodation;
     'data-requests': DataRequest;
@@ -148,6 +151,9 @@ export interface Config {
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'kka-outcomes': KkaOutcomesSelect<false> | KkaOutcomesSelect<true>;
     'help-articles': HelpArticlesSelect<false> | HelpArticlesSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
+    'peer-reviews': PeerReviewsSelect<false> | PeerReviewsSelect<true>;
+    'showcase-votes': ShowcaseVotesSelect<false> | ShowcaseVotesSelect<true>;
     'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
     accommodations: AccommodationsSelect<false> | AccommodationsSelect<true>;
     'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
@@ -261,6 +267,26 @@ export interface User {
    */
   guardians?: (number | User)[] | null;
   parentLinkCode?: string | null;
+  hideNameOnBoards?: boolean | null;
+  /**
+   * A parent allowed this under-18’s projects in the gallery
+   */
+  galleryParentApproved?: boolean | null;
+  /**
+   * Public portfolio page (settings are changed by the user on their Account page)
+   */
+  portfolio?: {
+    enabled?: boolean | null;
+    handle?: string | null;
+    headline?: string | null;
+    showProjects?: boolean | null;
+    showBadges?: boolean | null;
+    showCertificate?: boolean | null;
+    /**
+     * Needed for under-18s
+     */
+    parentApproved?: boolean | null;
+  };
   /**
    * Erased at the person’s request
    */
@@ -332,6 +358,10 @@ export interface Class {
   grade?: ('7' | '8' | '9' | '10' | '11' | '12') | null;
   academicYear: string;
   track?: (number | null) | Track;
+  /**
+   * Team-based: the class is the team, no student names
+   */
+  leaderboardOptIn?: boolean | null;
   /**
    * Students enter this code to join.
    */
@@ -1104,6 +1134,14 @@ export interface Challenge {
   target: number;
   startsAt: string;
   endsAt: string;
+  mode?: ('individual' | 'team') | null;
+  teams?:
+    | {
+        name: string;
+        members?: (number | User)[] | null;
+        id?: string | null;
+      }[]
+    | null;
   participants?: (number | User)[] | null;
   createdBy?: (number | null) | User;
   updatedAt: string;
@@ -1412,6 +1450,126 @@ export interface HelpArticle {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  slug: string;
+  type: 'hackathon' | 'challenge_week' | 'demo_day';
+  status: 'upcoming' | 'open' | 'judging' | 'closed';
+  description?: string | null;
+  startsAt: string;
+  endsAt: string;
+  scope?: ('platform' | 'school') | null;
+  school?: (number | null) | School;
+  /**
+   * Optional: entries must answer this brief
+   */
+  brief?: (number | null) | ProjectBrief;
+  criteria?:
+    | {
+        name: string;
+        max: number;
+        id?: string | null;
+      }[]
+    | null;
+  judges?: (number | User)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "peer-reviews".
+ */
+export interface PeerReview {
+  id: number;
+  submission: number | Submission;
+  reviewer: number | User;
+  class?: (number | null) | Class;
+  ratings:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  praise: string;
+  suggestion: string;
+  /**
+   * Hidden by the teacher
+   */
+  hidden?: boolean | null;
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "submissions".
+ */
+export interface Submission {
+  id: number;
+  brief: number | ProjectBrief;
+  class: number | Class;
+  members: (number | User)[];
+  text: string;
+  links?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'submitted' | 'graded';
+  submittedAt?: string | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  feedback?: string | null;
+  gradedBy?: (number | null) | User;
+  gradedAt?: string | null;
+  showcase?: ('none' | 'nominated' | 'published') | null;
+  /**
+   * Members who agreed to the gallery
+   */
+  showcaseAgreed?: (number | User)[] | null;
+  showcaseAt?: string | null;
+  votes?: number | null;
+  event?: (number | null) | Event;
+  judgeScores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcase-votes".
+ */
+export interface ShowcaseVote {
+  id: number;
+  submission: number | Submission;
+  voter: number | User;
+  key: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "support-tickets".
  */
 export interface SupportTicket {
@@ -1549,39 +1707,6 @@ export interface AiConversation {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "submissions".
- */
-export interface Submission {
-  id: number;
-  brief: number | ProjectBrief;
-  class: number | Class;
-  members: (number | User)[];
-  text: string;
-  links?:
-    | {
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  status: 'submitted' | 'graded';
-  submittedAt?: string | null;
-  scores?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  feedback?: string | null;
-  gradedBy?: (number | null) | User;
-  gradedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Pseudonymous product events. No names, emails or exact ages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1655,7 +1780,10 @@ export interface Notification {
     | 'content_review'
     | 'content_decision'
     | 'ticket_new'
-    | 'ticket_reply';
+    | 'ticket_reply'
+    | 'showcase_nominated'
+    | 'showcase_published'
+    | 'peer_review';
   title: string;
   body?: string | null;
   link?: string | null;
@@ -1931,6 +2059,18 @@ export interface PayloadLockedDocument {
         value: number | HelpArticle;
       } | null)
     | ({
+        relationTo: 'events';
+        value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'peer-reviews';
+        value: number | PeerReview;
+      } | null)
+    | ({
+        relationTo: 'showcase-votes';
+        value: number | ShowcaseVote;
+      } | null)
+    | ({
         relationTo: 'support-tickets';
         value: number | SupportTicket;
       } | null)
@@ -2042,6 +2182,19 @@ export interface UsersSelect<T extends boolean = true> {
   suspended?: T;
   guardians?: T;
   parentLinkCode?: T;
+  hideNameOnBoards?: T;
+  galleryParentApproved?: T;
+  portfolio?:
+    | T
+    | {
+        enabled?: T;
+        handle?: T;
+        headline?: T;
+        showProjects?: T;
+        showBadges?: T;
+        showCertificate?: T;
+        parentApproved?: T;
+      };
   deletedAt?: T;
   parentLinkExpiresAt?: T;
   lastWeeklySummaryAt?: T;
@@ -2095,6 +2248,7 @@ export interface ClassesSelect<T extends boolean = true> {
   grade?: T;
   academicYear?: T;
   track?: T;
+  leaderboardOptIn?: T;
   joinCode?: T;
   teachers?: T;
   students?: T;
@@ -2635,6 +2789,14 @@ export interface ChallengesSelect<T extends boolean = true> {
   target?: T;
   startsAt?: T;
   endsAt?: T;
+  mode?: T;
+  teams?:
+    | T
+    | {
+        name?: T;
+        members?: T;
+        id?: T;
+      };
   participants?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -2741,6 +2903,59 @@ export interface HelpArticlesSelect<T extends boolean = true> {
   published?: T;
   summary?: T;
   body?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  type?: T;
+  status?: T;
+  description?: T;
+  startsAt?: T;
+  endsAt?: T;
+  scope?: T;
+  school?: T;
+  brief?: T;
+  criteria?:
+    | T
+    | {
+        name?: T;
+        max?: T;
+        id?: T;
+      };
+  judges?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "peer-reviews_select".
+ */
+export interface PeerReviewsSelect<T extends boolean = true> {
+  submission?: T;
+  reviewer?: T;
+  class?: T;
+  ratings?: T;
+  praise?: T;
+  suggestion?: T;
+  hidden?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcase-votes_select".
+ */
+export interface ShowcaseVotesSelect<T extends boolean = true> {
+  submission?: T;
+  voter?: T;
+  key?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2893,6 +3108,12 @@ export interface SubmissionsSelect<T extends boolean = true> {
   feedback?: T;
   gradedBy?: T;
   gradedAt?: T;
+  showcase?: T;
+  showcaseAgreed?: T;
+  showcaseAt?: T;
+  votes?: T;
+  event?: T;
+  judgeScores?: T;
   updatedAt?: T;
   createdAt?: T;
 }

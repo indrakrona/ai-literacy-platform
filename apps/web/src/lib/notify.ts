@@ -11,7 +11,7 @@ import { sendWhatsApp, type WaTemplate } from './whatsapp'
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
 
-export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn', 'content_review', 'content_decision', 'ticket_new', 'ticket_reply'] as const
+export const NOTIFICATION_KINDS = ['assignment_new', 'submission_received', 'project_graded', 'score_ready', 'consent_granted', 'consent_declined', 'report_received', 'pilot_request', 'badge_earned', 'announcement', 'test_reminder', 'weekly_summary', 'child_linked', 'licence_expiring', 'data_request', 'consent_withdrawn', 'content_review', 'content_decision', 'ticket_new', 'ticket_reply', 'showcase_nominated', 'showcase_published', 'peer_review'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
@@ -88,6 +88,18 @@ const MESSAGES: Record<NotificationKind, Record<Locale, Text>> = {
   ticket_reply: {
     id: { title: 'Balasan untuk tiket Anda: {subject}', body: '{excerpt}' },
     en: { title: 'Reply to your ticket: {subject}', body: '{excerpt}' },
+  },
+  showcase_nominated: {
+    id: { title: 'Proyekmu dipilih untuk galeri', body: 'Gurumu memilih proyekmu. Proyek tampil di galeri setelah semua anggota setuju (dan orang tua, bila di bawah 18 tahun).' },
+    en: { title: 'Your project was picked for the gallery', body: 'Your teacher picked your project. It appears in the gallery once every member agrees (and a parent, for under-18s).' },
+  },
+  showcase_published: {
+    id: { title: 'Proyekmu tampil di galeri', body: 'Selamat! Kamu dapat menariknya kembali kapan saja dari halaman proyek.' },
+    en: { title: 'Your project is in the gallery', body: 'Well done! You can take it down at any time from the project page.' },
+  },
+  peer_review: {
+    id: { title: 'Ulasan baru dari teman sekelas', body: 'Ada masukan baru untuk proyekmu.' },
+    en: { title: 'New review from a classmate', body: 'There is new feedback on your project.' },
   },
   pilot_request: {
     id: { title: 'Permintaan pilot baru', body: '{school} ({city}) ingin bergabung dengan program pilot.' },

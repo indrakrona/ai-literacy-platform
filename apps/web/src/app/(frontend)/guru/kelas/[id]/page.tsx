@@ -7,6 +7,7 @@ import { getDict } from '../../../../../i18n/server'
 import { classOverview, inactive } from '../../../../../lib/teacher'
 import { requireClassTeacher } from '../../../../../lib/teacher-guard'
 import { CreateChallengeForm } from '../../../../../components/forms/ChallengeForms'
+import { MakeTeams, Toggle } from '../../../../../components/forms/EngagementForms'
 import { ConsentShare } from '../../../../../components/forms/ConsentShare'
 import { challengeProgress } from '../../../../../lib/gamification'
 
@@ -21,7 +22,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const challengeRows = await Promise.all(challenges.map(async (c) => {
     const ids = (c.participants ?? []).map((p) => (typeof p === 'object' ? p.id : p))
     const done = await Promise.all(ids.map((uid) => challengeProgress(payload, uid, c)))
-    return { id: c.id, title: c.title, endsAt: c.endsAt, joined: ids.length, completed: done.filter((d) => d >= (c.target ?? 1)).length }
+    return { id: c.id, title: c.title, endsAt: c.endsAt, joined: ids.length, completed: done.filter((d) => d >= (c.target ?? 1)).length, mode: c.mode ?? 'individual', teams: (c.teams ?? []).length }
   }))
   const assignments = await payload.find({ collection: 'assignments', overrideAccess: false, user, where: { class: { equals: classId } }, depth: 1, sort: 'dueDate', limit: 50 })
   const track = typeof klass.track === 'object' ? klass.track : null
@@ -92,16 +93,21 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
         </Card>
         <Card>
           <h2 className="text-lg font-semibold">{id ? 'Tantangan kelas' : 'Class challenges'}</h2>
-          <p className="mt-1 text-sm text-muted">{id ? 'Kemajuan setiap siswa bersifat pribadi; Anda melihat jumlah peserta dan yang sudah selesai, tanpa peringkat.' : 'Each student’s progress is private; you see how many joined and finished, with no ranking.'}</p>
+          <p className="mt-1 text-sm text-muted">{id ? 'Kemajuan setiap siswa bersifat pribadi; Anda melihat jumlah peserta dan yang sudah selesai, tanpa peringkat. Untuk tantangan tim, bagi kelas menjadi tim: yang dibandingkan adalah skor tim.' : 'Each student’s progress is private; you see how many joined and finished, with no ranking. For a team challenge, split the class into teams: only team scores are compared.'}</p>
           <ul className="mt-3 divide-y divide-line text-sm">
             {challengeRows.map((r) => (
               <li key={r.id} className="flex flex-wrap justify-between gap-2 py-2">
                 <span className="font-medium">{r.title}</span>
-                <span className="text-muted">{r.joined} {id ? 'ikut' : 'joined'} · {r.completed} {id ? 'selesai' : 'finished'} · {id ? 'sampai' : 'until'} {new Date(r.endsAt).toLocaleDateString(id ? 'id-ID' : 'en-GB')}</span>
+                <span className="text-muted">{r.mode === 'team' ? `${r.teams} ${id ? 'tim' : 'teams'} · ` : ''}{r.joined} {id ? 'ikut' : 'joined'} · {r.completed} {id ? 'selesai' : 'finished'} · {id ? 'sampai' : 'until'} {new Date(r.endsAt).toLocaleDateString(id ? 'id-ID' : 'en-GB')}</span>
+                {new Date(r.endsAt) > new Date() && <span className="w-full"><MakeTeams challengeId={r.id} students={rows.length} locale={locale} />{r.mode === 'team' && <> · <Link href="/papan-skor" className="text-sm underline">{id ? 'Papan skor tim' : 'Team board'}</Link></>}</span>}
               </li>
             ))}
             {!challengeRows.length && <li className="py-2 text-muted">{id ? 'Belum ada tantangan.' : 'No challenges yet.'}</li>}
           </ul>
+          <div className="mt-4 flex flex-col gap-2 border-t border-line pt-3">
+            <Toggle path={`/api/classes/${classId}`} field="leaderboardOptIn" value={Boolean(klass.leaderboardOptIn)} label={id ? 'Tampilkan kelas ini di papan skor sekolah (berbasis kelas, tanpa nama siswa)' : 'Show this class on the school board (class-based, no student names)'} />
+            <p className="text-sm"><Link href="/acara" className="underline">{id ? 'Acara: hackathon, pekan tantangan, demo day' : 'Events: hackathons, challenge weeks, demo days'}</Link> · <Link href={`/guru/kelas/${classId}/nilai`} className="underline">{id ? 'Kiriman proyek, galeri dan ulasan teman' : 'Project submissions, gallery and peer reviews'}</Link></p>
+          </div>
           <details className="mt-4">
             <summary className="cursor-pointer font-semibold">{id ? 'Buat tantangan baru' : 'Create a new challenge'}</summary>
             <div className="mt-3"><CreateChallengeForm classId={classId} locale={locale} /></div>

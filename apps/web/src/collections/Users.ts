@@ -4,6 +4,7 @@ import { ROLES, ROLE_LABELS, hasRole, needsGuardianConsent, normalizeIdPhone } f
 import { canAccessAdminPanel, fieldSuperAdminOnly, readUsers, selfOrSuperAdmin, superAdminOnly } from '../access'
 import { signupEndpoint } from '../endpoints/accounts'
 import { linkChild, makeParentCode, parentSignup, unlinkGuardian } from '../endpoints/parents'
+import { parentApprove, portfolioSettings } from './Engagement'
 import { escapeHtml } from '../lib/emails'
 
 const VALID_ROLES = new Set<string>(ROLES)
@@ -66,7 +67,7 @@ export const Users: CollectionConfig = {
       },
     },
   },
-  endpoints: [signupEndpoint, manageEndpoint, parentSignup, linkChild, makeParentCode, unlinkGuardian],
+  endpoints: [signupEndpoint, manageEndpoint, parentSignup, linkChild, makeParentCode, unlinkGuardian, parentApprove, portfolioSettings],
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'roles', 'school'],
@@ -194,6 +195,23 @@ export const Users: CollectionConfig = {
       index: true,
       access: { read: ({ req, doc }) => Boolean(req.user && (req.user.id === doc?.id || hasRole(req.user as { roles?: string[] }, 'super_admin'))), update: fieldSuperAdminOnly },
       admin: { hidden: true },
+    },
+    { name: 'hideNameOnBoards', label: 'Hide my name on team boards', type: 'checkbox', defaultValue: false },
+    { name: 'galleryParentApproved', type: 'checkbox', defaultValue: false, access: { update: fieldSuperAdminOnly }, admin: { position: 'sidebar', description: 'A parent allowed this under-18’s projects in the gallery' } },
+    {
+      name: 'portfolio',
+      type: 'group',
+      access: { update: fieldSuperAdminOnly },
+      admin: { description: 'Public portfolio page (settings are changed by the user on their Account page)' },
+      fields: [
+        { name: 'enabled', type: 'checkbox', defaultValue: false },
+        { name: 'handle', type: 'text', index: true },
+        { name: 'headline', type: 'text' },
+        { name: 'showProjects', type: 'checkbox', defaultValue: true },
+        { name: 'showBadges', type: 'checkbox', defaultValue: true },
+        { name: 'showCertificate', type: 'checkbox', defaultValue: false },
+        { name: 'parentApproved', type: 'checkbox', defaultValue: false, admin: { description: 'Needed for under-18s' } },
+      ],
     },
     { name: 'deletedAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { readOnly: true, position: 'sidebar', condition: (d) => Boolean(d?.deletedAt), description: 'Erased at the person’s request' } },
     { name: 'parentLinkExpiresAt', type: 'date', access: { update: fieldSuperAdminOnly }, admin: { hidden: true } },

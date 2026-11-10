@@ -23,6 +23,7 @@ import * as migration_20261110_045609_parents_announcements from './20261110_045
 import * as migration_20261110_060908_school_reports_data_rights from './20261110_060908_school_reports_data_rights';
 import * as migration_20261110_091456_cms_workflow_help from './20261110_091456_cms_workflow_help';
 import * as migration_20261110_161506_accommodations from './20261110_161506_accommodations';
+import * as migration_20261110_164027_engagement from './20261110_164027_engagement';
 
 export const migrations = [
   {
@@ -148,6 +149,11 @@ export const migrations = [
   {
     up: migration_20261110_161506_accommodations.up,
     down: migration_20261110_161506_accommodations.down,
-    name: '20261110_161506_accommodations'
+    name: '20261110_161506_accommodations',
+  },
+  {
+    up: migration_20261110_164027_engagement.up,
+    down: migration_20261110_164027_engagement.down,
+    name: '20261110_164027_engagement'
   },
 ];

@@ -23,6 +23,7 @@ import { Announcements } from './collections/Announcements'
 import { KkaOutcomes } from './collections/KkaOutcomes'
 import { HelpArticles, SupportTickets } from './collections/Support'
 import { Accommodations } from './collections/Accommodations'
+import { Events, PeerReviews, ShowcaseVotes } from './collections/Engagement'
 import { DataRequests } from './collections/DataRequests'
 import { runJobs } from './endpoints/parents'
 import { Bookings, TestSessions, Vouchers } from './collections/TestSessions'
@@ -59,7 +60,9 @@ export default buildConfig({
   },
   // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
   collections: [
-    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, withApprovalWorkflow(Lessons), Media, TestItems, TestForms, withApprovalWorkflow(AiActivities), Assignments, withApprovalWorkflow(ProjectBriefs), Orders, Reports, withApprovalWorkflow(Pages), PilotRequests, withApprovalWorkflow(Badges, { titleField: 'name' }), Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes, HelpArticles].map(withAudit),
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, withApprovalWorkflow(Lessons), Media, TestItems, TestForms, withApprovalWorkflow(AiActivities), Assignments, withApprovalWorkflow(ProjectBriefs), Orders, Reports, withApprovalWorkflow(Pages), PilotRequests, withApprovalWorkflow(Badges, { titleField: 'name' }), Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes, HelpArticles, Events].map(withAudit),
+    PeerReviews,
+    ShowcaseVotes,
     SupportTickets,
     Accommodations,
     DataRequests,

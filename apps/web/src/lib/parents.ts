@@ -69,6 +69,8 @@ export interface ChildProgress {
   id: number
   name: string
   consentStatus: string
+  galleryParentApproved: boolean
+  portfolioParentApproved: boolean
   classes: string[]
   lessonsCompleted: number
   recentLessons: { title: string; completedAt: string }[]
@@ -130,6 +132,8 @@ export async function childProgress(payload: Payload, childId: number, locale: '
     id: child.id,
     name: child.name,
     consentStatus: child.consentStatus ?? 'not_required',
+    galleryParentApproved: Boolean((child as { galleryParentApproved?: boolean }).galleryParentApproved),
+    portfolioParentApproved: Boolean((child as { portfolio?: { parentApproved?: boolean } }).portfolio?.parentApproved),
     classes: classes.docs.map((c) => c.name),
     lessonsCompleted: done.totalDocs,
     recentLessons: done.docs.map((p) => ({ title: typeof p.lesson === 'object' ? (p.lesson.title ?? '') : '', completedAt: p.completedAt ?? p.updatedAt })),

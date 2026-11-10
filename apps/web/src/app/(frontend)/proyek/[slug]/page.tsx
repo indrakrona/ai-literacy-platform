@@ -59,6 +59,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </ol>
         </Card>
 
+        {sub && (
+          <p className="text-sm"><Link className="font-semibold underline" href={`/proyek/kiriman/${sub.id}`}>{id ? 'Halaman kirimanmu: ulasan teman, galeri dan acara →' : 'Your submission page: peer reviews, gallery and events →'}</Link></p>
+        )}
         {sub?.status === 'graded' && total && (
           <Notice tone="ok" title={`${id ? 'Nilai' : 'Mark'}: ${total.total}/${total.max}`}>
             {sub.feedback || (id ? 'Gurumu belum menulis umpan balik.' : 'No written feedback yet.')}

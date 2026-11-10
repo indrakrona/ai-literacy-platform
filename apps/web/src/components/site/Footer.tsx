@@ -15,6 +15,7 @@ export async function Footer({ locale }: { locale: 'id' | 'en' }) {
         <nav aria-label={id ? 'Tautan situs' : 'Site links'} className="flex flex-col gap-1.5">
           {nav.map((l) => <Link key={l.href} href={l.href} className="text-muted hover:text-ink">{l.label}</Link>)}
           {legal.map((l) => <Link key={l.href} href={l.href} className="text-muted hover:text-ink">{l.label}</Link>)}
+          <Link href="/galeri" className="text-muted hover:text-ink">{id ? 'Galeri proyek' : 'Project gallery'}</Link>
           <Link href="/bantuan" className="text-muted hover:text-ink">{id ? 'Pusat bantuan' : 'Help centre'}</Link>
           <Link href="/verifikasi" className="text-muted hover:text-ink">{id ? 'Verifikasi sertifikat' : 'Verify a certificate'}</Link>
         </nav>

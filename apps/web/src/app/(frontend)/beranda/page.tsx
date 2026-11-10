@@ -80,6 +80,12 @@ export default async function DashboardPage() {
         {isStudent && <ProgressPanel payload={payload} userId={user.id} classIds={classes.docs.map((c) => c.id)} locale={locale} />}
         <div className="flex flex-wrap gap-3">
         <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
+        <nav aria-label={locale === 'id' ? 'Bersama teman' : 'With classmates'} className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+          <Link href="/papan-skor" className="underline">{locale === 'id' ? 'Papan skor tim' : 'Team boards'}</Link>
+          <Link href="/proyek/ulasan" className="underline">{locale === 'id' ? 'Ulas proyek teman' : 'Review classmates’ projects'}</Link>
+          <Link href="/galeri" className="underline">{locale === 'id' ? 'Galeri proyek' : 'Project gallery'}</Link>
+          <Link href="/acara" className="underline">{locale === 'id' ? 'Acara' : 'Events'}</Link>
+        </nav>
         {user.roles?.includes('super_admin') && (
           <Link href="/operasi" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Operasi' : 'Operations'}</Link>
         )}

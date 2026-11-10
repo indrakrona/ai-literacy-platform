@@ -8,6 +8,8 @@ import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { ParentCodeButton, UnlinkButton } from '../../../components/forms/ParentForms'
 import { MyDataPanel } from '../../../components/forms/DataRightsForms'
+import { PortfolioForm, Toggle } from '../../../components/forms/EngagementForms'
+import { isMinor, portfolioPublic } from '../../../lib/engagement'
 
 export default async function AccountPage() {
   const user = await getCurrentUser()
@@ -57,6 +59,27 @@ export default async function AccountPage() {
               </ul>
             )}
             <ParentCodeButton locale={locale} />
+          </Card>
+        </div>
+      )}
+      {isStudent && (
+        <div className="mt-5">
+          <Card>
+            <h2 className="text-lg font-semibold">{id ? 'Portofolio dan papan skor' : 'Portfolio and boards'}</h2>
+            <p className="mt-1 mb-4 text-sm text-muted">
+              {id ? 'Halaman portofolio menampilkan proyek galeri, lencana dan sertifikatmu. Mati secara bawaan; kamu yang memutuskan.' : 'Your portfolio page shows your gallery projects, badges and certificate. It is off unless you turn it on.'}
+              {portfolioPublic(user as never) && user.portfolio?.handle ? <> {' '}<a className="underline" href={`/portofolio/${user.portfolio.handle}`}>{id ? 'Lihat halamanku' : 'View my page'}</a></> : null}
+            </p>
+            <PortfolioForm
+              initial={{ enabled: Boolean(user.portfolio?.enabled), handle: user.portfolio?.handle ?? '', headline: user.portfolio?.headline ?? '', showProjects: user.portfolio?.showProjects !== false, showBadges: user.portfolio?.showBadges !== false, showCertificate: Boolean(user.portfolio?.showCertificate) }}
+              handleBase={`${(process.env.NEXT_PUBLIC_SERVER_URL || '').replace(/^https?:\/\//, '')}/portofolio`}
+              minor={isMinor(user)}
+              parentApproved={Boolean(user.portfolio?.parentApproved)}
+              locale={locale}
+            />
+            <div className="mt-4 border-t border-line pt-3">
+              <Toggle path={`/api/users/${user.id}`} field="hideNameOnBoards" value={Boolean(user.hideNameOnBoards)} label={id ? 'Sembunyikan namaku di papan skor tim (tampil sebagai “Anggota”)' : 'Hide my name on team boards (shown as “Member”)'} />
+            </div>
           </Card>
         </div>
       )}

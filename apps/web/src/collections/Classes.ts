@@ -53,6 +53,7 @@ export const Classes: CollectionConfig = {
       validate: (v: unknown) => (typeof v === 'string' && /^\d{4}\/\d{4}$/.test(v)) || 'Use the form 2026/2027',
     },
     { name: 'track', type: 'relationship', relationTo: 'tracks' },
+    { name: 'leaderboardOptIn', label: 'Show this class on the school leaderboard', type: 'checkbox', defaultValue: false, admin: { description: 'Team-based: the class is the team, no student names' } },
     {
       name: 'joinCode',
       type: 'text',

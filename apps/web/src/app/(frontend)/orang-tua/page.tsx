@@ -6,6 +6,7 @@ import { Card, Notice } from '../../../components/ui'
 import { Announcements } from '../../../components/Announcements'
 import { LinkChildForm, UnlinkButton } from '../../../components/forms/ParentForms'
 import { RequestChildDeletion, WithdrawConsent } from '../../../components/forms/DataRightsForms'
+import { Toggle } from '../../../components/forms/EngagementForms'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { childProgress, childrenOf, LINK_PROBLEMS, weekLine } from '../../../lib/parents'
@@ -134,6 +135,14 @@ export default async function ParentPage() {
                 )}
               </section>
             </div>
+            <section className="mt-5 border-t border-line pt-4">
+              <h3 className="font-semibold">{id ? 'Izin tampil publik' : 'Public sharing'}</h3>
+              <p className="mt-1 text-sm text-muted">{id ? 'Bila diizinkan, nama tampil disingkat (mis. “Ayu L.”). Anda dapat mencabutnya kapan saja.' : 'If allowed, the name is shortened (e.g. “Ayu L.”). You can withdraw at any time.'}</p>
+              <div className="mt-2 flex flex-col gap-2">
+                <Toggle path="/api/users/parent-approve" method="POST" field="value" extra={{ childId: c.id, what: 'gallery' }} value={c.galleryParentApproved} label={id ? 'Proyek pilihan guru boleh tampil di galeri' : 'Projects picked by the teacher may appear in the gallery'} />
+                <Toggle path="/api/users/parent-approve" method="POST" field="value" extra={{ childId: c.id, what: 'portfolio' }} value={c.portfolioParentApproved} label={id ? 'Halaman portofolio boleh publik (jika anak mengaktifkannya)' : 'The portfolio page may be public (if your child turns it on)'} />
+              </div>
+            </section>
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
               {c.consentStatus === 'granted' && <WithdrawConsent childId={c.id} childName={c.name.split(' ')[0] ?? c.name} locale={locale} />}
               <RequestChildDeletion childId={c.id} childName={c.name.split(' ')[0] ?? c.name} locale={locale} />

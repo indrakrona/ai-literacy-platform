@@ -33,7 +33,7 @@ export default async function GradingQueuePage({ params }: { params: Promise<{ i
             <Card key={s.id}>
               <p className="text-sm font-semibold text-brand-deep uppercase">{brief?.title}</p>
               <h2 className="mt-1 text-lg font-semibold">{names(s)}</h2>
-              <p className="text-sm text-muted">{id ? 'Dikirim' : 'Sent'} {date(s.submittedAt)}</p>
+              <p className="text-sm text-muted">{id ? 'Dikirim' : 'Sent'} {date(s.submittedAt)} · <a className="underline" href={`/proyek/kiriman/${s.id}`}>{id ? 'ulasan teman' : 'peer reviews'}</a></p>
               <p className="mt-3 whitespace-pre-line">{s.text}</p>
               {(s.links ?? []).length > 0 && (
                 <ul className="mt-2 text-sm">
@@ -57,7 +57,9 @@ export default async function GradingQueuePage({ params }: { params: Promise<{ i
                     <details>
                       <summary className="cursor-pointer">
                         <span className="font-medium">{names(s)}</span> · {briefOf(s)?.title} · <span className="font-semibold">{t ? `${t.total}/${t.max}` : ''}</span>
+                        {s.showcase === 'published' ? ' · 🖼' : s.showcase === 'nominated' ? (id ? ' · dipilih untuk galeri' : ' · nominated') : ''}
                       </summary>
+                      <p className="mt-2 text-sm"><a className="underline" href={`/proyek/kiriman/${s.id}`}>{id ? 'Ulasan teman dan galeri' : 'Peer reviews and gallery'}</a></p>
                       <div className="mt-3">
                         <p className="mb-3 text-sm text-muted">{id ? 'Ubah nilai bila perlu:' : 'Change the marks if needed:'}</p>
                         <GradeForm

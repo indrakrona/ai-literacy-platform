@@ -1,3 +1,4 @@
+import { makeTeams } from '../Engagement'
 import type { Access, CollectionConfig, Endpoint, GlobalConfig } from 'payload'
 import { BIG_IDEAS, BIG_IDEA_LABELS, hasRole } from '@ailit/shared'
 import { roles } from '../../access'
@@ -126,7 +127,7 @@ export const Challenges: CollectionConfig = {
     update: teacherOfChallengeClass,
     delete: teacherOfChallengeClass,
   },
-  endpoints: [join],
+  endpoints: [join, makeTeams],
   hooks: {
     beforeChange: [({ req, data, operation }) => {
       if (operation === 'create' && req.user) data.createdBy = req.user.id
@@ -142,6 +143,8 @@ export const Challenges: CollectionConfig = {
       { name: 'target', label: 'Lessons to complete', type: 'number', required: true, min: 1, max: 18, defaultValue: 3 },
     ] },
     { type: 'row', fields: [{ name: 'startsAt', type: 'date', required: true }, { name: 'endsAt', type: 'date', required: true }] },
+    { name: 'mode', type: 'select', defaultValue: 'individual', options: [{ value: 'individual', label: 'Individual (private progress)' }, { value: 'team', label: 'Teams (team scores only)' }] },
+    { name: 'teams', type: 'array', admin: { condition: (d) => d?.mode === 'team' }, fields: [{ name: 'name', type: 'text', required: true }, { name: 'members', type: 'relationship', relationTo: 'users', hasMany: true }] },
     { name: 'participants', type: 'relationship', relationTo: 'users', hasMany: true, admin: { readOnly: true } },
     { name: 'createdBy', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },
   ],
