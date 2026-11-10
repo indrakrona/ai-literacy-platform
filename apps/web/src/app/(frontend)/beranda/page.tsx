@@ -77,6 +77,9 @@ export default async function DashboardPage() {
         {user.roles?.some((r) => r === 'school_admin' || r === 'super_admin') && (
           <Link href="/sekolah" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Ruang Sekolah' : 'School space'}</Link>
         )}
+        {user.roles?.some((r) => r === 'proctor' || r === 'super_admin') && (
+          <Link href="/pengawas" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Pengawasan tes' : 'Test proctoring'}</Link>
+        )}
         {user.roles?.some((r) => r === 'rater' || r === 'super_admin') && (
           <Link href="/penilai" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Antrean penilai' : 'Rating queue'}</Link>
         )}

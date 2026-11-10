@@ -1,6 +1,6 @@
 import type { CollectionConfig, Endpoint, PayloadRequest } from 'payload'
 import { hasRole } from '@ailit/shared'
-import { scoreAttempt, toPaperItem } from '../lib/ailis'
+import { optionOrdersFor, scoreAttempt, toDisplayed, toOriginal, toPaperItem } from '../lib/ailis'
 import type { TestAttempt, TestItem } from '../payload-types'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
@@ -70,6 +70,7 @@ const start: Endpoint = {
       ;[order[i], order[j]] = [order[j]!, order[i]!]
     }
     const now = Date.now()
+    const formItemDocs = (await req.payload.find({ collection: 'test-items', overrideAccess: true, depth: 0, limit: order.length || 1, where: { id: { in: order } } })).docs
     const attempt = await req.payload.create({
       collection: 'test-attempts',
       overrideAccess: true,
@@ -80,8 +81,9 @@ const start: Endpoint = {
         startedAt: new Date(now).toISOString(),
         deadline: new Date(now + form.timeLimitMinutes * 60_000).toISOString(),
         itemOrder: order,
+        optionOrder: optionOrdersFor(formItemDocs),
         responses: {},
-        integrity: { tabHidden: 0, pastes: 0 },
+        integrity: { tabHidden: 0, pastes: 0, fullscreenExits: 0, log: [] },
       },
     })
     await track(req.payload, { name: 'test_started', user: req.user as unknown as Actor, headers: req.headers, props: { attemptId: attempt.id } })
@@ -97,11 +99,18 @@ const paper: Endpoint = {
     const attempt = await ownAttempt(req)
     if (attempt instanceof Response) return attempt
     const items = await formItems(req, attempt)
+    const orders = (attempt.optionOrder ?? {}) as Record<string, number[]>
+    const saved = (attempt.responses ?? {}) as Record<string, { selected?: number[]; text?: string }>
+    const responses = Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, v.selected ? { ...v, selected: toDisplayed(v.selected, orders[k]) } : v]))
     return Response.json({
       status: attempt.status,
       deadline: attempt.deadline,
-      items: items.map(toPaperItem),
-      responses: attempt.responses ?? {},
+      items: items.map((it) => {
+        const pi = toPaperItem(it)
+        const o = orders[String(it.id)]
+        return o ? { ...pi, options: o.map((i) => pi.options[i]!) } : pi
+      }),
+      responses,
     })
   },
 }
@@ -117,7 +126,9 @@ const answer: Endpoint = {
     const b = await body(req)
     const itemId = String(b.itemId ?? '')
     if (!(attempt.itemOrder as number[]).map(String).includes(itemId)) return bad('Item not in this test')
-    const selected = Array.isArray(b.selected) ? b.selected.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < 10) : undefined
+    const shown = Array.isArray(b.selected) ? b.selected.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < 10) : undefined
+    // The candidate answers in the shuffled order they see; store original option indices.
+    const selected = shown ? toOriginal(shown, ((attempt.optionOrder ?? {}) as Record<string, number[]>)[itemId]) : undefined
     const text = typeof b.text === 'string' ? b.text.slice(0, 20_000) : undefined
     const responses = { ...((attempt.responses ?? {}) as Record<string, unknown>) }
     responses[itemId] = { ...(responses[itemId] as object), ...(selected ? { selected } : {}), ...(text !== undefined ? { text } : {}), savedAt: new Date().toISOString() }
@@ -134,11 +145,14 @@ const integrity: Endpoint = {
     const attempt = await ownAttempt(req)
     if (attempt instanceof Response) return attempt
     const { event } = await body(req)
-    const counts = { tabHidden: 0, pastes: 0, ...((attempt.integrity ?? {}) as Record<string, number>) }
+    const prev = (attempt.integrity ?? {}) as { tabHidden?: number; pastes?: number; fullscreenExits?: number; log?: { at: string; event: string }[] }
+    const counts = { tabHidden: prev.tabHidden ?? 0, pastes: prev.pastes ?? 0, fullscreenExits: prev.fullscreenExits ?? 0 }
     if (event === 'tab_hidden') counts.tabHidden++
     else if (event === 'paste') counts.pastes++
+    else if (event === 'fullscreen_exit') counts.fullscreenExits++
     else return bad('Unknown event')
-    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { integrity: counts } })
+    const log = [...(prev.log ?? []), { at: new Date().toISOString(), event: String(event) }].slice(-200)
+    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { integrity: { ...counts, log } } })
     return Response.json({ ok: true })
   },
 }
@@ -201,6 +215,27 @@ const rate: Endpoint = {
   },
 }
 
+export const INCIDENT_TYPES = ['device_issue', 'connection', 'left_room', 'suspected_cheating', 'identity_check', 'other'] as const
+
+/** POST /api/test-attempts/:id/incident {type, note} — a proctor records something that happened during the test. */
+const incident: Endpoint = {
+  path: '/:id/incident',
+  method: 'post',
+  handler: async (req) => {
+    const u = req.user as { id: number; roles?: string[] } | null
+    if (!hasRole(u as { roles?: string[] }, 'proctor', 'super_admin')) return bad('Proctors only', 403)
+    const attempt = await req.payload.findByID({ collection: 'test-attempts', id: Number(req.routeParams?.id), overrideAccess: true, depth: 0 }).catch(() => null)
+    if (!attempt) return bad('Not found', 404)
+    const b = await body(req)
+    const type = INCIDENT_TYPES.find((t) => t === b.type)
+    if (!type) return bad('Unknown incident type')
+    const note = typeof b.note === 'string' ? b.note.trim().slice(0, 1000) : ''
+    const incidents = [...((attempt.incidents ?? []) as unknown[]), { at: new Date().toISOString(), by: u!.id, type, note }]
+    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { incidents } })
+    return Response.json({ ok: true, count: incidents.length })
+  },
+}
+
 export const TestAttempts: CollectionConfig = {
   slug: 'test-attempts',
   admin: {
@@ -219,7 +254,7 @@ export const TestAttempts: CollectionConfig = {
     update: () => false,
     delete: ({ req }) => hasRole(req.user as { roles?: string[] }, 'super_admin'),
   },
-  endpoints: [start, paper, answer, integrity, submit, rate],
+  endpoints: [start, paper, answer, integrity, submit, rate, incident],
   fields: [
     { name: 'candidate', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'form', type: 'relationship', relationTo: 'test-forms', required: true, index: true },
@@ -237,7 +272,9 @@ export const TestAttempts: CollectionConfig = {
     { name: 'responses', type: 'json' },
     { name: 'points', type: 'json' },
     { name: 'ratings', type: 'json' },
+    { name: 'optionOrder', type: 'json', admin: { description: 'Shuffled answer order per item for this candidate' } },
     { name: 'integrity', type: 'json' },
+    { name: 'incidents', type: 'json', admin: { description: 'Logged by the proctor' } },
     { name: 'report', type: 'json' },
   ],
 }

@@ -26,6 +26,9 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
   const [saving, setSaving] = useState(false)
   const [now, setNow] = useState(Date.now())
   const [closed, setClosed] = useState(false)
+  const [canFullscreen, setCanFullscreen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [leftFullscreen, setLeftFullscreen] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -38,9 +41,24 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
     const tick = setInterval(() => setNow(Date.now()), 1000)
     const onHide = () => document.visibilityState === 'hidden' && api(`/api/test-attempts/${attemptId}/integrity`, { body: { event: 'tab_hidden' } })
     const onPaste = () => api(`/api/test-attempts/${attemptId}/integrity`, { body: { event: 'paste' } })
+    // Full screen where the browser supports it (most phones' Safari does not; then only tab switches are logged).
+    setCanFullscreen(Boolean(document.fullscreenEnabled))
+    const onFs = () => {
+      const fs = Boolean(document.fullscreenElement)
+      setIsFullscreen((was) => {
+        if (was && !fs) {
+          setLeftFullscreen(true)
+          void api(`/api/test-attempts/${attemptId}/integrity`, { body: { event: 'fullscreen_exit' } })
+        }
+        return fs
+      })
+      if (fs) setLeftFullscreen(false)
+    }
+    document.addEventListener('fullscreenchange', onFs)
     document.addEventListener('visibilitychange', onHide)
     document.addEventListener('paste', onPaste)
     return () => {
+      document.removeEventListener('fullscreenchange', onFs)
       clearInterval(tick)
       document.removeEventListener('visibilitychange', onHide)
       document.removeEventListener('paste', onPaste)
@@ -89,6 +107,12 @@ export function TestPlayer({ attemptId, t }: { attemptId: number; t: Dict }) {
 
   return (
     <div className="flex flex-col gap-5">
+      {canFullscreen && !isFullscreen && (
+        <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 text-sm ${leftFullscreen ? 'border-danger/40 bg-danger/10' : 'border-line bg-paper'}`} role={leftFullscreen ? 'alert' : undefined}>
+          {leftFullscreen && <p className="font-semibold">{t.test.fullscreenLeft}</p>}
+          <button type="button" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper">{t.test.fullscreenStart}</button>
+        </div>
+      )}
       <div className="flex items-center justify-between text-sm font-semibold">
         <span>{fmt(t.test.question, { n: String(i + 1), total: String(paper.items.length) })}</span>
         <span aria-live="polite" className={left < 5 * 60000 ? 'text-danger' : ''}>{t.test.timeLeft}: {mm}:{ss}</span>

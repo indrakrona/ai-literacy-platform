@@ -13,6 +13,7 @@ import * as migration_20261109_172648_analytics from './20261109_172648_analytic
 import * as migration_20261109_223128_notifications_reports from './20261109_223128_notifications_reports';
 import * as migration_20261109_224354_public_site from './20261109_224354_public_site';
 import * as migration_20261110_000448_gamification from './20261110_000448_gamification';
+import * as migration_20261110_001722_ailis_integrity from './20261110_001722_ailis_integrity';
 
 export const migrations = [
   {
@@ -88,6 +89,11 @@ export const migrations = [
   {
     up: migration_20261110_000448_gamification.up,
     down: migration_20261110_000448_gamification.down,
-    name: '20261110_000448_gamification'
+    name: '20261110_000448_gamification',
+  },
+  {
+    up: migration_20261110_001722_ailis_integrity.up,
+    down: migration_20261110_001722_ailis_integrity.down,
+    name: '20261110_001722_ailis_integrity'
   },
 ];

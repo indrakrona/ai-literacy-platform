@@ -131,7 +131,9 @@ const id = {
     band: 'Band keseluruhan',
     provisional: 'Hasil sementara: batas band akan ditetapkan panel ahli setelah uji coba.',
     domains: 'Skor per domain',
-    integrityNote: 'Berpindah tab dan menempel teks dicatat selama tes.',
+    integrityNote: 'Berpindah tab, menempel teks, dan keluar dari layar penuh dicatat selama tes.',
+    fullscreenStart: 'Masuk layar penuh',
+    fullscreenLeft: 'Anda keluar dari layar penuh. Kejadian ini dicatat. Kembali ke layar penuh untuk melanjutkan dengan tenang.',
   },
   home: {
     hello: 'Halo, {name}',
@@ -293,7 +295,9 @@ const en: Dict = {
     band: 'Overall band',
     provisional: 'Provisional result: band boundaries will be set by an expert panel after the pilot.',
     domains: 'Score by domain',
-    integrityNote: 'Switching tabs and pasting text are recorded during the test.',
+    integrityNote: 'Switching tabs, pasting text and leaving full screen are recorded during the test.',
+    fullscreenStart: 'Enter full screen',
+    fullscreenLeft: 'You left full screen. This has been recorded. Return to full screen to carry on.',
   },
   home: {
     hello: 'Hello, {name}',

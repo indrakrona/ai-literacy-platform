@@ -62,3 +62,26 @@ export function scoreAttempt(items: TestItem[], attempt: Pick<TestAttempt, 'resp
   const report = pendingRatings === 0 ? (buildReport(items.map(toEngineItem), points) as unknown as Record<string, unknown>) : null
   return { points, pendingRatings, report }
 }
+
+/**
+ * Answer-option shuffling (spec G5). Each attempt gets its own option order per item.
+ * order[displayedIndex] = originalIndex. Responses are stored in original indices so scoring never changes.
+ */
+export function shuffledOrder(n: number, rand: () => number = Math.random): number[] {
+  const order = Array.from({ length: n }, (_, i) => i)
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1))
+    ;[order[i], order[j]] = [order[j]!, order[i]!]
+  }
+  return order
+}
+
+export const toOriginal = (displayed: number[], order?: number[]) => (order ? displayed.map((d) => order[d]).filter((x): x is number => x !== undefined) : displayed)
+export const toDisplayed = (original: number[], order?: number[]) => (order ? original.map((o) => order.indexOf(o)).filter((x) => x >= 0) : original)
+
+/** Option orders for every choice item in an attempt. */
+export function optionOrdersFor(items: TestItem[], rand: () => number = Math.random): Record<string, number[]> {
+  const out: Record<string, number[]> = {}
+  for (const it of items) if (it.type !== 'performance_task' && (it.options?.length ?? 0) > 1) out[String(it.id)] = shuffledOrder(it.options!.length, rand)
+  return out
+}

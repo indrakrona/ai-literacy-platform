@@ -766,7 +766,31 @@ export interface TestAttempt {
     | number
     | boolean
     | null;
+  /**
+   * Shuffled answer order per item for this candidate
+   */
+  optionOrder?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   integrity?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Logged by the proctor
+   */
+  incidents?:
     | {
         [k: string]: unknown;
       }
@@ -1785,7 +1809,9 @@ export interface TestAttemptsSelect<T extends boolean = true> {
   responses?: T;
   points?: T;
   ratings?: T;
+  optionOrder?: T;
   integrity?: T;
+  incidents?: T;
   report?: T;
   updatedAt?: T;
   createdAt?: T;
