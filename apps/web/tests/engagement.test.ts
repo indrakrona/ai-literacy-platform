@@ -24,7 +24,7 @@ async function classWith(n: number, extra: Record<string, unknown> = {}) {
   return { school, teacher, students, klass }
 }
 async function brief() {
-  return (await payload.find({ collection: 'project-briefs', overrideAccess: true, limit: 1 })).docs[0] ?? payload.create({ collection: 'project-briefs', overrideAccess: true, data: { title: 'B', slug: `b-${uniq()}`, level: 'smp', competency: 'CRE-1', problem: 'p', deliverables: 'd', rubric: [{ criterion: 'c' }], _status: 'published' } as never })
+  return (await payload.find({ collection: 'project-briefs', overrideAccess: true, limit: 1 })).docs[0] ?? payload.create({ collection: 'project-briefs', overrideAccess: true, data: { title: 'B', slug: `b-${uniq()}`, level: 'smp', competency: 'CRE-1', problem: 'p', deliverables: 'd', rubric: [{ criterion: 'c1' }, { criterion: 'c2' }], _status: 'published' } as never })
 }
 
 beforeAll(async () => {
