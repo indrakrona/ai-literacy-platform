@@ -6,6 +6,7 @@ import { Card, Notice } from '../../../components/ui'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { aiLab, consentStats, funnel, learning, loadEvents, overview, paths, retention } from '../../../lib/metrics'
+import { bandDistribution, domainProfile, itemStats, type ScoredAttempt } from '../../../lib/assessment-stats'
 
 const TABS = [
   { key: 'ringkasan', id: 'Ringkasan', en: 'Overview' },
@@ -14,6 +15,8 @@ const TABS = [
   { key: 'retensi', id: 'Retensi', en: 'Retention' },
   { key: 'belajar', id: 'Pembelajaran', en: 'Learning' },
   { key: 'ailab', id: 'AI Lab', en: 'AI Lab' },
+  { key: 'asesmen', id: 'Asesmen', en: 'Assessment' },
+  { key: 'sekolah', id: 'Sekolah', en: 'Schools' },
 ] as const
 
 const usd = (v: number) => (v > 0 && v < 0.01 ? '<$0.01' : `$${v.toFixed(2)}`)
@@ -164,6 +167,114 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
           </table></div>
         </Card>
       </>
+    )
+  } else if (tab === 'asesmen') {
+    const attempts = (await payload.find({ collection: 'test-attempts', overrideAccess: true, depth: 0, pagination: false, limit: 0, where: { status: { equals: 'scored' } } })).docs
+    const scored = attempts.map((a) => ({ points: (a.points ?? {}) as Record<string, number>, report: a.report as ScoredAttempt['report'] }))
+    const itemIds = [...new Set(attempts.flatMap((a) => Object.keys((a.points ?? {}) as object).map(Number)))]
+    const items = itemIds.length ? (await payload.find({ collection: 'test-items', overrideAccess: true, depth: 0, limit: itemIds.length, where: { id: { in: itemIds } } })).docs : []
+    const stats = itemStats(scored, items.map((it) => ({ id: it.id, code: it.code, maxPoints: it.type === 'performance_task' ? Math.max(0, ...(it.rubric ?? []).map((r) => r.points)) : 1 })))
+    const bands = bandDistribution(scored)
+    const maxBand = Math.max(1, ...bands)
+    const profile = domainProfile(scored)
+    const flagged = stats.filter((s) => s.flags.length).sort((a, b) => (a.discrimination ?? 1) - (b.discrimination ?? 1))
+    const flagLabel: Record<string, string> = id
+      ? { too_hard: 'terlalu sulit', too_easy: 'terlalu mudah', weak_discrimination: 'daya beda lemah', negative_discrimination: 'daya beda negatif' }
+      : { too_hard: 'too hard', too_easy: 'too easy', weak_discrimination: 'weak discrimination', negative_discrimination: 'negative discrimination' }
+    const domainLabel: Record<string, string> = id
+      ? { understand: 'Memahami AI', use_create: 'Memakai & berkarya', evaluate: 'Mengevaluasi', protect: 'Melindungi', apply: 'Menerapkan' }
+      : { understand: 'Understanding AI', use_create: 'Using & creating', evaluate: 'Evaluating', protect: 'Protecting', apply: 'Applying' }
+    body = (
+      <>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {stat(id ? 'Tes selesai dinilai' : 'Tests scored', attempts.length)}
+          {stat(id ? 'Butir dianalisis' : 'Items analysed', stats.length)}
+          {stat(id ? 'Butir ditandai' : 'Items flagged', flagged.length, id ? 'perlu ditinjau panel' : 'for panel review')}
+          {stat(id ? 'Rata-rata skor' : 'Mean score', scored.length ? (scored.reduce((a, c) => a + (c.report?.overall ?? 0), 0) / scored.length).toFixed(0) + '%' : '—')}
+        </div>
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Sebaran band skor' : 'Score band distribution'}</h2>
+          <div className="mt-4 flex h-36 items-end gap-2 border-b border-line" role="img" aria-label={id ? 'Grafik sebaran band' : 'Band distribution chart'}>
+            {bands.map((n, b) => (
+              <div key={b} className="group relative flex h-full flex-1 flex-col items-center justify-end">
+                <div className="w-full rounded-t bg-brand-deep" style={{ height: `${(n / maxBand) * 100}%`, minHeight: n ? 2 : 0 }} />
+                <span className="pointer-events-none absolute -top-6 hidden rounded bg-ink px-2 py-0.5 text-xs text-paper group-hover:block">{n}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-1 flex gap-2 text-center text-xs text-muted">{bands.map((_, b) => <span key={b} className="flex-1">{b}</span>)}</div>
+          <p className="mt-2 text-xs text-muted">{id ? 'Ambang band masih sementara sampai ditetapkan panel ahli.' : 'Band thresholds are provisional until set by the expert panel.'}</p>
+        </Card>
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Profil rata-rata sub-skor' : 'Average sub-score profile'}</h2>
+          <ul className="mt-3 flex flex-col gap-2 text-sm">
+            {Object.entries(profile).map(([d, v]) => (
+              <li key={d}>
+                <div className="flex justify-between"><span>{domainLabel[d]}</span><span className="tabular-nums">{v.toFixed(0)}%</span></div>
+                <div className="mt-1 h-2 rounded bg-paper"><div className="h-2 rounded bg-brand-deep" style={{ width: `${Math.min(100, v)}%` }} /></div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Statistik butir' : 'Item statistics'}</h2>
+          <p className="mt-1 text-sm text-muted">{id ? 'Tingkat kesulitan = rata-rata proporsi skor; daya beda = korelasi butir dengan skor total lainnya. Ditandai bila kesulitan <0,2 atau >0,9, atau daya beda <0,2 (minimal 10 peserta).' : 'Difficulty = mean proportion correct; discrimination = correlation with the rest of the score. Flagged when difficulty <0.2 or >0.9, or discrimination <0.2 (at least 10 candidates).'}</p>
+          <div className="mt-3 overflow-x-auto"><table className="w-full text-sm">
+            <thead><tr className="text-left text-muted"><th>{id ? 'Kode' : 'Code'}</th><th className="text-right">n</th><th className="text-right">{id ? 'Kesulitan' : 'Difficulty'}</th><th className="text-right">{id ? 'Daya beda' : 'Discrimination'}</th><th className="pl-4">{id ? 'Catatan' : 'Flags'}</th></tr></thead>
+            <tbody>{[...flagged, ...stats.filter((s) => !s.flags.length)].map((s) => (
+              <tr key={s.id} className="border-b border-line"><td className="py-1.5 font-mono text-xs">{s.code}</td><td className="text-right tabular-nums">{s.n}</td><td className="text-right tabular-nums">{s.difficulty.toFixed(2)}</td><td className="text-right tabular-nums">{s.discrimination === null ? '—' : s.discrimination.toFixed(2)}</td><td className="pl-4 text-danger">{s.flags.map((f) => flagLabel[f]).join(', ')}</td></tr>
+            ))}</tbody>
+          </table></div>
+        </Card>
+      </>
+    )
+  } else if (tab === 'sekolah') {
+    const schools = (await payload.find({ collection: 'schools', overrideAccess: true, depth: 0, limit: 300, sort: 'name' })).docs
+    const users = (await payload.find({ collection: 'users', overrideAccess: true, depth: 0, pagination: false, limit: 0, where: { school: { exists: true } } })).docs
+    const weekAgo = Date.now() - 7 * 86400000
+    const active = new Map<number, Set<string>>()
+    for (const e of events) if (e.school && Date.parse(e.createdAt) >= weekAgo) {
+      if (!active.has(e.school)) active.set(e.school, new Set())
+      active.get(e.school)!.add(e.aid)
+    }
+    const lessons = new Map<number, number>()
+    for (const e of events) if (e.school && e.name === 'lesson_completed') lessons.set(e.school, (lessons.get(e.school) ?? 0) + 1)
+    const rows = schools.map((sc) => {
+      const mine = users.filter((u) => (typeof u.school === 'object' ? u.school?.id : u.school) === sc.id)
+      const students = mine.filter((u) => u.roles?.includes('student')).length
+      const lic = sc.licence ?? {}
+      const licActive = Boolean(lic.endsAt && new Date(lic.endsAt) > new Date())
+      return {
+        id: sc.id,
+        name: sc.name,
+        students,
+        teachers: mine.filter((u) => u.roles?.includes('teacher')).length,
+        pending: mine.filter((u) => u.consentStatus === 'pending').length,
+        active7: active.get(sc.id)?.size ?? 0,
+        lessons: lessons.get(sc.id) ?? 0,
+        seats: licActive ? lic.seats ?? 0 : null,
+        endsAt: licActive ? lic.endsAt : null,
+      }
+    })
+    body = (
+      <Card>
+        <h2 className="text-lg font-semibold">{id ? 'Adopsi per sekolah' : 'Adoption by school'}</h2>
+        <div className="mt-3 overflow-x-auto"><table className="w-full text-sm">
+          <thead><tr className="text-left text-muted"><th>{id ? 'Sekolah' : 'School'}</th><th className="text-right">{id ? 'Siswa' : 'Students'}</th><th className="text-right">{id ? 'Aktif 7 hari' : 'Active 7d'}</th><th className="text-right">{id ? 'Guru' : 'Teachers'}</th><th className="text-right">{id ? 'Menunggu izin' : 'Awaiting consent'}</th><th className="text-right">{id ? 'Pelajaran selesai' : 'Lessons done'}</th><th className="text-right">{id ? 'Lisensi' : 'Licence'}</th></tr></thead>
+          <tbody>{rows.map((r) => (
+            <tr key={r.id} className="border-b border-line">
+              <td className="py-1.5"><a className="underline" href={`/sekolah?sekolah=${r.id}`}>{r.name}</a></td>
+              <td className="text-right tabular-nums">{r.students}</td>
+              <td className="text-right tabular-nums">{r.active7}{r.students ? ` (${pct(r.active7 / r.students)})` : ''}</td>
+              <td className="text-right tabular-nums">{r.teachers}</td>
+              <td className={`text-right tabular-nums ${r.pending ? 'text-danger' : ''}`}>{r.pending}</td>
+              <td className="text-right tabular-nums">{r.lessons}</td>
+              <td className={`text-right tabular-nums ${r.seats !== null && r.students > r.seats ? 'text-danger' : ''}`}>{r.seats === null ? (id ? 'pilot' : 'pilot') : `${r.students}/${r.seats}`}</td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+        <p className="mt-2 text-xs text-muted">{id ? '"Aktif 7 hari" dihitung dari aktivitas belajar yang tercatat. Klik nama sekolah untuk membuka Ruang Sekolah-nya.' : '"Active 7d" counts recorded learning activity. Click a school to open its school space.'}</p>
+      </Card>
     )
   } else {
     const a = aiLab(events)
