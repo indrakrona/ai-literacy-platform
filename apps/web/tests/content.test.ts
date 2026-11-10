@@ -66,3 +66,19 @@ describe('English lessons', () => {
     expect(Object.keys(EN_LESSONS)).toHaveLength(WRITTEN.length)
   })
 })
+
+describe('English AILIS items', () => {
+  it('exist for every item with the same options and rubric levels', async () => {
+    const { EN_ITEMS } = await import('../src/seed/items')
+    const all = [...SMA_PILOT_ITEMS, ...SMA_EXTRA_ITEMS, ...SMP_PILOT_ITEMS]
+    for (const it of all) {
+      const en = EN_ITEMS[it.code]
+      expect(en, it.code).toBeTruthy()
+      expect(en!.stem.length, it.code).toBeGreaterThan(10)
+      expect(en!.options?.length ?? 0, it.code).toBe(it.options?.length ?? 0)
+      expect(en!.rubric?.length ?? 0, it.code).toBe(it.rubric?.length ?? 0)
+      expect(Boolean(en!.scenario), `${it.code} scenario`).toBe(Boolean(it.scenario))
+    }
+    expect(Object.keys(EN_ITEMS)).toHaveLength(all.length)
+  })
+})

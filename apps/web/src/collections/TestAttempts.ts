@@ -31,9 +31,17 @@ async function ownAttempt(req: PayloadRequest): Promise<TestAttempt | Response> 
   return attempt
 }
 
-async function formItems(req: PayloadRequest, attempt: TestAttempt): Promise<TestItem[]> {
+/** Language the candidate reads the test in: the site language cookie, then the profile setting. */
+function candidateLocale(req: PayloadRequest): 'id' | 'en' {
+  const cookie = req.headers.get('cookie') ?? ''
+  const m = cookie.match(/(?:^|;\s*)lang=(id|en)/)
+  if (m) return m[1] as 'id' | 'en'
+  return (req.user as { preferredLocale?: string } | null)?.preferredLocale === 'en' ? 'en' : 'id'
+}
+
+async function formItems(req: PayloadRequest, attempt: TestAttempt, locale: 'id' | 'en' = 'id'): Promise<TestItem[]> {
   const ids = (attempt.itemOrder ?? []) as number[]
-  const res = await req.payload.find({ collection: 'test-items', overrideAccess: true, limit: ids.length || 1, depth: 0, where: { id: { in: ids } } })
+  const res = await req.payload.find({ collection: 'test-items', overrideAccess: true, limit: ids.length || 1, depth: 0, locale, fallbackLocale: 'id', where: { id: { in: ids } } })
   const byId = new Map(res.docs.map((d) => [d.id, d]))
   return ids.map((i) => byId.get(i)).filter((x): x is TestItem => Boolean(x))
 }
@@ -102,7 +110,7 @@ const paper: Endpoint = {
   handler: async (req) => {
     const attempt = await ownAttempt(req)
     if (attempt instanceof Response) return attempt
-    const items = await formItems(req, attempt)
+    const items = await formItems(req, attempt, candidateLocale(req))
     const orders = (attempt.optionOrder ?? {}) as Record<string, number[]>
     const saved = (attempt.responses ?? {}) as Record<string, { selected?: number[]; text?: string }>
     const responses = Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, v.selected ? { ...v, selected: toDisplayed(v.selected, orders[k]) } : v]))

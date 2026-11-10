@@ -2,6 +2,10 @@ import type { Payload } from 'payload'
 import { SMA_PILOT_ITEMS, type ItemSeed } from './items/sma-pilot'
 import { SMA_EXTRA_ITEMS } from './items/sma-extra'
 import { SMP_PILOT_ITEMS } from './items/smp-pilot'
+import { EN_SMA_ITEMS, type ItemEn } from './items/en-sma'
+import { EN_SMP_ITEMS } from './items/en-smp'
+
+export const EN_ITEMS: Record<string, ItemEn> = { ...EN_SMA_ITEMS, ...EN_SMP_ITEMS }
 
 const SETS: { level: 'smp' | 'sma_smk'; items: ItemSeed[] }[] = [
   { level: 'sma_smk', items: [...SMA_PILOT_ITEMS, ...SMA_EXTRA_ITEMS] },
@@ -35,4 +39,28 @@ export async function seedItems(payload: Payload) {
     created++
   }
   return { created, total: ITEM_COUNT }
+}
+
+/** Write the English text onto the same option and rubric rows, so answer keys and points stay shared. */
+export async function seedItemsEn(payload: Payload) {
+  let translated = 0
+  for (const [code, en] of Object.entries(EN_ITEMS)) {
+    const item = (await payload.find({ collection: 'test-items', locale: 'id', where: { code: { equals: code } }, limit: 1, depth: 0 })).docs[0]
+    if (!item) continue
+    await payload.update({
+      collection: 'test-items',
+      id: item.id,
+      locale: 'en',
+      data: {
+        type: item.type,
+        state: item.state,
+        scenario: en.scenario ?? item.scenario,
+        stem: en.stem,
+        options: (item.options ?? []).map((o, i) => ({ id: o.id, correct: o.correct, text: en.options?.[i] ?? o.text })),
+        rubric: (item.rubric ?? []).map((r, i) => ({ id: r.id, points: r.points, descriptor: en.rubric?.[i] ?? r.descriptor })),
+      },
+    })
+    translated++
+  }
+  return { translated }
 }
