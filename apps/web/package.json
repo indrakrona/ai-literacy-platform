@@ -14,8 +14,11 @@
     "seed": "payload run src/seed/run.ts"
   },
   "dependencies": {
+    "@ailit/ai-gateway": "workspace:*",
     "@ailit/shared": "workspace:*",
+    "@ailit/test-engine": "workspace:*",
     "@payloadcms/db-postgres": "3.90.2",
+    "@payloadcms/email-nodemailer": "3.90.2",
     "@payloadcms/next": "3.90.2",
     "@payloadcms/richtext-lexical": "3.90.2",
     "@payloadcms/storage-s3": "3.90.2",
@@ -26,9 +29,7 @@
     "react": "19.1.10",
     "react-dom": "19.1.10",
     "sharp": "0.34.5",
-    "zod": "4.6.7",
-    "@ailit/test-engine": "workspace:*",
-    "@ailit/ai-gateway": "workspace:*"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

@@ -90,3 +90,41 @@ export async function decideConsent(
   })
   return { ok: true as const, decision, studentId }
 }
+
+/**
+ * A consent link a teacher or school admin can pass to the parent themselves (WhatsApp, in person),
+ * so consent works even before an email provider is configured. Reuses the student's open request
+ * when it is still valid; otherwise issues a new one with the same guardian contact (no email sent).
+ */
+export async function shareableConsentLink(payload: Payload, studentId: number) {
+  const student = await payload.findByID({ collection: 'users', id: studentId, depth: 0, overrideAccess: true })
+  const now = new Date()
+  const requests = await payload.find({ collection: 'consent-requests', overrideAccess: true, depth: 0, limit: 10, sort: '-createdAt', where: { student: { equals: studentId } } })
+  const open = requests.docs.find((r) => r.status === 'pending' && r.expiresAt && new Date(r.expiresAt) > now)
+  const last = requests.docs[0]
+  const request = open ?? (await payload.create({
+    collection: 'consent-requests',
+    overrideAccess: true,
+    data: {
+      student: studentId,
+      guardianEmail: last?.guardianEmail || undefined,
+      guardianPhone: last?.guardianPhone || undefined,
+      guardianName: last?.guardianName || undefined,
+      token: randomToken(),
+      status: 'pending',
+      expiresAt: new Date(now.getTime() + CONSENT_LINK_DAYS * 864e5).toISOString(),
+      consentVersion: CONSENT_VERSION,
+    },
+  }))
+  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const link = `${base}/persetujuan/${request.token}`
+  return { link, studentName: student.name, guardianName: request.guardianName ?? null, guardianPhone: request.guardianPhone ?? null, expiresAt: request.expiresAt }
+}
+
+/** Prefilled WhatsApp message (click-to-chat; free, no API account needed). */
+export function whatsappConsentUrl(opts: { link: string; studentName: string; guardianName?: string | null; guardianPhone?: string | null }) {
+  const greeting = opts.guardianName ? `Yth. ${opts.guardianName},` : 'Yth. Bapak/Ibu,'
+  const text = `${greeting}\n\n${opts.studentName} akan mengikuti program AI Literacy di sekolah. Karena ${opts.studentName} berusia di bawah 18 tahun, kami memerlukan izin Bapak/Ibu. Silakan baca penjelasan dan berikan keputusan melalui tautan berikut (berlaku 14 hari):\n${opts.link}\n\nTerima kasih.`
+  const phone = (opts.guardianPhone ?? '').replace(/\D/g, '')
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+}

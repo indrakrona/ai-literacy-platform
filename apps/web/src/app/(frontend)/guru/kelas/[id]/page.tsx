@@ -7,6 +7,7 @@ import { getDict } from '../../../../../i18n/server'
 import { classOverview, inactive } from '../../../../../lib/teacher'
 import { requireClassTeacher } from '../../../../../lib/teacher-guard'
 import { CreateChallengeForm } from '../../../../../components/forms/ChallengeForms'
+import { ConsentShare } from '../../../../../components/forms/ConsentShare'
 import { challengeProgress } from '../../../../../lib/gamification'
 
 export default async function ClassPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +63,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
                     <td className="py-2 pr-3 font-medium">{r.name}</td>
                     <td className="pr-3">{r.completed}/{totalLessons}</td>
                     {BIG_IDEAS.map((b) => <td key={b} className="pr-3">{r.byBigIdea[b]}%</td>)}
-                    <td className="pr-3">{consentLabel(r.consentStatus)}</td>
+                    <td className="pr-3">{consentLabel(r.consentStatus)}{r.consentStatus === 'pending' && <div className="mt-1"><ConsentShare studentId={r.id} locale={locale} /></div>}</td>
                     <td>{r.flaggedChats || ''}</td>
                   </tr>
                 ))}

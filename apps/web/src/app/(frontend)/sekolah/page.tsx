@@ -4,6 +4,7 @@ import { hasRole } from '@ailit/shared'
 import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { CreateClassForm, RosterUpload } from '../../../components/forms/SchoolForms'
+import { ConsentShare } from '../../../components/forms/ConsentShare'
 import { BuyLicenceForm } from '../../../components/forms/LicenceForms'
 import { formatIdr, getPaymentProvider, PLANS, PRICES_ARE_PLACEHOLDERS } from '../../../lib/payments'
 import { getDict } from '../../../i18n/server'
@@ -145,9 +146,9 @@ export default async function SchoolAdminPage({ searchParams }: { searchParams: 
         {pending.length > 0 && (
           <Card>
             <h2 className="text-lg font-semibold">{id ? 'Siswa yang menunggu izin orang tua' : 'Students awaiting parent consent'}</h2>
-            <p className="mt-1 text-sm text-muted">{id ? 'Ingatkan siswa agar orang tuanya membuka tautan persetujuan.' : 'Remind students to ask their parents to open the consent link.'}</p>
+            <p className="mt-1 text-sm text-muted">{id ? 'Jika email belum sampai, kirim tautan izin langsung ke orang tua lewat WhatsApp.' : 'If the email has not arrived, send the consent link to the parent by WhatsApp.'}</p>
             <ul className="mt-3 divide-y divide-line text-sm">
-              {pending.map((p) => <li key={p.id} className="flex justify-between gap-3 py-2"><span>{p.name}</span><span className="text-muted">{p.email}</span></li>)}
+              {pending.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-2"><span>{p.name} <span className="text-muted">· {p.email}</span></span>{hasRole(user, 'school_admin', 'super_admin') && <ConsentShare studentId={p.id} locale={locale} />}</li>)}
             </ul>
           </Card>
         )}

@@ -32,6 +32,7 @@ import { PilotRequests } from './collections/PilotRequests'
 import { SiteSettings } from './globals/SiteSettings'
 import { Badges, Challenges, GamificationSettings, UserBadges, XpEvents } from './collections/gamification'
 import { migrations } from './migrations'
+import { emailAdapter } from './lib/email-adapter'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -47,6 +48,7 @@ export default buildConfig({
   },
   collections: [Users, Schools, Classes, ConsentRequests, Tracks, Units, Lessons, LessonProgress, Media, TestItems, TestForms, TestAttempts, AiActivities, AiConversations, Assignments, ProjectBriefs, Submissions, Orders, AnalyticsEvents, Notifications, Reports, Pages, PilotRequests, XpEvents, Badges, UserBadges, Challenges],
   globals: [SiteSettings, GamificationSettings],
+  email: emailAdapter(),
   editor: lexicalEditor(),
   localization: {
     locales: [

@@ -67,10 +67,10 @@ const id = {
     why: [
       'Menjalankan pembelajaran dan menunjukkan kemajuan kepada siswa, guru, dan Anda.',
       'Menjaga keamanan: AI Lab memiliki filter, dan data pribadi diblokir sebelum dikirim.',
-      'Tidak untuk iklan. Data disimpan di Indonesia.',
+      'Tidak untuk iklan dan tidak dijual. Pesan AI Lab diproses oleh penyedia AI setelah data pribadi disaring.',
     ],
     rightsTitle: 'Hak Anda',
-    rights: 'Anda dapat menarik izin, meminta salinan data, atau meminta penghapusan kapan saja melalui hello@impact.id.',
+    rights: 'Anda dapat menarik izin, meminta salinan data, atau meminta penghapusan kapan saja melalui indra@impact.id.',
     yourName: 'Nama Anda (orang tua / wali)',
     grant: 'Saya mengizinkan',
     decline: 'Saya tidak mengizinkan',
@@ -160,7 +160,7 @@ const id = {
     showcase: 'Boleh tampilkan proyek saya di galeri sekolah',
     showcaseMinor: 'Untuk siswa di bawah 18 tahun, galeri tetap privat sampai fitur izin galeri tersedia.',
     data: 'Data saya',
-    dataBody: 'Untuk meminta salinan atau penghapusan data, hubungi hello@impact.id.',
+    dataBody: 'Untuk meminta salinan atau penghapusan data, hubungi indra@impact.id.',
   },
 }
 
@@ -233,10 +233,10 @@ const en: Dict = {
     why: [
       'To run the lessons and show progress to the student, their teacher and you.',
       'To keep them safe: the AI Lab is filtered and personal data is blocked before it is sent.',
-      'Never for advertising. Data is stored in Indonesia.',
+      'Never for advertising and never sold. AI Lab messages are processed by an AI provider after personal data is filtered out.',
     ],
     rightsTitle: 'Your rights',
-    rights: 'You can withdraw permission, ask for a copy of the data, or ask for deletion at any time via hello@impact.id.',
+    rights: 'You can withdraw permission, ask for a copy of the data, or ask for deletion at any time via indra@impact.id.',
     yourName: 'Your name (parent / guardian)',
     grant: 'I give permission',
     decline: 'I do not give permission',
@@ -326,7 +326,7 @@ const en: Dict = {
     showcase: 'Projects may appear in my school’s gallery',
     showcaseMinor: 'For students under 18, the gallery stays private until gallery permission is available.',
     data: 'My data',
-    dataBody: 'To ask for a copy or deletion of your data, contact hello@impact.id.',
+    dataBody: 'To ask for a copy or deletion of your data, contact indra@impact.id.',
   },
 }
 
