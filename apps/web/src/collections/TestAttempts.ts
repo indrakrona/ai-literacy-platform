@@ -5,6 +5,7 @@ import type { TestAttempt, TestItem } from '../payload-types'
 import { track, type Actor } from '../lib/analytics'
 import { notify } from '../lib/notify'
 import { addMark, normalizeRating, resolve } from '../lib/marking'
+import { getGateway } from '../lib/ai'
 
 const GRACE_MS = 30_000
 
@@ -228,6 +229,46 @@ const rate: Endpoint = {
   },
 }
 
+/**
+ * POST /api/test-attempts/:id/suggest {itemId} — AI-suggested rubric level for a rater (spec G7).
+ * Offered only for single marking and adjudication, so the two blind marks stay independent of the AI.
+ * Cached on the attempt so each answer is sent to the model at most once.
+ */
+const suggest: Endpoint = {
+  path: '/:id/suggest',
+  method: 'post',
+  handler: async (req) => {
+    const u = req.user as { id: number; roles?: string[]; preferredLocale?: string } | null
+    if (!hasRole(u as { roles?: string[] }, 'rater', 'super_admin')) return bad('Not allowed', 403)
+    const attempt = await req.payload.findByID({ collection: 'test-attempts', id: Number(req.routeParams?.id), overrideAccess: true, depth: 0 }).catch(() => null)
+    if (!attempt || attempt.status !== 'awaiting_rating') return bad('Not waiting for rating', 409)
+    const b = await body(req)
+    const items = await formItems(req, attempt)
+    const item = items.find((i) => String(i.id) === String(b.itemId))
+    if (!item || item.type !== 'performance_task') return bad('Not a performance task in this attempt')
+    const form = await req.payload.findByID({ collection: 'test-forms', id: typeof attempt.form === 'object' ? attempt.form.id : attempt.form, depth: 0, overrideAccess: true }).catch(() => null)
+    const double = form?.doubleMarking !== false
+    const state = resolve(normalizeRating(((attempt.ratings ?? {}) as Record<string, unknown>)[String(item.id)]), double)
+    if (double && state.status !== 'needs_adjudication') return bad('AI suggestions are only shown for adjudication, so blind marks stay independent', 409)
+    const cache = { ...((attempt.aiSuggestions ?? {}) as Record<string, unknown>) }
+    if (cache[String(item.id)]) return Response.json(cache[String(item.id)])
+    const answer = (((attempt.responses ?? {}) as Record<string, { text?: string }>)[String(item.id)]?.text) ?? ''
+    const gateway = getGateway(req.payload)
+    const s = await gateway
+      .suggestRubricScore({ stem: item.stem, scenario: item.scenario, answer, rubric: (item.rubric ?? []).map((r) => ({ points: r.points, descriptor: r.descriptor })), locale: u?.preferredLocale === 'en' ? 'en' : 'id' })
+      .catch((e: Error) => {
+        req.payload.logger.warn(`rubric suggestion failed: ${e.message}`)
+        return null
+      })
+    if (!s) return bad('No suggestion available right now', 503)
+    if (s.refused) return bad('The AI declined to suggest a score for this answer', 422)
+    const saved = { points: s.points, rationale: s.rationale, model: s.model, mock: gateway.providerName === 'mock', at: new Date().toISOString() }
+    cache[String(item.id)] = saved
+    await req.payload.update({ collection: 'test-attempts', id: attempt.id, overrideAccess: true, data: { aiSuggestions: cache } })
+    return Response.json(saved)
+  },
+}
+
 export const INCIDENT_TYPES = ['device_issue', 'connection', 'left_room', 'suspected_cheating', 'identity_check', 'other'] as const
 
 /** POST /api/test-attempts/:id/incident {type, note} — a proctor records something that happened during the test. */
@@ -267,7 +308,7 @@ export const TestAttempts: CollectionConfig = {
     update: () => false,
     delete: ({ req }) => hasRole(req.user as { roles?: string[] }, 'super_admin'),
   },
-  endpoints: [start, paper, answer, integrity, submit, rate, incident],
+  endpoints: [start, paper, answer, integrity, submit, rate, incident, suggest],
   fields: [
     { name: 'candidate', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'form', type: 'relationship', relationTo: 'test-forms', required: true, index: true },
@@ -288,6 +329,7 @@ export const TestAttempts: CollectionConfig = {
     { name: 'optionOrder', type: 'json', admin: { description: 'Shuffled answer order per item for this candidate' } },
     { name: 'integrity', type: 'json' },
     { name: 'incidents', type: 'json', admin: { description: 'Logged by the proctor' } },
+    { name: 'aiSuggestions', type: 'json', admin: { description: 'AI-suggested rubric levels shown to adjudicating raters (advice only)' } },
     { name: 'report', type: 'json' },
   ],
 }

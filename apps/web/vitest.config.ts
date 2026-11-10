@@ -7,7 +7,8 @@ export default defineConfig({
   },
   test: {
     include: ['tests/**/*.test.ts'],
-    testTimeout: 60_000,
+    // Seeding all 36 bilingual lessons takes a while on small machines and CI runners.
+    testTimeout: 180_000,
     hookTimeout: 120_000,
     env: {
       DATABASE_URI: process.env.TEST_DATABASE_URI || 'postgres://ailit:ailit@127.0.0.1:5432/ailit_test',

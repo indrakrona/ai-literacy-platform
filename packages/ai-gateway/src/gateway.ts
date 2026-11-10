@@ -1,6 +1,7 @@
 import { blockedReply, moderate, type ModerationCategory } from './moderation'
 import { DEFAULT_MODELS, type AIProvider, type ChatMessage, type ModelTier } from './providers'
 import { redactPersonalData, scanPersonalData, SHIELD_MESSAGES, type ShieldKind } from './shield'
+import type { RubricSuggestion, RubricSuggestionRequest } from './rubric'
 
 /** Safety rules every AI Lab conversation starts with; activity instructions come after. */
 export const BASE_SYSTEM_PROMPT = `You are a learning assistant in a school AI literacy program in Indonesia. The students are teenagers (12–18).
@@ -52,6 +53,12 @@ export class AIGateway {
     private limits: Limits = DEFAULT_LIMITS,
     private models: Record<ModelTier, string> = DEFAULT_MODELS,
   ) {}
+
+  /** Advice for an AILIS rater; null when the provider cannot suggest or the reply did not fit the rubric. */
+  async suggestRubricScore(req: RubricSuggestionRequest): Promise<RubricSuggestion | null> {
+    if (!this.provider.suggestRubricScore) return null
+    return this.provider.suggestRubricScore(req, this.models.deep)
+  }
 
   get providerName() {
     return this.provider.name

@@ -15,6 +15,7 @@ import * as migration_20261109_224354_public_site from './20261109_224354_public
 import * as migration_20261110_000448_gamification from './20261110_000448_gamification';
 import * as migration_20261110_001722_ailis_integrity from './20261110_001722_ailis_integrity';
 import * as migration_20261110_002822_double_marking from './20261110_002822_double_marking';
+import * as migration_20261110_003906_ai_suggestions from './20261110_003906_ai_suggestions';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20261110_002822_double_marking.up,
     down: migration_20261110_002822_double_marking.down,
-    name: '20261110_002822_double_marking'
+    name: '20261110_002822_double_marking',
+  },
+  {
+    up: migration_20261110_003906_ai_suggestions.up,
+    down: migration_20261110_003906_ai_suggestions.down,
+    name: '20261110_003906_ai_suggestions'
   },
 ];

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { buildRubricPrompt, parseRubricReply, RUBRIC_SYSTEM_PROMPT, rubricOutputSchema, type RubricSuggestion, type RubricSuggestionRequest } from './rubric'
 
 export type ChatRole = 'user' | 'assistant'
 export interface ChatMessage {
@@ -35,6 +36,8 @@ export interface ProviderResult {
 export interface AIProvider {
   readonly name: string
   chat(req: ProviderRequest): Promise<ProviderResult>
+  /** Suggest a rubric level for a performance-task answer (advice for a human rater). */
+  suggestRubricScore?(req: RubricSuggestionRequest, model: string): Promise<RubricSuggestion | null>
 }
 
 /**
@@ -74,6 +77,24 @@ export class AnthropicProvider implements AIProvider {
       refused,
     }
   }
+  /** Structured output constrains the reply to {points, rationale}; the result is still validated. */
+  async suggestRubricScore(req: RubricSuggestionRequest, model: string): Promise<RubricSuggestion | null> {
+    const response = await this.client.beta.messages.create({
+      model,
+      max_tokens: 16000,
+      system: RUBRIC_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: buildRubricPrompt(req) }],
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema: rubricOutputSchema(req.rubric) } },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+    })
+    const usage = { model: response.model, inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens }
+    if (response.stop_reason === 'refusal') return { points: -1, rationale: '', refused: true, ...usage }
+    if (response.stop_reason === 'max_tokens') return null
+    const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text').map((b) => b.text).join('')
+    const parsed = parseRubricReply(text, req.rubric)
+    return parsed ? { ...parsed, refused: false, ...usage } : null
+  }
 }
 
 /**
@@ -88,5 +109,15 @@ export class MockProvider implements AIProvider {
       `[Mode uji, tanpa AI sungguhan] Kamu bertanya: "${last.slice(0, 120)}". ` +
       'Di versi lengkap, AI akan menjawab di sini. Ingat: periksa jawaban AI dengan sumber tepercaya.'
     return { text, model: 'mock', inputTokens: Math.ceil((req.system.length + last.length) / 4), outputTokens: Math.ceil(text.length / 4), refused: false }
+  }
+  /** Test-mode suggestion from answer length only, clearly labelled; never a real judgement. */
+  async suggestRubricScore(req: RubricSuggestionRequest): Promise<RubricSuggestion | null> {
+    const levels = [...req.rubric].map((r) => r.points).sort((a, b) => a - b)
+    const words = req.answer.trim().split(/\s+/).filter(Boolean).length
+    const idx = words === 0 ? 0 : Math.min(levels.length - 1, Math.floor(words / 15) + 1)
+    const rationale = req.locale === 'id'
+      ? '[Mode uji] Saran ini dibuat dari panjang jawaban saja, bukan penilaian AI sungguhan.'
+      : '[Test mode] This suggestion is based on answer length only, not a real AI judgement.'
+    return { points: levels[idx] ?? 0, rationale, model: 'mock', refused: false, inputTokens: 0, outputTokens: 0 }
   }
 }

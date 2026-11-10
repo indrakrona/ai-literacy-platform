@@ -65,11 +65,23 @@ describe('blind double marking in the rate endpoint', () => {
       return { status: res.status, data: (await res.json()) as Record<string, unknown> }
     }
 
+    const suggest = TestAttempts.endpoints ? TestAttempts.endpoints.find((e) => e.path === '/:id/suggest')! : null!
+    const ask = async (u: unknown) => {
+      const res = await suggest.handler({ payload, user: u, json: async () => ({ itemId: task.id }), routeParams: { id: attempt.id }, headers: new Headers() } as unknown as PayloadRequest)
+      return { status: res.status, data: (await res.json()) as Record<string, unknown> }
+    }
+    expect((await ask(r1)).status).toBe(409) // no AI help before the blind marks
     expect((await call(r1, 4)).data).toMatchObject({ status: 'awaiting_rating', itemStatus: 'needs_second' })
+    expect((await ask(r2)).status).toBe(409)
     expect((await call(r1, 3)).status).toBe(409)
     expect((await ratingQueue(payload, r1!.id)).some((t) => t.attemptId === attempt.id)).toBe(false)
     expect((await ratingQueue(payload, r2!.id)).find((t) => t.attemptId === attempt.id)?.stage).toBe('second')
     expect((await call(r2, 1)).data).toMatchObject({ status: 'awaiting_rating', itemStatus: 'needs_adjudication' })
+    const first = await ask(r3)
+    expect(first.status).toBe(200)
+    expect(first.data).toMatchObject({ mock: true })
+    expect([0, 1, 2, 3, 4]).toContain(first.data.points)
+    expect((await ask(r3)).data.at).toBe(first.data.at) // cached, not asked twice
     expect((await ratingQueue(payload, r3!.id)).find((t) => t.attemptId === attempt.id)?.stage).toBe('adjudication')
     expect((await call(r3, 2)).data).toMatchObject({ status: 'scored', itemStatus: 'final' })
     const done = await payload.findByID({ collection: 'test-attempts', id: attempt.id, overrideAccess: true })

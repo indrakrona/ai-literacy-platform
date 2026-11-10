@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { hasRole } from '@ailit/shared'
 import { Shell } from '../../../components/Shell'
 import { Card } from '../../../components/ui'
-import { RateForm } from '../../../components/forms/RateForm'
+import { RateForm, SuggestButton } from '../../../components/forms/RateForm'
 import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { markHistory, ratingQueue } from '../../../lib/projects'
@@ -82,6 +82,7 @@ export default async function RaterPage() {
             <p className="mt-2 font-medium whitespace-pre-line">{t.item.stem}</p>
             <h2 className="mt-4 text-sm font-semibold uppercase">{id ? 'Jawaban peserta' : 'Candidate answer'}</h2>
             <blockquote className="mt-1 rounded-2xl bg-paper p-4 whitespace-pre-line">{t.answer || <em className="text-muted">{id ? '(kosong)' : '(blank)'}</em>}</blockquote>
+            {(t.stage === 'adjudication' || t.stage === 'single') && <div className="mt-3"><SuggestButton attemptId={t.attemptId} itemId={t.item.id} locale={locale} /></div>}
             <h2 className="mt-4 mb-2 text-sm font-semibold uppercase">{id ? 'Pilih tingkat rubrik' : 'Choose a rubric level'}</h2>
             <RateForm attemptId={t.attemptId} itemId={t.item.id} rubric={(t.item.rubric ?? []).map((r) => ({ points: r.points, descriptor: r.descriptor }))} locale={locale} />
           </Card>

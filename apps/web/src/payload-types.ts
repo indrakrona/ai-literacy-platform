@@ -803,6 +803,18 @@ export interface TestAttempt {
     | number
     | boolean
     | null;
+  /**
+   * AI-suggested rubric levels shown to adjudicating raters (advice only)
+   */
+  aiSuggestions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   report?:
     | {
         [k: string]: unknown;
@@ -1817,6 +1829,7 @@ export interface TestAttemptsSelect<T extends boolean = true> {
   optionOrder?: T;
   integrity?: T;
   incidents?: T;
+  aiSuggestions?: T;
   report?: T;
   updatedAt?: T;
   createdAt?: T;
