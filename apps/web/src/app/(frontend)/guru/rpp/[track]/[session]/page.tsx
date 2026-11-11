@@ -27,12 +27,14 @@ export default async function SessionPlan({ params }: { params: Promise<{ track:
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <span className="flex gap-4 text-sm">
-            <Link href={`/guru/presentasi/${slug}/${session}`} className="underline">{id ? 'Mode presentasi' : 'Presentation mode'}</Link>
+            <Link href={`/guru/slide/${slug}/${session}`} className="underline">{id ? 'Slide' : 'Slides'}</Link>
+            <Link href={`/guru/lkpd/${slug}/${session}`} className="underline">{id ? 'Lembar kerja siswa' : 'Student worksheet'}</Link>
+            <Link href={`/guru/presentasi/${slug}/${session}`} className="underline">{id ? 'Kelas Langsung' : 'Live Class'}</Link>
             <Link href={`/guru/rpp/${slug}`} className="underline">{id ? 'Semua sesi' : 'All sessions'}</Link>
           </span>
           <PrintButton label={id ? 'Cetak / simpan PDF' : 'Print / save as PDF'} />
         </div>
-        <LessonPlan lesson={lesson as never} trackTitle={track.title} level={track.level} ctx={ctx} locale={locale} />
+        <LessonPlan lesson={lesson as never} trackTitle={track.title} level={track.level} ctx={ctx} locale={locale} standalone />
       </div>
     </Shell>
   )

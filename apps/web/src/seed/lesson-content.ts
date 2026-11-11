@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { EN_LESSONS } from './lessons-en'
+import { ACTIVITIES_ID } from './activities-id'
 import { SMP_02 } from './lessons/smp-02'
 import { SMP_01, SMP_03, SMP_04, SMP_06 } from './lessons/smp-batch1'
 import { SMP_07, SMP_08, SMP_10, SMP_11 } from './lessons/smp-batch2'
@@ -57,8 +58,8 @@ export async function seedLessonContent(payload: Payload) {
       locale: 'id',
       data: {
         objective: l.objective,
-        // The written lesson has its own Bahasa activity section; the English planning note stays on the 'en' locale only.
-        activity: null,
+        // Short Bahasa summary of the main activity (the English planning note stays on the 'en' locale).
+        activity: ACTIVITIES_ID[`${l.track}:${l.order}`] ?? null,
         content: l.content,
         quiz: l.quiz,
         simulator: (SIMULATORS[`${l.track}:${l.order}`] ?? null) as never,

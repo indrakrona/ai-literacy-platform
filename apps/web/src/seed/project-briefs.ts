@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import { BRIEFS_EN } from './project-briefs-en'
 
 type Level = 'smp' | 'sma_smk'
 interface BriefSeed {
@@ -148,6 +149,8 @@ const BRIEFS: BriefSeed[] = [
 ]
 
 export const PROJECT_BRIEF_COUNT = BRIEFS.length
+/** For tests: Bahasa briefs with their slugs and rubric sizes. */
+export const BRIEF_SEEDS = BRIEFS.map((b) => ({ slug: b.slug, rubric: b.rubric.length }))
 
 /** Upsert briefs by slug and link the default brief to each project lesson. Idempotent. */
 export async function seedProjectBriefs(payload: Payload) {
@@ -171,13 +174,15 @@ export async function seedProjectBriefs(payload: Payload) {
     const doc = existing.docs[0]
       ? await payload.update({ collection: 'project-briefs', id: existing.docs[0].id, locale: 'id', data })
       : await payload.create({ collection: 'project-briefs', locale: 'id', data })
-    // English title only for now; the body stays in Bahasa until the English content pass.
-    const enRubric = (doc.rubric ?? []).map((r) => ({ id: r.id, criterion: r.criterion, description: r.description }))
+    // English version; rubric rows keep their ids so each translation lands on the same criterion.
+    const en = BRIEFS_EN[b.slug]
+    if (!en) throw new Error(`Missing English version of brief ${b.slug}`)
+    const enRubric = (doc.rubric ?? []).map((r, i) => ({ id: r.id, criterion: en.rubric[i]?.[0] ?? r.criterion, description: en.rubric[i]?.[1] ?? r.description }))
     await payload.update({
       collection: 'project-briefs',
       id: doc.id,
       locale: 'en',
-      data: { title: b.title.en, client: b.client, problem: b.problem, deliverables: b.deliverables, rubric: enRubric },
+      data: { title: b.title.en, client: en.client, problem: en.problem, deliverables: en.deliverables, rubric: enRubric },
     })
     for (const link of b.links ?? []) {
       const [slug, order] = link.split(':')

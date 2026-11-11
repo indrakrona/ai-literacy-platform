@@ -1,6 +1,6 @@
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import type { Payload } from 'payload'
-import { BIG_IDEA_LABELS, type BigIdea } from '@ailit/shared'
+import { BIG_IDEA_LABELS, canDo, type BigIdea } from '@ailit/shared'
 import { KKA_ELEMENTS } from '../collections/KkaOutcomes'
 
 const idOf = (v: unknown): number | null => (v == null ? null : typeof v === 'object' ? (v as { id: number }).id : (v as number))
@@ -18,8 +18,9 @@ export async function lessonPlanContext(payload: Payload, lessons: Lesson[], lev
  * One printable lesson plan (spec H3, "modul ajar" style): goals, timing, preparation, steps, assessment with
  * answer key, differentiation and AI safety notes. Rendered on screen and printed to PDF by the browser.
  */
-export function LessonPlan({ lesson, trackTitle, level, ctx, locale }: { lesson: Lesson; trackTitle: string; level: string; ctx: Awaited<ReturnType<typeof lessonPlanContext>>; locale: 'id' | 'en' }) {
+export function LessonPlan({ lesson, trackTitle, level, ctx, locale, standalone = false }: { lesson: Lesson; trackTitle: string; level: string; ctx: Awaited<ReturnType<typeof lessonPlanContext>>; locale: 'id' | 'en'; standalone?: boolean }) {
   const id = locale === 'id'
+  const Title = standalone ? 'h1' : 'h2'
   const unit = ctx.units.get(idOf(lesson.unit) ?? -1)
   const comps = [lesson.competency, ...(lesson.alsoCovers ?? [])]
   const kka = ctx.outcomes.filter((o) => ((o.competencies as string[] | null) ?? []).some((c) => comps.includes(c)))
@@ -34,12 +35,12 @@ export function LessonPlan({ lesson, trackTitle, level, ctx, locale }: { lesson:
   return (
     <article className="break-after-page rounded-2xl border border-line bg-white p-6 print:rounded-none print:border-0 print:p-0">
       <p className="text-xs font-semibold tracking-wide text-brand-deep uppercase">{id ? 'Rencana pembelajaran' : 'Lesson plan'} · {trackTitle}</p>
-      <h2 className="mt-1 text-2xl font-bold">{id ? 'Sesi' : 'Session'} {lesson.order}: {lesson.title}</h2>
+      <Title className="mt-1 text-2xl font-bold">{id ? 'Sesi' : 'Session'} {lesson.order}: {lesson.title}</Title>
       <table className="mt-4 w-full text-sm">
         <tbody>
           {row(id ? 'Jenjang / fase' : 'Level / phase', level === 'smp' ? (id ? 'SMP · Fase D' : 'Junior secondary · Phase D') : id ? 'SMA/SMK · Fase E–F' : 'Senior secondary · Phase E–F')}
           {row(id ? 'Gagasan besar' : 'Big idea', unit ? `${BIG_IDEA_LABELS[unit.bigIdea as BigIdea]?.[locale] ?? ''} · ${unit.title}` : '—')}
-          {row(id ? 'Kompetensi (can-do)' : 'Can-do statements', comps.join(', '))}
+          {row(id ? 'Kompetensi (can-do)' : 'Can-do statements', <ul className="list-none">{comps.map((c) => <li key={c}><span className="font-mono text-xs">{c}</span> {canDo(c, level, locale) ?? ''}</li>)}</ul>)}
           {row(id ? 'Alokasi waktu' : 'Time', `${minutes} ${id ? 'menit' : 'minutes'}`)}
           {row(id ? 'Capaian KKA terkait' : 'Related KKA outcomes', kka.length ? (
             <ul className="list-disc pl-4">{kka.map((o) => <li key={o.code}><span className="font-mono text-xs">{o.code}</span> {KKA_ELEMENTS.find((e) => e.value === o.element)?.[locale]}: {o.description}{o.status !== 'checked' ? (id ? ' (draf)' : ' (draft)') : ''}</li>)}</ul>

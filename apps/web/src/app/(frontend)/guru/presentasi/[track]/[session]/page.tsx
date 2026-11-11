@@ -29,7 +29,7 @@ export default async function PresentPage({ params }: { params: Promise<{ track:
       </nav>
       <div className="mx-auto mb-6 max-w-4xl">
         <LiveControl track={slug} order={n} locale={locale} />
-        <p className="mt-2 text-right text-sm"><Link className="underline" href={`/guru/rpp/${slug}/${n}`}>{locale === 'id' ? 'Rencana pembelajaran sesi ini' : 'Lesson plan for this session'}</Link></p>
+        <p className="mt-2 flex justify-end gap-4 text-sm"><Link className="underline" href={`/guru/slide/${slug}/${n}`}>{locale === 'id' ? 'Slide sesi ini' : 'Slides for this session'}</Link><Link className="underline" href={`/guru/rpp/${slug}/${n}`}>{locale === 'id' ? 'Rencana pembelajaran sesi ini' : 'Lesson plan for this session'}</Link></p>
       </div>
       {!lesson ? (
         <p className="text-muted">{locale === 'id' ? 'Sesi ini belum dipublikasikan.' : 'This session is not published yet.'}</p>

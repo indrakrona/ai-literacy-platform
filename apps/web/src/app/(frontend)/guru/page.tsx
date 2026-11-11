@@ -19,6 +19,21 @@ export default async function TeacherHome() {
       <div className="flex flex-col gap-5">
         <h1 className="text-3xl font-bold">{id ? 'Ruang Guru' : 'Teacher space'}</h1>
         <div className="grid gap-4 sm:grid-cols-2">
+          <Link href="/guru/materi">
+            <Card>
+              <h2 className="text-lg font-bold">{id ? 'Materi mengajar' : 'Teaching materials'}</h2>
+              <p className="mt-1 text-sm text-muted">{id ? 'Rencana pembelajaran, slide, dan lembar kerja siswa untuk setiap sesi.' : 'Lesson plans, slides and student worksheets for every session.'}</p>
+            </Card>
+          </Link>
+          <Link href="/guru/pelatihan">
+            <Card>
+              <h2 className="text-lg font-bold">{id ? 'Pelatihan guru' : 'Teacher training'}</h2>
+              <p className="mt-1 text-sm text-muted">{id ? 'Kursus mandiri dan sertifikat Guru Literasi AI.' : 'Self-paced course and the AI Literacy Teacher certificate.'}</p>
+            </Card>
+          </Link>
+        </div>
+        <h2 className="mt-2 text-xl font-bold">{id ? 'Kelas saya' : 'My classes'}</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
           {classes.docs.map((c) => (
             <Link key={c.id} href={`/guru/kelas/${c.id}`}>
               <Card>
