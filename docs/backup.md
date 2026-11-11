@@ -9,11 +9,32 @@
 
 Keep at least one copy **off the server** (another machine or cloud storage), so a lost server does not take the backups with it.
 
+## Copying backups off the server
+
+A simple nightly job on the host, using [rclone](https://rclone.org) to any storage it supports
+(Google Drive, Google Cloud Storage, S3, another server over SFTP). Configure a remote once with `rclone config`, then add to the host's crontab (`crontab -e`):
+
+```bash
+# 02:30 every night: copy new database dumps and mirror the media bucket off the server.
+30 2 * * * cd /opt/ai-literacy-platform && rclone copy backups offsite:ailit-backups/db --max-age 48h
+45 2 * * * cd /opt/ai-literacy-platform && docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost exec -T storage sh -c 'tar -C /data -cz ailit-media' | rclone rcat offsite:ailit-backups/media/media-$(date +\%F).tgz
+```
+
+Also keep a copy of `.env.selfhost` somewhere safe (a password manager): `PAYLOAD_SECRET` must stay the same for a restored database to work with existing sign-ins.
+
 ## Manual backup
 
 ```bash
 DATABASE_URI=postgres://ailit:PASSWORD@localhost:5432/ailit scripts/backup.sh ./backups
 ```
+
+On the self-hosted stack the database is not exposed outside Docker; take a dump through the container instead:
+
+```bash
+docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost exec -T db pg_dump -U ailit -Fc ailit > backups/ailit-manual.dump
+```
+
+`scripts/selfhost-update.sh` does this automatically before every update.
 
 ## Restore (always into a new database first)
 

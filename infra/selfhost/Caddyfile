@@ -1,0 +1,25 @@
+# Reverse proxy with automatic HTTPS (Let's Encrypt). Used by the "https" profile of
+# docker-compose.selfhost.yml. DOMAIN comes from .env.selfhost; its DNS A record must point at this server
+# and ports 80 and 443 must be open before the first start, so the certificate can be issued.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	# Uploads (media, CSV class lists) stay under the app's own limits.
+	request_body {
+		max_size 25MB
+	}
+	reverse_proxy web:8080 {
+		health_uri /api/health
+		health_interval 30s
+	}
+}
