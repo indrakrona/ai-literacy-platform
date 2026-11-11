@@ -1,3 +1,4 @@
+import { LiveControl } from '../../../../../../components/forms/LiveForms'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { hasRole } from '@ailit/shared'
@@ -26,6 +27,10 @@ export default async function PresentPage({ params }: { params: Promise<{ track:
         <span className="text-muted">{track.title}</span>
         {n < 18 ? <Link href={`/guru/presentasi/${slug}/${n + 1}`}>{n + 1} →</Link> : <span />}
       </nav>
+      <div className="mx-auto mb-6 max-w-4xl">
+        <LiveControl track={slug} order={n} locale={locale} />
+        <p className="mt-2 text-right text-sm"><Link className="underline" href={`/guru/rpp/${slug}/${n}`}>{locale === 'id' ? 'Rencana pembelajaran sesi ini' : 'Lesson plan for this session'}</Link></p>
+      </div>
       {!lesson ? (
         <p className="text-muted">{locale === 'id' ? 'Sesi ini belum dipublikasikan.' : 'This session is not published yet.'}</p>
       ) : (

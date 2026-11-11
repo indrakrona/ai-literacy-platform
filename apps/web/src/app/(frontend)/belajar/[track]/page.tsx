@@ -1,3 +1,4 @@
+import { SaveOffline } from '../../../../components/Offline'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Shell } from '../../../../components/Shell'
@@ -51,6 +52,9 @@ export default async function TrackPage({ params }: { params: Promise<{ track: s
               ? fmt(t.learn.progress, { done: String(doneIds.size), total: String(lessons.totalDocs) })
               : fmt(t.learn.sessions, { n: String(lessons.totalDocs) })}
           </p>
+          <div className="mt-3">
+            <SaveOffline urls={[`/belajar/${slug}`, ...lessons.docs.filter((l) => l._status === 'published').map((l) => `/belajar/${slug}/${l.order}`)]} locale={locale} />
+          </div>
         </div>
         <Card>
           <ol className="divide-y divide-line">

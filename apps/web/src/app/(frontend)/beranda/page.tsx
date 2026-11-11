@@ -81,6 +81,7 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap gap-3">
         <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
         <nav aria-label={locale === 'id' ? 'Bersama teman' : 'With classmates'} className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+          <Link href="/kelas-langsung" className="underline">{locale === 'id' ? 'Ikut Kelas Langsung' : 'Join Live Class'}</Link>
           <Link href="/papan-skor" className="underline">{locale === 'id' ? 'Papan skor tim' : 'Team boards'}</Link>
           <Link href="/proyek/ulasan" className="underline">{locale === 'id' ? 'Ulas proyek teman' : 'Review classmates’ projects'}</Link>
           <Link href="/galeri" className="underline">{locale === 'id' ? 'Galeri proyek' : 'Project gallery'}</Link>

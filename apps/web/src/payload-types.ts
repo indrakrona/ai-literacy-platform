@@ -100,6 +100,7 @@ export interface Config {
     'support-tickets': SupportTicket;
     accommodations: Accommodation;
     'login-codes': LoginCode;
+    'live-sessions': LiveSession;
     'data-requests': DataRequest;
     bookings: Booking;
     'lesson-progress': LessonProgress;
@@ -162,6 +163,7 @@ export interface Config {
     'support-tickets': SupportTicketsSelect<false> | SupportTicketsSelect<true>;
     accommodations: AccommodationsSelect<false> | AccommodationsSelect<true>;
     'login-codes': LoginCodesSelect<false> | LoginCodesSelect<true>;
+    'live-sessions': LiveSessionsSelect<false> | LiveSessionsSelect<true>;
     'data-requests': DataRequestsSelect<false> | DataRequestsSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     'lesson-progress': LessonProgressSelect<false> | LessonProgressSelect<true>;
@@ -1723,6 +1725,32 @@ export interface LoginCode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "live-sessions".
+ */
+export interface LiveSession {
+  id: number;
+  code: string;
+  teacher: number | User;
+  class?: (number | null) | Class;
+  track: string;
+  order: number;
+  question?: number | null;
+  responses?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  active?: boolean | null;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "data-requests".
  */
 export interface DataRequest {
@@ -2191,6 +2219,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'login-codes';
         value: number | LoginCode;
+      } | null)
+    | ({
+        relationTo: 'live-sessions';
+        value: number | LiveSession;
       } | null)
     | ({
         relationTo: 'data-requests';
@@ -3179,6 +3211,23 @@ export interface LoginCodesSelect<T extends boolean = true> {
   attempts?: T;
   expiresAt?: T;
   usedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "live-sessions_select".
+ */
+export interface LiveSessionsSelect<T extends boolean = true> {
+  code?: T;
+  teacher?: T;
+  class?: T;
+  track?: T;
+  order?: T;
+  question?: T;
+  responses?: T;
+  active?: T;
+  expiresAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

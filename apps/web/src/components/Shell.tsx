@@ -8,6 +8,9 @@ import { PublicNav } from './site/PublicNav'
 import { Footer } from './site/Footer'
 import { getSiteChrome } from '../lib/site'
 import { getSwitches } from '../lib/settings'
+import { isLite } from '../lib/lite'
+import { LiteSuggest } from './Lite'
+import { OfflineSupport } from './Offline'
 
 export async function Shell({ children, narrow = true }: { children: React.ReactNode; narrow?: boolean }) {
   const { locale, t } = await getDict()
@@ -17,10 +20,13 @@ export async function Shell({ children, narrow = true }: { children: React.React
   const unread = user
     ? (await (await getPayloadClient()).count({ collection: 'notifications', overrideAccess: true, where: { and: [{ user: { equals: user.id } }, { readAt: { exists: false } }] } }).catch(() => ({ totalDocs: 0 }))).totalDocs
     : 0
+  const lite = await isLite()
   return (
     <div className="min-h-screen">
+      <OfflineSupport locale={locale} />
+      <LiteSuggest on={lite} locale={locale} />
       {banner && <div role="status" className="bg-brand-deep px-4 py-2 text-center text-sm font-semibold text-white">{banner}</div>}
-      <header className="border-b border-line bg-white/80 backdrop-blur">
+      <header className="border-b border-line bg-white/80 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Link href={user ? '/beranda' : '/'} className="text-lg font-bold">
             {t.brand}

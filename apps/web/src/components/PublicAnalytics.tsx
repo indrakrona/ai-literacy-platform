@@ -35,7 +35,8 @@ export function PublicAnalytics({ gaId, locale }: { gaId?: string; locale: 'id' 
   useEffect(() => {
     const c = readConsent()
     setConsent(c)
-    if (c === 'yes' && gaId) loadGa(gaId)
+    // Data saver skips optional third-party scripts.
+    if (c === 'yes' && gaId && !document.cookie.includes('hemat=1')) loadGa(gaId)
   }, [gaId])
   if (!gaId || consent !== null) return null
   const id = locale === 'id'

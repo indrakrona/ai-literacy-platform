@@ -1,3 +1,5 @@
+import { isLite, sizeLabel, withoutImages } from '../../../../../lib/lite'
+import { LessonVideo } from '../../../../../components/Lite'
 import Link from 'next/link'
 import { TrackOnMount } from '../../../../../components/Track'
 import { ReportButton } from '../../../../../components/ReportButton'
@@ -34,6 +36,8 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
     })
   ).docs[0]
 
+  const lite = await isLite()
+  const video = lesson?.video && typeof lesson.video === 'object' && lesson.video.url ? lesson.video : null
   return (
     <Shell>
       <div className="flex flex-col gap-5">
@@ -53,9 +57,14 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
                 <p className="mt-1 text-muted">{lesson.objective}</p>
               </section>
             )}
+            {video && (
+              <div className="mt-4">
+                <LessonVideo src={video.url!} type={video.mimeType} size={sizeLabel(video.filesize, locale)} lite={lite} locale={locale} />
+              </div>
+            )}
             {lesson.content && (
               <div className="prose mt-4 max-w-none">
-                <RichText data={lesson.content} />
+                <RichText data={lite ? withoutImages(lesson.content, locale === 'id' ? 'Gambar tidak dimuat (mode hemat data)' : 'Image not loaded (data saver)') : lesson.content} />
               </div>
             )}
             {lesson.activity && (

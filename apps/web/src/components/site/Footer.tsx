@@ -6,7 +6,7 @@ export async function Footer({ locale }: { locale: 'id' | 'en' }) {
   const id = locale === 'id'
   const wa = settings?.whatsapp?.replace(/\D/g, '')
   return (
-    <footer className="mt-16 border-t border-line bg-white">
+    <footer className="mt-16 border-t border-line bg-white print:hidden">
       <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 text-sm sm:grid-cols-3">
         <div>
           <p className="font-bold">Impact Thinklab · AI Literacy</p>

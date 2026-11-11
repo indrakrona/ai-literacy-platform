@@ -87,7 +87,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           </div>
           {track && (
             <p className="mt-4 text-sm">
-              <Link className="underline" href={`/guru/presentasi/${track.slug}/1`}>{id ? 'Buka mode presentasi untuk kelas' : 'Open presentation mode for class'}</Link>
+              <Link className="underline" href={`/guru/presentasi/${track.slug}/1`}>{id ? 'Buka mode presentasi untuk kelas' : 'Open presentation mode for class'}</Link> · <Link className="underline" href={`/guru/rpp/${track.slug}`}>{id ? 'Unduh rencana pembelajaran (semua sesi)' : 'Download lesson plans (all sessions)'}</Link>
             </p>
           )}
         </Card>

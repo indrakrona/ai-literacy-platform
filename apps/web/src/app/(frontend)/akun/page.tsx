@@ -8,6 +8,8 @@ import { getDict } from '../../../i18n/server'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
 import { ParentCodeButton, UnlinkButton } from '../../../components/forms/ParentForms'
 import { MyDataPanel } from '../../../components/forms/DataRightsForms'
+import { LiteToggle } from '../../../components/Lite'
+import { isLite } from '../../../lib/lite'
 import { PortfolioForm, Toggle } from '../../../components/forms/EngagementForms'
 import { isMinor, portfolioPublic } from '../../../lib/engagement'
 
@@ -83,6 +85,13 @@ export default async function AccountPage() {
           </Card>
         </div>
       )}
+      <div className="mt-5">
+        <Card>
+          <h2 className="text-lg font-semibold">{id ? 'Hemat data' : 'Data saver'}</h2>
+          <p className="mt-1 mb-3 text-sm text-muted">{id ? 'Untuk koneksi lambat atau kuota terbatas. Berlaku di perangkat ini.' : 'For slow connections or limited data. Applies on this device.'}</p>
+          <LiteToggle on={await isLite()} locale={locale} />
+        </Card>
+      </div>
       <div className="mt-5">
         <Card>
           <h2 className="text-lg font-semibold">{id ? 'Data saya' : 'My data'}</h2>
