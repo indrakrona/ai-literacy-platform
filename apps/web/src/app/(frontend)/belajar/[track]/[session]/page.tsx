@@ -1,5 +1,6 @@
 import { isLite, sizeLabel, withoutImages } from '../../../../../lib/lite'
 import { LessonVideo } from '../../../../../components/Lite'
+import { unfinishedBefore } from '../../../../../lib/learning-path'
 import Link from 'next/link'
 import { TrackOnMount } from '../../../../../components/Track'
 import { ReportButton } from '../../../../../components/ReportButton'
@@ -37,11 +38,19 @@ export default async function LessonPage({ params }: { params: Promise<{ track: 
   ).docs[0]
 
   const lite = await isLite()
+  const earlier = lesson && user ? await unfinishedBefore(payload, user.id, lesson as never) : []
   const video = lesson?.video && typeof lesson.video === 'object' && lesson.video.url ? lesson.video : null
   return (
     <Shell>
       <div className="flex flex-col gap-5">
         <Link href={`/belajar/${slug}`} className="text-sm font-semibold underline">← {t.learn.back}</Link>
+        {earlier.length > 0 && (
+          <p className="rounded-xl bg-paper px-3 py-2 text-sm">
+            {locale === 'id' ? 'Disarankan menyelesaikan dulu: ' : 'Recommended first: '}
+            {earlier.slice(0, 5).map((o, i) => <span key={o}>{i ? ', ' : ''}<Link className="underline" href={`/belajar/${slug}/${o}`}>{locale === 'id' ? 'sesi' : 'session'} {o}</Link></span>)}
+            {earlier.length > 5 ? ' …' : ''}
+          </p>
+        )}
         {!lesson ? (
           <Notice tone="warn" title={t.learn.notPublished} />
         ) : (

@@ -497,7 +497,20 @@ export interface Lesson {
   /**
    * Interactive tool shown in the lesson
    */
-  simulator?: ('shield-sort' | 'program-vs-ai' | 'data-trainer' | 'fair-data' | 'prompt-builder') | null;
+  simulator?:
+    | (
+        | 'shield-sort'
+        | 'program-vs-ai'
+        | 'data-trainer'
+        | 'fair-data'
+        | 'prompt-builder'
+        | 'ai-or-human'
+        | 'hallucination-hunt'
+        | 'prompt-battle'
+        | 'bias-fix'
+        | 'feed-bubble'
+      )
+    | null;
   /**
    * Instant-feedback practice; not part of the AILIS item bank.
    */

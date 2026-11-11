@@ -23,6 +23,7 @@ export default async function LabPage({ params }: { params: Promise<{ slug: stri
           <p className="text-sm font-semibold tracking-wide text-brand-deep uppercase">AI Lab · {activity.competency}</p>
           <h1 className="mt-1 text-2xl font-bold">{activity.title}</h1>
           <p className="mt-2 text-muted">{activity.goal}</p>
+          <p className="mt-2 text-sm"><a href="/lab/perintah" className="underline">{locale === 'id' ? 'Butuh contoh perintah yang baik? Buka perpustakaan perintah' : 'Need examples of good prompts? Open the prompt library'}</a></p>
         </Card>
         {locked ? (
           <Notice tone="warn" title={t.home.pendingTitle}>{t.home.pendingBody}</Notice>

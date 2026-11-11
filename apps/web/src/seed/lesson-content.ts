@@ -23,6 +23,13 @@ const SIMULATORS: Record<string, string> = {
   'smp-ai-untuk-belajar-dan-integritas:7': 'fair-data',
   'smp-ai-untuk-belajar-dan-integritas:10': 'prompt-builder',
   'smp-ai-untuk-belajar-dan-integritas:13': 'fair-data',
+  'smp-ai-untuk-belajar-dan-integritas:4': 'feed-bubble',
+  'smp-ai-untuk-belajar-dan-integritas:8': 'hallucination-hunt',
+  'smp-ai-untuk-belajar-dan-integritas:9': 'ai-or-human',
+  'sma-smk-membangun-dengan-ai:4': 'feed-bubble',
+  'sma-smk-membangun-dengan-ai:8': 'hallucination-hunt',
+  'sma-smk-membangun-dengan-ai:9': 'prompt-battle',
+  'sma-smk-membangun-dengan-ai:12': 'bias-fix',
   'sma-smk-membangun-dengan-ai:2': 'shield-sort',
   'sma-smk-membangun-dengan-ai:6': 'data-trainer',
 }

@@ -4,6 +4,8 @@ import { Shell } from '../../../components/Shell'
 import { Card, Notice } from '../../../components/ui'
 import { ProgressPanel } from '../../../components/ProgressPanel'
 import { Announcements } from '../../../components/Announcements'
+import { recommendNext } from '../../../lib/learning-path'
+import { SCORE_DOMAIN_LABELS } from '@ailit/shared'
 import { getDict } from '../../../i18n/server'
 import { fmt } from '../../../i18n/dict'
 import { getCurrentUser, getPayloadClient } from '../../../lib/session'
@@ -23,6 +25,7 @@ export default async function DashboardPage() {
     limit: 20,
   })
   const isStudent = user.roles?.includes('student')
+  const next = isStudent ? await recommendNext(payload, user.id, locale) : null
   const isTeacher = user.roles?.some((r) => ['teacher', 'school_admin', 'super_admin'].includes(r))
   const assignments = classes.docs.length
     ? await payload.find({ collection: 'assignments', overrideAccess: false, user, where: { class: { in: classes.docs.map((c) => c.id) } }, sort: 'dueDate', depth: 2, limit: 20 })
@@ -33,6 +36,24 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold">{fmt(t.home.hello, { name: user.name.split(' ')[0] ?? user.name })}</h1>
         <Announcements user={user} locale={locale} limit={2} />
+        {isStudent && next && (
+          <Card>
+            <p className="text-sm font-semibold tracking-wide text-brand-deep uppercase">{locale === 'id' ? 'Disarankan untukmu' : 'Recommended for you'}</p>
+            {next.lesson ? (
+              <>
+                <Link href={`/belajar/${next.lesson.track}/${next.lesson.order}`} className="mt-1 block text-xl font-bold underline-offset-2 hover:underline">{locale === 'id' ? 'Sesi' : 'Session'} {next.lesson.order}: {next.lesson.title}</Link>
+                <p className="mt-1 text-sm text-muted">
+                  {next.reason === 'weak_domain' && next.domain
+                    ? locale === 'id' ? `Karena skor “${SCORE_DOMAIN_LABELS[next.domain].id}” di tes AILIS-mu masih bisa naik.` : `Because your AILIS “${SCORE_DOMAIN_LABELS[next.domain].en}” score has room to grow.`
+                    : locale === 'id' ? 'Sesi berikutnya yang belum kamu selesaikan.' : 'Your next unfinished session.'}
+                  {' '}· {next.done}/{next.total} {locale === 'id' ? 'selesai' : 'done'}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1">{locale === 'id' ? `Semua sesi ${next.trackTitle} sudah selesai. Hebat!` : `You have finished every session of ${next.trackTitle}. Well done!`}</p>
+            )}
+          </Card>
+        )}
         {user.roles?.some((r) => ['content_editor', 'content_reviewer'].includes(r)) && (
           <Link href="/konten" className="rounded-2xl border border-line bg-white p-4 font-semibold hover:border-ink">
             {locale === 'id' ? 'Ruang telaah konten →' : 'Content review workspace →'}
@@ -81,6 +102,7 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap gap-3">
         <Link href="/proyek" className="w-fit rounded-xl border border-ink px-5 py-3 font-semibold">{locale === 'id' ? 'Proyek nyata' : 'Real-world projects'}</Link>
         <nav aria-label={locale === 'id' ? 'Bersama teman' : 'With classmates'} className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+          <Link href="/lab/perintah" className="underline">{locale === 'id' ? 'Perpustakaan perintah' : 'Prompt library'}</Link>
           <Link href="/kelas-langsung" className="underline">{locale === 'id' ? 'Ikut Kelas Langsung' : 'Join Live Class'}</Link>
           <Link href="/papan-skor" className="underline">{locale === 'id' ? 'Papan skor tim' : 'Team boards'}</Link>
           <Link href="/proyek/ulasan" className="underline">{locale === 'id' ? 'Ulas proyek teman' : 'Review classmates’ projects'}</Link>

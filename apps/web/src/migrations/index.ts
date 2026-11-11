@@ -27,6 +27,7 @@ import * as migration_20261110_164027_engagement from './20261110_164027_engagem
 import * as migration_20261110_223306_commerce from './20261110_223306_commerce';
 import * as migration_20261110_230755_sign_in from './20261110_230755_sign_in';
 import * as migration_20261111_103716_live_sessions from './20261111_103716_live_sessions';
+import * as migration_20261111_105624_simulators from './20261111_105624_simulators';
 
 export const migrations = [
   {
@@ -172,6 +173,11 @@ export const migrations = [
   {
     up: migration_20261111_103716_live_sessions.up,
     down: migration_20261111_103716_live_sessions.down,
-    name: '20261111_103716_live_sessions'
+    name: '20261111_103716_live_sessions',
+  },
+  {
+    up: migration_20261111_105624_simulators.up,
+    down: migration_20261111_105624_simulators.down,
+    name: '20261111_105624_simulators'
   },
 ];
