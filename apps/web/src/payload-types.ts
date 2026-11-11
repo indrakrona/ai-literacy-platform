@@ -87,6 +87,7 @@ export interface Config {
     badges: Badge;
     challenges: Challenge;
     certificates: Certificate;
+    'teacher-certifications': TeacherCertification;
     'test-sessions': TestSession;
     vouchers: Voucher;
     announcements: Announcement;
@@ -150,6 +151,7 @@ export interface Config {
     badges: BadgesSelect<false> | BadgesSelect<true>;
     challenges: ChallengesSelect<false> | ChallengesSelect<true>;
     certificates: CertificatesSelect<false> | CertificatesSelect<true>;
+    'teacher-certifications': TeacherCertificationsSelect<false> | TeacherCertificationsSelect<true>;
     'test-sessions': TestSessionsSelect<false> | TestSessionsSelect<true>;
     vouchers: VouchersSelect<false> | VouchersSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
@@ -1417,6 +1419,43 @@ export interface TestAttempt {
   createdAt: string;
 }
 /**
+ * Teacher training progress and the AI Literacy Teacher certificate (spec H7).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teacher-certifications".
+ */
+export interface TeacherCertification {
+  id: number;
+  user: number | User;
+  modulesDone?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  attempts?:
+    | {
+        at: string;
+        correct: number;
+        total: number;
+        passed?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  passedAt?: string | null;
+  code?: string | null;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
+  status?: ('valid' | 'revoked') | null;
+  revokedReason?: string | null;
+  revokedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "test-sessions".
  */
@@ -2180,6 +2219,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'certificates';
         value: number | Certificate;
+      } | null)
+    | ({
+        relationTo: 'teacher-certifications';
+        value: number | TeacherCertification;
       } | null)
     | ({
         relationTo: 'test-sessions';
@@ -2992,6 +3035,32 @@ export interface CertificatesSelect<T extends boolean = true> {
   overall?: T;
   subScores?: T;
   provisional?: T;
+  issuedAt?: T;
+  expiresAt?: T;
+  status?: T;
+  revokedReason?: T;
+  revokedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teacher-certifications_select".
+ */
+export interface TeacherCertificationsSelect<T extends boolean = true> {
+  user?: T;
+  modulesDone?: T;
+  attempts?:
+    | T
+    | {
+        at?: T;
+        correct?: T;
+        total?: T;
+        passed?: T;
+        id?: T;
+      };
+  passedAt?: T;
+  code?: T;
   issuedAt?: T;
   expiresAt?: T;
   status?: T;

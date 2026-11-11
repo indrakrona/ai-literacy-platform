@@ -19,6 +19,7 @@ import { LessonProgress } from './collections/LessonProgress'
 import { TestItems } from './collections/TestItems'
 import { TestForms } from './collections/TestForms'
 import { Certificates } from './collections/Certificates'
+import { TeacherCertifications } from './collections/TeacherCertifications'
 import { Announcements } from './collections/Announcements'
 import { KkaOutcomes } from './collections/KkaOutcomes'
 import { HelpArticles, SupportTickets } from './collections/Support'
@@ -64,7 +65,7 @@ export default buildConfig({
   },
   // Audited: records people change by hand. High-volume or system-written collections are not (their key actions are audited explicitly).
   collections: [
-    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, withApprovalWorkflow(Lessons), Media, TestItems, TestForms, withApprovalWorkflow(AiActivities), Assignments, withApprovalWorkflow(ProjectBriefs), Orders, Reports, withApprovalWorkflow(Pages), PilotRequests, withApprovalWorkflow(Badges, { titleField: 'name' }), Challenges, Certificates, TestSessions, Vouchers, Announcements, KkaOutcomes, HelpArticles, Events, Products, PromoCodes].map(withAudit),
+    ...[Users, Schools, Classes, ConsentRequests, Tracks, Units, withApprovalWorkflow(Lessons), Media, TestItems, TestForms, withApprovalWorkflow(AiActivities), Assignments, withApprovalWorkflow(ProjectBriefs), Orders, Reports, withApprovalWorkflow(Pages), PilotRequests, withApprovalWorkflow(Badges, { titleField: 'name' }), Challenges, Certificates, TeacherCertifications, TestSessions, Vouchers, Announcements, KkaOutcomes, HelpArticles, Events, Products, PromoCodes].map(withAudit),
     PeerReviews,
     ShowcaseVotes,
     SupportTickets,

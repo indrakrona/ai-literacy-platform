@@ -16,7 +16,7 @@ export default async function VerifyPage() {
   return (
     <Shell>
       <Card>
-        <h1 className="text-2xl font-bold">{id ? 'Verifikasi sertifikat AILIS' : 'Verify an AILIS certificate'}</h1>
+        <h1 className="text-2xl font-bold">{id ? 'Verifikasi sertifikat' : 'Verify a certificate'}</h1>
         <p className="mt-1 mb-5 text-muted">
           {id ? 'Masukkan kode yang tertera di sertifikat, atau pindai kode QR-nya.' : 'Enter the code printed on the certificate, or scan its QR code.'}
         </p>

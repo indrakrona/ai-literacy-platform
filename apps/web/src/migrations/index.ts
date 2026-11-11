@@ -28,6 +28,7 @@ import * as migration_20261110_223306_commerce from './20261110_223306_commerce'
 import * as migration_20261110_230755_sign_in from './20261110_230755_sign_in';
 import * as migration_20261111_103716_live_sessions from './20261111_103716_live_sessions';
 import * as migration_20261111_105624_simulators from './20261111_105624_simulators';
+import * as migration_20261111_154032_teacher_certifications from './20261111_154032_teacher_certifications';
 
 export const migrations = [
   {
@@ -178,6 +179,11 @@ export const migrations = [
   {
     up: migration_20261111_105624_simulators.up,
     down: migration_20261111_105624_simulators.down,
-    name: '20261111_105624_simulators'
+    name: '20261111_105624_simulators',
+  },
+  {
+    up: migration_20261111_154032_teacher_certifications.up,
+    down: migration_20261111_154032_teacher_certifications.down,
+    name: '20261111_154032_teacher_certifications'
   },
 ];

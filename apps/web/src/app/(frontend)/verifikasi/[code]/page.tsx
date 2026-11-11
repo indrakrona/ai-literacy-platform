@@ -7,6 +7,8 @@ import { getDict } from '../../../../i18n/server'
 import { getPayloadClient } from '../../../../lib/session'
 import { verifyCertificate } from '../../../../collections/Certificates'
 import { BAND_NAMES } from '../../../../lib/certificates'
+import { verifyTeacherCertificate } from '../../../../collections/TeacherCertifications'
+import { isTeacherCode } from '../../../../lib/teacher-certificate'
 
 // Individual certificates are not for search engines: the page is for whoever was given the code.
 export const metadata: Metadata = { title: 'AILIS · Verifikasi', robots: { index: false, follow: false } }
@@ -21,7 +23,43 @@ export default async function VerifyCodePage({ params }: { params: Promise<{ cod
   const { locale } = await getDict()
   const id = locale === 'id'
   const code = decodeURIComponent((await params).code).slice(0, 40)
-  const c = await verifyCertificate(await getPayloadClient(), code)
+  const payload = await getPayloadClient()
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString(id ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  if (isTeacherCode(code)) {
+    const t = await verifyTeacherCertificate(payload, code)
+    const tone = !t ? 'warn' : t.status === 'valid' ? 'ok' : 'warn'
+    const title = !t
+      ? id ? 'Sertifikat tidak ditemukan' : 'Certificate not found'
+      : t.status === 'valid' ? (id ? 'Sertifikat asli dan masih berlaku' : 'Genuine and valid')
+      : t.status === 'expired' ? (id ? `Sertifikat asli, tetapi masa berlakunya habis pada ${fmtDate(t.expiresAt)}` : `Genuine, but it expired on ${fmtDate(t.expiresAt)}`)
+      : id ? 'Sertifikat ini telah dicabut dan tidak berlaku' : 'This certificate has been revoked and is not valid'
+    return (
+      <Shell>
+        <div className="flex flex-col gap-4">
+          <Notice tone={tone} title={title}>{!t ? (id ? `Tidak ada sertifikat guru dengan kode ${code}.` : `There is no teacher certificate with the code ${code}.`) : null}</Notice>
+          {t && (
+            <Card>
+              <p className="text-sm font-semibold tracking-wide text-brand-deep uppercase">{id ? 'Sertifikat Guru Literasi AI' : 'AI Literacy Teacher Certificate'}</p>
+              <h1 className="mt-2 text-2xl font-bold">{t.name}</h1>
+              {t.school && <p className="text-muted">{t.school}</p>}
+              <p className="mt-3 text-sm">{id ? 'Telah menyelesaikan pelatihan guru literasi AI (6 modul) dan lulus ujian sertifikasi.' : 'Has completed the AI literacy teacher training (6 modules) and passed the certification exam.'}</p>
+              <dl className="mt-5 grid grid-cols-2 gap-y-1 text-sm">
+                <dt className="text-muted">{id ? 'Kode' : 'Code'}</dt>
+                <dd className="font-mono font-semibold">{t.code}</dd>
+                <dt className="text-muted">{id ? 'Diterbitkan' : 'Issued'}</dt>
+                <dd>{fmtDate(t.issuedAt)}</dd>
+                <dt className="text-muted">{id ? 'Berlaku sampai' : 'Valid until'}</dt>
+                <dd>{fmtDate(t.expiresAt)}</dd>
+              </dl>
+              <p className="mt-4 text-xs text-muted">{id ? 'Diterbitkan oleh Impact Thinklab.' : 'Issued by Impact Thinklab.'}</p>
+            </Card>
+          )}
+          <Link href="/verifikasi" className="text-sm underline">{id ? 'Periksa kode lain' : 'Check another code'}</Link>
+        </div>
+      </Shell>
+    )
+  }
+  const c = await verifyCertificate(payload, code)
   const fmt = (d: string) => new Date(d).toLocaleDateString(id ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const back = (
     <Link href="/verifikasi" className="text-sm underline">

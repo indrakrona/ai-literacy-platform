@@ -168,7 +168,7 @@ export function VerifyLookup({ locale }: L) {
         if (c) window.location.href = `/verifikasi/${encodeURIComponent(c)}`
       }}
     >
-      <input className={`${inputClass} font-mono uppercase`} placeholder="AILIS-XXXX-XXXX" aria-label={id ? 'Kode sertifikat' : 'Certificate code'} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
+      <input className={`${inputClass} font-mono uppercase`} placeholder="AILIS-XXXX-XXXX / GURU-XXXX-XXXX" aria-label={id ? 'Kode sertifikat' : 'Certificate code'} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
       <button type="submit" className="rounded-xl bg-ink px-5 py-3 font-semibold text-paper">{id ? 'Periksa' : 'Verify'}</button>
     </form>
   )
