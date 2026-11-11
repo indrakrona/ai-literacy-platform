@@ -42,6 +42,8 @@ docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost --profile
 the draft KKA mapping, help articles and the placeholder products. It matches content by slug or code,
 so running it twice creates no duplicates, but it does reset seeded lessons to the seed text: run it once
 on a new server, not after editors have started changing content. No demo accounts are created.
+The seed prints one line per content type, ending with `Products (placeholder prices)`. If it exits without
+those lines, run it again.
 `create-admin` makes a **platform super admin**; running it again for the same email resets the password.
 Sign in at `/masuk`, then add schools, staff and editors from `/admin` or `/admin-platform`.
 

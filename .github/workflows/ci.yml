@@ -42,3 +42,15 @@ jobs:
           PGPASSWORD=ailit psql -h localhost -U ailit -d ailit_test -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
           pnpm --filter web payload migrate
       - run: pnpm --filter web build
+
+  # The self-host image must build with no database or secrets, exactly as on a server.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image
+        run: docker build -f apps/web/Dockerfile --target run -t ailit-web:ci .
+      - name: Compose file is valid
+        run: |
+          cp .env.selfhost.example .env.selfhost
+          docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost --profile https --profile tools config --quiet
