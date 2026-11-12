@@ -101,6 +101,37 @@ and the web container is restarted (`up -d`):
 
 Before going live set `PAYMENTS_ALLOW_MOCK=` (empty) so test payments cannot be used.
 
+## On your own computer (staging before a server exists)
+
+The same stack runs on a Mac, Windows or Linux computer with Docker Desktop. It is reachable at
+`http://localhost:8080` on that computer only, without HTTPS and without Caddy.
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). In Settings → Resources, give it at
+   least 4 GB of memory. On Windows, use the WSL 2 backend and run every command below in the Ubuntu (WSL)
+   terminal, with the code cloned inside WSL (for example `~/ai-literacy-platform`), not under `C:\`.
+2. Clone the repository and generate the settings:
+   ```bash
+   git clone https://github.com/indrakrona/ai-literacy-platform.git && cd ai-literacy-platform
+   scripts/selfhost-setup.sh localhost
+   ```
+3. Start it, load the content and create your admin (the script prints these commands too):
+   ```bash
+   docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d --build
+   docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost --profile tools run --rm tools seed
+   docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost --profile tools run --rm \
+     -e ADMIN_EMAIL=indra@impact.id -e ADMIN_PASSWORD='a-long-password' -e ADMIN_NAME='Indra' tools create-admin
+   ```
+4. Open `http://localhost:8080/masuk`.
+
+Notes:
+
+- The site stops when the computer sleeps or Docker Desktop quits, and comes back when Docker starts again.
+- Data lives in Docker volumes and survives restarts; `docker compose … down -v` deletes it.
+- To let other people try it, use a tunnel such as `cloudflared tunnel --url http://localhost:8080`. Set
+  `PUBLIC_URL` in `.env.selfhost` to the tunnel's https address and run `up -d` again, so links in emails and
+  certificates point to it. A free quick tunnel gets a new address each time it starts.
+- `scripts/selfhost-update.sh` works here too; it skips Caddy automatically.
+
 ## Moving to Google Cloud later
 
 The app is the same container image in both places; only configuration changes.

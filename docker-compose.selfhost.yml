@@ -8,6 +8,8 @@ x-app-env: &app-env
   DATABASE_URI: postgres://ailit:${DB_PASSWORD}@db:5432/ailit
   PAYLOAD_SECRET: ${PAYLOAD_SECRET}
   NEXT_PUBLIC_SERVER_URL: ${PUBLIC_URL}
+  # Read at run time by the server (see apps/web/src/lib/site-url.ts), so one image works at any address.
+  SERVER_URL: ${PUBLIC_URL}
   S3_BUCKET: ailit-media
   S3_REGION: us-east-1
   S3_ENDPOINT: http://storage:9000

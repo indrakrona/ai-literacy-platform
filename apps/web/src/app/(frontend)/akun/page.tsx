@@ -12,6 +12,7 @@ import { LiteToggle } from '../../../components/Lite'
 import { isLite } from '../../../lib/lite'
 import { PortfolioForm, Toggle } from '../../../components/forms/EngagementForms'
 import { isMinor, portfolioPublic } from '../../../lib/engagement'
+import { siteUrl } from '../../../lib/site-url'
 
 export default async function AccountPage() {
   const user = await getCurrentUser()
@@ -74,7 +75,7 @@ export default async function AccountPage() {
             </p>
             <PortfolioForm
               initial={{ enabled: Boolean(user.portfolio?.enabled), handle: user.portfolio?.handle ?? '', headline: user.portfolio?.headline ?? '', showProjects: user.portfolio?.showProjects !== false, showBadges: user.portfolio?.showBadges !== false, showCertificate: Boolean(user.portfolio?.showCertificate) }}
-              handleBase={`${(process.env.NEXT_PUBLIC_SERVER_URL || '').replace(/^https?:\/\//, '')}/portofolio`}
+              handleBase={`${siteUrl().replace(/^https?:\/\//, '')}/portofolio`}
               minor={isMinor(user)}
               parentApproved={Boolean(user.portfolio?.parentApproved)}
               locale={locale}

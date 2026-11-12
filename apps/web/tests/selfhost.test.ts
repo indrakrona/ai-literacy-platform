@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import config from '@payload-config'
 import { health } from '../src/endpoints/health'
+import { siteUrl } from '../src/lib/site-url'
 
 const root = path.resolve(__dirname, '../../..')
 const read = (f: string) => readFileSync(path.join(root, f), 'utf8')
@@ -47,5 +48,19 @@ describe('self-host package', () => {
     expect(compose).toContain('/api/health')
     expect(read('apps/web/Dockerfile')).toContain('HEALTHCHECK')
     expect(read('infra/selfhost/Caddyfile')).toContain('reverse_proxy web:8080')
+  })
+
+  it('reads the site address at run time, preferring SERVER_URL', () => {
+    const saved = { s: process.env.SERVER_URL, n: process.env.NEXT_PUBLIC_SERVER_URL }
+    process.env.SERVER_URL = 'https://staging.example.test/'
+    process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
+    expect(siteUrl()).toBe('https://staging.example.test')
+    delete process.env.SERVER_URL
+    expect(siteUrl()).toBe('http://localhost:3000')
+    process.env.SERVER_URL = saved.s ?? ''
+    if (saved.s === undefined) delete process.env.SERVER_URL
+    process.env.NEXT_PUBLIC_SERVER_URL = saved.n ?? ''
+    if (saved.n === undefined) delete process.env.NEXT_PUBLIC_SERVER_URL
+    expect(read('docker-compose.selfhost.yml')).toContain('SERVER_URL: ${PUBLIC_URL}')
   })
 })

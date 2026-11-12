@@ -9,6 +9,7 @@ import { addSessionToUser, generatePayloadCookie } from 'payload/shared'
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto'
 import { normalizeIdPhone } from '@ailit/shared'
 import { audit, ipOf } from './audit'
+import { siteUrl } from './site-url'
 
 export const CODE_MINUTES = 10
 export const CODE_ATTEMPTS = 5
@@ -70,7 +71,7 @@ export async function checkLoginCode(payload: Payload, userId: number, code: str
 // ---------- Google ----------
 
 export const googleConfigured = () => Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
-export const googleRedirectUri = () => `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/google/callback`
+export const googleRedirectUri = () => `${siteUrl()}/api/users/google/callback`
 
 export function googleAuthUrl(state: string, nonce: string): string {
   const q = new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID ?? '', redirect_uri: googleRedirectUri(), response_type: 'code', scope: 'openid email profile', state, nonce, prompt: 'select_account' })

@@ -9,9 +9,10 @@ import { escapeHtml } from './emails'
 import { notify } from './notify'
 import { sendWhatsApp } from './whatsapp'
 import { childrenOf, weekLine, weekStats } from './parents'
+import { siteUrl } from './site-url'
 
 const idOf = (v: unknown): number | null => (v == null ? null : typeof v === 'object' ? (v as { id: number }).id : (v as number))
-const base = () => process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const base = () => siteUrl()
 
 export function jakartaParts(now: Date): { weekday: number; hour: number } {
   const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', weekday: 'short', hour: '2-digit', hourCycle: 'h23' }).formatToParts(now)

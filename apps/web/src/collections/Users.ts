@@ -7,6 +7,7 @@ import { linkChild, makeParentCode, parentSignup, unlinkGuardian } from '../endp
 import { parentApprove, portfolioSettings } from './Engagement'
 import { googleCallback, googleStart, otpRequest, otpVerify } from '../endpoints/sign-in'
 import { escapeHtml } from '../lib/emails'
+import { siteUrl } from '../lib/site-url'
 
 const VALID_ROLES = new Set<string>(ROLES)
 
@@ -44,7 +45,7 @@ const manageEndpoint: Endpoint = {
       // A link the admin passes on personally (WhatsApp, in person) while no email provider is set.
       const token = await req.payload.forgotPassword({ collection: 'users', data: { email: target.email }, disableEmail: true })
       await log('reset_link')
-      const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      const base = siteUrl()
       return Response.json({ link: `${base}/atur-sandi?token=${token}` })
     }
     return Response.json({ error: 'Unknown action' }, { status: 400 })
@@ -57,11 +58,13 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000,
     tokenExpiration: 7 * 24 * 60 * 60,
-    cookies: { sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' },
+    // Secure in production, except when the site itself runs on plain http (a local staging copy at
+    // http://localhost:8080), where browsers such as Safari would otherwise drop the sign-in cookie.
+    cookies: { sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' && !siteUrl().startsWith('http://') },
     forgotPassword: {
       generateEmailSubject: () => 'Atur ulang kata sandi AI Literacy',
       generateEmailHTML: (args) => {
-        const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+        const base = siteUrl()
         const link = `${base}/atur-sandi?token=${args?.token ?? ''}`
         const name = escapeHtml(String((args?.user as { name?: string } | undefined)?.name ?? ''))
         return `<p>Halo ${name},</p><p>Klik tautan ini untuk mengatur kata sandi Anda:</p><p><a href="${link}">${link}</a></p><p>Abaikan email ini jika Anda tidak memintanya.</p>`

@@ -6,6 +6,7 @@ import type { Payload } from 'payload'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import QRCode from 'qrcode'
 import { needsGuardianConsent, SCORE_DOMAINS, SCORE_DOMAIN_LABELS } from '@ailit/shared'
+import { siteUrl } from './site-url'
 
 export const BAND_NAMES = {
   id: ['Belum terlihat', 'Sadar', 'Sadar', 'Sadar', 'Pengguna cakap', 'Pengguna cakap', 'Terampil', 'Terampil', 'Ahli', 'Ahli'],
@@ -30,7 +31,7 @@ export function publicName(name: string, dateOfBirth?: string | null): string {
 }
 
 export function verifyUrl(code: string): string {
-  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const base = siteUrl()
   return `${base}/verifikasi/${code}`
 }
 

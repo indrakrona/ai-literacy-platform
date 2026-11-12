@@ -7,6 +7,7 @@
 import type { Payload } from 'payload'
 import { escapeHtml } from './emails'
 import { sendWhatsApp, type WaTemplate } from './whatsapp'
+import { siteUrl } from './site-url'
 
 type Locale = 'id' | 'en'
 type Text = { title: string; body: string }
@@ -129,7 +130,7 @@ export function renderNotification(kind: NotificationKind, locale: Locale, vars:
 }
 
 export function notificationEmail(text: Text, link: string | undefined, locale: Locale) {
-  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const base = siteUrl()
   const href = link ? `${base}${link}` : base
   const label = locale === 'id' ? 'Buka AI Literacy' : 'Open AI Literacy'
   const footer = locale === 'id' ? 'Anda dapat mematikan email pemberitahuan di halaman Akun.' : 'You can turn off notification emails on your Account page.'

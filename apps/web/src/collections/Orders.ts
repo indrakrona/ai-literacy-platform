@@ -4,6 +4,7 @@ import { hasRole } from '@ailit/shared'
 import { getPaymentProvider, mockPaymentsAllowed, mockSign, PLANS, quote, type PlanKey, type WebhookEvent } from '../lib/payments'
 import { track, type Actor } from '../lib/analytics'
 import { invoiceNumber, invoicePdf } from '../lib/invoices'
+import { siteUrl } from '../lib/site-url'
 
 const idOf = (v: unknown): number => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 const bad = (error: string, status = 400) => Response.json({ error }, { status })
@@ -96,7 +97,7 @@ const checkout: Endpoint = {
       data: { school, plan, seats, amountIdr, status: 'pending', provider: provider.name, createdBy: u.id },
     })
     try {
-      const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      const base = siteUrl()
       const res = await provider.createCheckout({
         orderId: order.id,
         amountIdr,

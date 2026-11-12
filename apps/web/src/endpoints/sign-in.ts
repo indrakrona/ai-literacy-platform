@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { checkLoginCode, createLoginCode, CODE_MINUTES, findByIdentifier, googleAuthUrl, googleConfigured, googleIdentity, issueSession } from '../lib/sign-in'
 import { sendWhatsApp } from '../lib/whatsapp'
 import { escapeHtml } from '../lib/emails'
+import { siteUrl } from '../lib/site-url'
 
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...headers } })
 
@@ -86,7 +87,7 @@ export const googleCallback: Endpoint = {
   path: '/google/callback',
   method: 'get',
   handler: async (req) => {
-    const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const base = siteUrl()
     const back = (problem: string) => new Response(null, { status: 302, headers: { Location: `${base}/masuk?google=${problem}`, 'Set-Cookie': `${STATE_COOKIE}=; Path=/api/users/google; Max-Age=0` } })
     if (!googleConfigured()) return back('off')
     const url = new URL(req.url ?? base)

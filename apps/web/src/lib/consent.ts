@@ -3,6 +3,7 @@ import { CONSENT_VERSION, normalizeIdPhone } from '@ailit/shared'
 import { randomToken } from './tokens'
 import { consentEmail } from './emails'
 import { sendWhatsApp } from './whatsapp'
+import { siteUrl } from './site-url'
 
 const CONSENT_LINK_DAYS = 14
 
@@ -40,13 +41,13 @@ export async function requestGuardianConsent(
   })
 
   if (request.guardianEmail) {
-    const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const base = siteUrl()
     const link = `${base}/persetujuan/${token}`
     const mail = consentEmail({ studentName: student.name, link, locale })
     await payload.sendEmail({ to: request.guardianEmail, subject: mail.subject, html: mail.html })
   }
   if (request.guardianPhone) {
-    const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const base = siteUrl()
     await sendWhatsApp(payload, { to: request.guardianPhone, template: 'consent_request', locale, params: [student.name.split(' ')[0] ?? student.name, `${base}/persetujuan/${token}`] })
   }
   return request
@@ -121,7 +122,7 @@ export async function shareableConsentLink(payload: Payload, studentId: number) 
       consentVersion: CONSENT_VERSION,
     },
   }))
-  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const base = siteUrl()
   const link = `${base}/persetujuan/${request.token}`
   return { link, studentName: student.name, guardianName: request.guardianName ?? null, guardianPhone: request.guardianPhone ?? null, expiresAt: request.expiresAt }
 }

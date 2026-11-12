@@ -8,6 +8,8 @@ REF="${1:-origin/main}"
 COMPOSE=(docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost)
 PROFILES=(--profile https)
 [ "${NO_CADDY:-}" = 1 ] && PROFILES=()
+# On your own computer (PUBLIC_URL is localhost) there is no Caddy.
+grep -q '^PUBLIC_URL=http://localhost' .env.selfhost && PROFILES=()
 
 echo "1/4 Backing up the database before the update"
 "${COMPOSE[@]}" exec -T db sh -c 'pg_dump -U ailit -Fc ailit' > "backups/ailit-pre-update-$(date +%F-%H%M).dump"
@@ -16,7 +18,7 @@ echo "2/4 Fetching $REF"
 git fetch --quiet origin
 git checkout --quiet --detach "$REF"
 VERSION="$(git rev-parse --short HEAD)"
-sed -i "s|^APP_VERSION=.*|APP_VERSION=${VERSION}|" .env.selfhost || true
+sed "s|^APP_VERSION=.*|APP_VERSION=${VERSION}|" .env.selfhost > .env.selfhost.tmp && mv .env.selfhost.tmp .env.selfhost
 grep -q '^APP_VERSION=' .env.selfhost || echo "APP_VERSION=${VERSION}" >> .env.selfhost
 
 echo "3/4 Building and restarting ($VERSION)"

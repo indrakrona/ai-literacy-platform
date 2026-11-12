@@ -12,6 +12,7 @@ import { issueCertificate } from '../lib/certificates'
 import { bookingForStart } from '../lib/booking'
 import { accommodationsFor, effectiveMinutes } from './Accommodations'
 import { itemsCsv, loadAnalysis, ratingsCsv, responsesCsv } from '../lib/psychometrics'
+import { siteUrl } from '../lib/site-url'
 
 const GRACE_MS = 30_000
 /** Answers made before the deadline while offline may arrive this long after it (and are logged). */
@@ -282,7 +283,7 @@ const rate: Endpoint = {
     if (!pendingRatings) {
       await issueCertificate(req.payload, attempt.id)
       const candidate = await req.payload.findByID({ collection: 'users', id: typeof attempt.candidate === 'object' ? attempt.candidate.id : attempt.candidate, depth: 0, overrideAccess: true }).catch(() => null)
-      const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      const base = siteUrl()
       await notify(req.payload, {
         userIds: [candidate?.id],
         kind: 'score_ready',

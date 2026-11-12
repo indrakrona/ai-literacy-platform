@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # First-time setup of the self-hosted stack: writes .env.selfhost with strong random secrets.
 # Usage: scripts/selfhost-setup.sh [domain] [certificate-email]
-#   scripts/selfhost-setup.sh ailearning.impact.id indra@impact.id
+#   scripts/selfhost-setup.sh ailearning.impact.id indra@impact.id   # server with HTTPS
+#   scripts/selfhost-setup.sh localhost                              # your own computer, http://localhost:8080
 # Safe to re-run: an existing .env.selfhost is never overwritten.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -9,6 +10,8 @@ cd "$(dirname "$0")/.."
 DOMAIN="${1:-ailearning.impact.id}"
 ACME_EMAIL="${2:-indra@impact.id}"
 ENV_FILE=.env.selfhost
+LOCAL=0
+case "$DOMAIN" in localhost|localhost:*|127.0.0.1*) LOCAL=1 ;; esac
 
 command -v docker >/dev/null || { echo "Docker is not installed: https://docs.docker.com/engine/install/"; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "Docker Compose v2 is missing (the 'docker compose' plugin)."; exit 1; }
@@ -21,12 +24,13 @@ else
   set_var() {
     local key="$1" value="$2"
     if grep -q "^${key}=" "$ENV_FILE"; then
-      sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
+      # Portable in-place edit (GNU and macOS sed differ on -i).
+      sed "s|^${key}=.*|${key}=${value}|" "$ENV_FILE" > "$ENV_FILE.tmp" && mv "$ENV_FILE.tmp" "$ENV_FILE"
     else
       printf '%s=%s\n' "$key" "$value" >> "$ENV_FILE"
     fi
   }
-  set_var PUBLIC_URL "https://${DOMAIN}"
+  if [ "$LOCAL" = 1 ]; then set_var PUBLIC_URL "http://localhost:8080"; else set_var PUBLIC_URL "https://${DOMAIN}"; fi
   set_var DOMAIN "$DOMAIN"
   set_var ACME_EMAIL "$ACME_EMAIL"
   set_var DB_PASSWORD "$(rand 24)"
@@ -41,6 +45,22 @@ else
 fi
 
 mkdir -p backups
+
+if [ "$LOCAL" = 1 ]; then
+cat <<EOF
+
+Next steps on this computer (details in docs/hosting.md, "On your own computer"):
+  1. Start everything (the first build takes several minutes):
+       docker compose -f docker-compose.selfhost.yml --env-file ${ENV_FILE} up -d --build
+  2. Load the curriculum and content:
+       docker compose -f docker-compose.selfhost.yml --env-file ${ENV_FILE} --profile tools run --rm tools seed
+  3. Create the first platform admin:
+       docker compose -f docker-compose.selfhost.yml --env-file ${ENV_FILE} --profile tools run --rm \\
+         -e ADMIN_EMAIL=you@impact.id -e ADMIN_PASSWORD='a-long-password' -e ADMIN_NAME='Your Name' tools create-admin
+  4. Open http://localhost:8080/api/health, then sign in at http://localhost:8080/masuk.
+EOF
+exit 0
+fi
 
 cat <<EOF
 

@@ -57,7 +57,7 @@ const dirname = path.dirname(filename)
 const useS3 = Boolean(process.env.S3_BUCKET)
 
 export default buildConfig({
-  serverURL: process.env.NEXT_PUBLIC_SERVER_URL || '',
+  serverURL: process.env.SERVER_URL || process.env.NEXT_PUBLIC_SERVER_URL || '',
   admin: {
     user: Users.slug,
     importMap: { baseDir: path.resolve(dirname) },

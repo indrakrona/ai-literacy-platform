@@ -6,6 +6,7 @@ import { parseCsv } from './csv'
 import { requestGuardianConsent } from './consent'
 import { inviteEmail } from './emails'
 import { randomToken } from './tokens'
+import { siteUrl } from './site-url'
 
 const MAX_ROWS = 2000
 
@@ -43,7 +44,7 @@ export async function importRoster(payload: Payload, klass: Class, csv: string):
   const schoolId = typeof klass.school === 'object' ? klass.school.id : klass.school
   const studentIds = new Set((klass.students ?? []).map((s) => (typeof s === 'object' ? s.id : s)))
   const teacherIds = new Set((klass.teachers ?? []).map((s) => (typeof s === 'object' ? s.id : s)))
-  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const base = siteUrl()
 
   for (const [i, raw] of rows.entries()) {
     const rowNo = i + 2 // header is row 1
