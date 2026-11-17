@@ -36,6 +36,15 @@ it in a password manager: `PAYLOAD_SECRET` must stay the same for sign-ins and b
    No password is set: on the site choose **Lupa kata sandi**; while `EMAIL_TO_LOG=true` the reset link appears
    in the `ailit` project's logs.
 
+## Troubleshooting
+
+- **Project shows "created" with no containers**: the first start failed, usually because an image could not be
+  downloaded (e.g. `ailit-web` still private; a public image such as `postgres:16` works). "Update" and "Start" do
+  not rebuild a project that never started: delete it and create it again with the same compose file and
+  environment (data volumes do not exist yet at that point, so nothing is lost).
+- **GitHub visibility**: the repository and each package have separate settings. The VPS only needs the
+  `ailit-web` package public.
+
 ## Updating
 
 Every push to `main` publishes a new `:main` image. Press **Update** on the `ailit` project in the Docker
