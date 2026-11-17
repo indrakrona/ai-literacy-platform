@@ -31,7 +31,7 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
       prefix: ${{ steps.meta.outputs.prefix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: meta
         run: |
           echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
@@ -82,7 +82,7 @@ jobs:
       TAG: ${{ needs.images.outputs.tag }}
       PREFIX: ${{ needs.images.outputs.prefix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/vps-ssh
         with:
           host: ${{ secrets.VPS_HOST }}

@@ -40,7 +40,7 @@ jobs:
       APP_DIR: ${{ vars.APP_DIR || '/opt/ai-literacy-platform' }}
       DC: docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/vps-ssh
         with:
           host: ${{ secrets.VPS_HOST }}
