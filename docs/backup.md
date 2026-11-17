@@ -5,7 +5,7 @@
 | Data | How | Kept |
 |---|---|---|
 | Database (all platform data) | `backup` service in `docker-compose.selfhost.yml`, every night, `pg_dump` custom format into `./backups` | 14 days (older dumps removed automatically) |
-| Media files (images, uploads) | Copy the MinIO volume or bucket, for example `mc mirror local/ailit-media ./media-backup` | Follow the same 14-day cycle |
+| Media files (images, uploads) | Same `backup` service, every night: `backups/media-<date>.tgz` from the `media-data` volume | 14 days |
 
 Keep at least one copy **off the server** (another machine or cloud storage), so a lost server does not take the backups with it.
 
@@ -15,9 +15,9 @@ A simple nightly job on the host, using [rclone](https://rclone.org) to any stor
 (Google Drive, Google Cloud Storage, S3, another server over SFTP). Configure a remote once with `rclone config`, then add to the host's crontab (`crontab -e`):
 
 ```bash
-# 02:30 every night: copy new database dumps and mirror the media bucket off the server.
-30 2 * * * cd /opt/ai-literacy-platform && rclone copy backups offsite:ailit-backups/db --max-age 48h
-45 2 * * * cd /opt/ai-literacy-platform && docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost exec -T storage sh -c 'tar -C /data -cz ailit-media' | rclone rcat offsite:ailit-backups/media/media-$(date +\%F).tgz
+# 02:30 every night: copy the new database dumps and media archives off the server.
+30 2 * * * cd /opt/ai-literacy-platform && rclone copy backups offsite:ailit-backups/db --include '*.dump' --max-age 48h
+45 2 * * * cd /opt/ai-literacy-platform && rclone copy backups offsite:ailit-backups/media --include 'media-*.tgz' --max-age 48h
 ```
 
 Also keep a copy of `.env.selfhost` somewhere safe (a password manager): `PAYLOAD_SECRET` must stay the same for a restored database to work with existing sign-ins.

@@ -35,7 +35,6 @@ else
   set_var ACME_EMAIL "$ACME_EMAIL"
   set_var DB_PASSWORD "$(rand 24)"
   set_var PAYLOAD_SECRET "$(rand 32)"
-  set_var STORAGE_PASSWORD "$(rand 24)"
   set_var PAYMENTS_WEBHOOK_SECRET "$(rand 24)"
   set_var CRON_SECRET "$(rand 32)"
   set_var APP_VERSION "$(git rev-parse --short HEAD 2>/dev/null || echo dev)"

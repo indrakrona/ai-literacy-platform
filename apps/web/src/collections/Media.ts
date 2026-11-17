@@ -11,6 +11,8 @@ export const Media: CollectionConfig = {
     delete: roles('content_editor', 'content_reviewer', 'super_admin'),
   },
   upload: {
+    // On a server without object storage, files go to MEDIA_DIR (a Docker volume); unset = Payload's default folder.
+    ...(process.env.MEDIA_DIR ? { staticDir: process.env.MEDIA_DIR } : {}),
     // Phone-first sizes; originals kept for print.
     imageSizes: [
       { name: 'thumb', width: 320 },

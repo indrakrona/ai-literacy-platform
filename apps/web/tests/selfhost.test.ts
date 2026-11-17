@@ -2,6 +2,7 @@ import { getPayload, type Payload, type PayloadRequest } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { execFileSync } from 'node:child_process'
 import config from '@payload-config'
 import { health } from '../src/endpoints/health'
 import { siteUrl } from '../src/lib/site-url'
@@ -62,5 +63,22 @@ describe('self-host package', () => {
     process.env.NEXT_PUBLIC_SERVER_URL = saved.n ?? ''
     if (saved.n === undefined) delete process.env.NEXT_PUBLIC_SERVER_URL
     expect(read('docker-compose.selfhost.yml')).toContain('SERVER_URL: ${PUBLIC_URL}')
+  })
+
+  it('can run prebuilt images on a VPS, with capped logs and valid scripts', () => {
+    const compose = read('docker-compose.selfhost.yml')
+    expect(compose).toContain('image: ${WEB_IMAGE:-ailit-web}:${IMAGE_TAG:-local}')
+    expect(compose).toContain('image: ${TOOLS_IMAGE:-ailit-tools}:${IMAGE_TAG:-local}')
+    const services = compose.split('\nvolumes:')[0]!.split('\nservices:')[1]!
+    const names = [...services.matchAll(/^  ([a-z][a-z0-9-]*):$/gm)].map((m) => m[1])
+    expect(names.length).toBeGreaterThan(5)
+    expect((services.match(/logging: \*logging/g) ?? []).length).toBe(names.length)
+    for (const f of ['deploy.sh', 'vps-bootstrap.sh', 'selfhost-setup.sh', 'selfhost-update.sh', 'tools-entrypoint.sh']) {
+      execFileSync('bash', ['-n', path.join(root, 'scripts', f)]) // throws on a syntax error
+    }
+    // The Release workflow deploys the tag it just built, and Ops never prints the admin password.
+    const release = read('.github/workflows/release.yml')
+    expect(release).toContain("IMAGE_TAG='$TAG' scripts/deploy.sh")
+    expect(read('.github/workflows/ops.yml')).toMatch(/printf '%s\\n' "\$ADMIN_PASSWORD" \| ssh vps/)
   })
 })

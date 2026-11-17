@@ -19,7 +19,8 @@ FROM base AS run
 WORKDIR /app
 ARG APP_VERSION=dev
 ENV NODE_ENV=production PORT=8080 HOSTNAME=0.0.0.0 APP_VERSION=$APP_VERSION
-RUN groupadd -r app && useradd -r -g app app
+# Fixed uid/gid 999: the media-init service in docker-compose.selfhost.yml gives the uploads volume to this user.
+RUN groupadd -r -g 999 app && useradd -r -u 999 -g app app && install -d -o app -g app /app/media
 COPY --from=build --chown=app:app /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=app:app /repo/apps/web/.next/static ./apps/web/.next/static
 USER app

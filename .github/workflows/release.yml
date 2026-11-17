@@ -1,0 +1,118 @@
+name: Release
+
+# Builds the app images on GitHub (so the VPS never has to build), pushes them to GitHub Container Registry,
+# and deploys them to the VPS: automatically on every push to main once the repository variable AUTO_DEPLOY is
+# "true", or by running this workflow by hand. Setup: docs/deploy-vps.md.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to the VPS after building
+        type: boolean
+        default: true
+      seed:
+        description: Load the curriculum and content after deploying (first install; resets seeded lessons)
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      prefix: ${{ steps.meta.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        run: |
+          echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: run
+          push: true
+          build-args: APP_VERSION=${{ steps.meta.outputs.tag }}
+          tags: |
+            ${{ steps.meta.outputs.prefix }}/ailit-web:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}/ailit-web:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Tools image (seed, create-admin, migrate)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: tools
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.prefix }}/ailit-tools:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}/ailit-tools:main
+          cache-from: type=gha
+
+  deploy:
+    needs: images
+    if: (github.event_name == 'workflow_dispatch' && inputs.deploy) || (github.event_name == 'push' && vars.AUTO_DEPLOY == 'true')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.PUBLIC_URL }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      APP_DIR: ${{ vars.APP_DIR || '/opt/ai-literacy-platform' }}
+      TAG: ${{ needs.images.outputs.tag }}
+      PREFIX: ${{ needs.images.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/vps-ssh
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ vars.VPS_USER || 'deploy' }}
+          port: ${{ vars.VPS_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          known_hosts: ${{ secrets.VPS_KNOWN_HOSTS }}
+      - name: Copy the deployment files (no source code is needed on the server)
+        run: |
+          ssh vps "mkdir -p '$APP_DIR/scripts' '$APP_DIR/infra/selfhost' '$APP_DIR/backups'"
+          rsync -az docker-compose.selfhost.yml .env.selfhost.example "vps:$APP_DIR/"
+          rsync -az scripts/ "vps:$APP_DIR/scripts/"
+          rsync -az infra/selfhost/ "vps:$APP_DIR/infra/selfhost/"
+      - name: First-time settings (only if the server has none yet)
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL || 'indra@impact.id' }}
+        run: |
+          if ssh vps "test -f '$APP_DIR/.env.selfhost'"; then echo "Settings already on the server."; exit 0; fi
+          if [ -z "$DOMAIN" ]; then echo "::error::Set the repository variable DOMAIN (e.g. staging.ailearning.impact.id)."; exit 1; fi
+          ssh vps "cd '$APP_DIR' && scripts/selfhost-setup.sh '$DOMAIN' '$ACME_EMAIL'"
+      - name: Deploy ${{ needs.images.outputs.tag }}
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '${{ github.actor }}' --password-stdin" > /dev/null
+          ssh vps "cd '$APP_DIR' && WEB_IMAGE='$PREFIX/ailit-web' TOOLS_IMAGE='$PREFIX/ailit-tools' IMAGE_TAG='$TAG' scripts/deploy.sh"
+      - name: Load curriculum and content
+        if: github.event_name == 'workflow_dispatch' && inputs.seed
+        run: ssh vps "cd '$APP_DIR' && docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost --profile tools run --rm -T tools seed"
+      - name: Log out of the registry on the server
+        if: always()
+        run: ssh vps "docker logout ghcr.io" > /dev/null 2>&1 || true

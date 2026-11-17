@@ -1,0 +1,94 @@
+name: Ops
+
+# Day-to-day tasks on the VPS without logging in to it. Run from the Actions tab (or `gh workflow run ops.yml`).
+# Output appears in the run log, which everyone with access to this repository can read: use staging data only.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        type: choice
+        options:
+          - status
+          - logs
+          - restart
+          - backup
+          - seed
+          - create-admin
+          - rollback
+      admin_email:
+        description: "create-admin: email of the platform admin (password comes from the ADMIN_PASSWORD secret)"
+        type: string
+        default: ""
+      tag:
+        description: "rollback: image tag to go back to, e.g. sha-abc1234 (see the Release runs)"
+        type: string
+        default: ""
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: read
+    env:
+      APP_DIR: ${{ vars.APP_DIR || '/opt/ai-literacy-platform' }}
+      DC: docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/vps-ssh
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ vars.VPS_USER || 'deploy' }}
+          port: ${{ vars.VPS_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          known_hosts: ${{ secrets.VPS_KNOWN_HOSTS }}
+
+      - name: Status
+        if: inputs.action == 'status'
+        run: |
+          ssh vps "cd '$APP_DIR' && $DC ps --format 'table {{.Service}}\t{{.Status}}' && echo && curl -fsS http://127.0.0.1:8080/api/health && echo && echo && df -h / | tail -1 && free -m | sed -n 2p && ls -t backups | head -3"
+
+      - name: Logs (last 200 lines of the app)
+        if: inputs.action == 'logs'
+        run: ssh vps "cd '$APP_DIR' && $DC logs --tail 200 --no-color web"
+
+      - name: Restart all services
+        if: inputs.action == 'restart'
+        run: ssh vps "cd '$APP_DIR' && $DC --profile https restart && sleep 30 && curl -fsS http://127.0.0.1:8080/api/health"
+
+      - name: Back up the database now
+        if: inputs.action == 'backup'
+        run: ssh vps "cd '$APP_DIR' && $DC exec -T db sh -c 'pg_dump -U ailit -Fc ailit' > backups/ailit-manual-\$(date +%F-%H%M).dump && ls -lh backups | tail -3"
+
+      - name: Load curriculum and content
+        if: inputs.action == 'seed'
+        run: ssh vps "cd '$APP_DIR' && $DC --profile tools run --rm -T tools seed"
+
+      - name: Create or reset a platform admin
+        if: inputs.action == 'create-admin'
+        env:
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ]; then echo "::error::Give admin_email and set the ADMIN_PASSWORD secret."; exit 1; fi
+          # The password travels over SSH stdin, so it never appears in a command line or the log.
+          printf '%s\n' "$ADMIN_PASSWORD" | ssh vps "read -r P; cd '$APP_DIR' && $DC --profile tools run --rm -T -e ADMIN_EMAIL='$ADMIN_EMAIL' -e ADMIN_PASSWORD=\"\$P\" tools create-admin"
+
+      - name: Roll back to an earlier image
+        if: inputs.action == 'rollback'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          case "$TAG" in sha-*) ;; *) echo "::error::Give the image tag, e.g. sha-abc1234."; exit 1 ;; esac
+          echo "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '${{ github.actor }}' --password-stdin" > /dev/null
+          rc=0
+          ssh vps "cd '$APP_DIR' && IMAGE_TAG='$TAG' scripts/deploy.sh" || rc=$?
+          ssh vps "docker logout ghcr.io" > /dev/null 2>&1 || true
+          exit $rc

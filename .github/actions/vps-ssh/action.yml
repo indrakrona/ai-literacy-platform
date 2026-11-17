@@ -1,0 +1,54 @@
+name: VPS SSH
+description: Configure SSH access to the VPS under the host alias "vps" (secrets described in docs/deploy-vps.md).
+inputs:
+  host:
+    description: VPS address (IP or hostname)
+    required: true
+  user:
+    description: SSH user on the VPS
+    required: false
+    default: deploy
+  port:
+    description: SSH port
+    required: false
+    default: "22"
+  key:
+    description: Private SSH key (the public half is in the deploy user's authorized_keys)
+    required: true
+  known_hosts:
+    description: Output of `ssh-keyscan -H <host>`, to pin the server's host key (recommended)
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VPS_HOST: ${{ inputs.host }}
+        VPS_USER: ${{ inputs.user }}
+        VPS_PORT: ${{ inputs.port }}
+        VPS_KEY: ${{ inputs.key }}
+        VPS_KNOWN: ${{ inputs.known_hosts }}
+      run: |
+        if [ -z "$VPS_HOST" ] || [ -z "$VPS_KEY" ]; then
+          echo "::error::Set the VPS_HOST and VPS_SSH_KEY secrets first (docs/deploy-vps.md)."
+          exit 1
+        fi
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        printf '%s\n' "$VPS_KEY" > ~/.ssh/vps_key && chmod 600 ~/.ssh/vps_key
+        if [ -n "$VPS_KNOWN" ]; then
+          printf '%s\n' "$VPS_KNOWN" > ~/.ssh/known_hosts
+        else
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" > ~/.ssh/known_hosts 2>/dev/null
+          echo "::warning::VPS_KNOWN_HOSTS is not set, so the host key seen now is trusted. Set it to pin the key."
+        fi
+        {
+          echo "Host vps"
+          echo "  HostName $VPS_HOST"
+          echo "  User ${VPS_USER:-deploy}"
+          echo "  Port ${VPS_PORT:-22}"
+          echo "  IdentityFile ~/.ssh/vps_key"
+          echo "  IdentitiesOnly yes"
+          echo "  ServerAliveInterval 30"
+        } > ~/.ssh/config
+        ssh vps 'echo "Connected to $(hostname) as $(whoami)"'

@@ -45,6 +45,8 @@ jobs:
 
   # The self-host image must build with no database or secrets, exactly as on a server.
   docker:
+    # On main the Release workflow builds (and pushes) the images; here we only check pull requests.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -10,7 +10,10 @@ Production domain: **ailearning.impact.id**.
 
 ## Self-hosted server
 
-Everything runs from one compose file: the app, PostgreSQL 16, S3-compatible media storage (MinIO),
+**On a VPS (Hostinger or similar), use [deploy-vps.md](deploy-vps.md):** GitHub Actions builds the images and deploys
+them, so the server never builds anything. The sections below describe the same stack run by hand.
+
+Everything runs from one compose file: the app, PostgreSQL 16 (uploads are kept in a Docker volume on the same disk),
 nightly database backups, the hourly job runner and, optionally, Caddy for automatic HTTPS.
 
 ### What the server needs
@@ -138,7 +141,7 @@ The app is the same container image in both places; only configuration changes.
 
 1. `terraform apply` in `infra/terraform` (staging first).
 2. Restore the database: `pg_restore` the latest dump into Cloud SQL.
-3. Copy media from the self-hosted storage to the Cloud Storage bucket (`mc mirror` or `gsutil rsync`).
+3. Copy media to the Cloud Storage bucket: unpack the latest `backups/media-*.tgz` and `gsutil rsync` it, then set the `S3_*` values.
 4. Point ailearning.impact.id at Cloud Run.
 
 Before collecting real student data, check that the server's location and access controls meet UU PDP:
