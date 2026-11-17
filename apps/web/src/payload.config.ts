@@ -31,6 +31,7 @@ import { Products, PromoCodes } from './collections/commerce-endpoints'
 import { DataRequests } from './collections/DataRequests'
 import { runJobs } from './endpoints/parents'
 import { health } from './endpoints/health'
+import { opsRun } from './endpoints/ops'
 import { Bookings, TestSessions, Vouchers } from './collections/TestSessions'
 import { TestAttempts } from './collections/TestAttempts'
 import { AiActivities } from './collections/AiActivities'
@@ -77,7 +78,7 @@ export default buildConfig({
     LessonProgress, TestAttempts, AiConversations, Submissions, AnalyticsEvents, Notifications, XpEvents, UserBadges, AuditLogs,
   ],
   globals: [SiteSettings, GamificationSettings, PlatformSettings].map(withAuditGlobal),
-  endpoints: [runJobs, health],
+  endpoints: [runJobs, health, opsRun],
   email: emailAdapter(),
   editor: lexicalEditor(),
   localization: {

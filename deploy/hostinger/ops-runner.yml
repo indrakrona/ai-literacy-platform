@@ -1,0 +1,20 @@
+# One-shot task runner for the Hostinger deployment: create it as a separate Docker manager project
+# (e.g. "ailit-ops") with OPS_SECRET (same value as the app project) and OPS_BODY, read its logs, then delete it.
+#   OPS_BODY={"task":"seed"}
+#   OPS_BODY={"task":"create-admin","email":"indra@impact.id","name":"Indra"}
+# It talks to the app over the app project's private Docker network; nothing is exposed to the internet.
+services:
+  run:
+    image: curlimages/curl:8.11.1
+    restart: "no"
+    environment:
+      OPS_SECRET: ${OPS_SECRET}
+      OPS_BODY: ${OPS_BODY}
+    entrypoint: ["sh", "-c", "curl -sS --max-time 900 -X POST -H \"x-ops-secret: $${OPS_SECRET}\" -H 'content-type: application/json' -d \"$${OPS_BODY}\" http://web:8080/api/ops/run; echo"]
+    networks:
+      - app
+
+networks:
+  app:
+    external: true
+    name: ${APP_PROJECT:-ailit}_default

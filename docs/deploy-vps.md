@@ -1,5 +1,9 @@
 # Deploying to a VPS (Hostinger)
 
+> **Current staging server:** the Hostinger VPS made from the Docker + Traefik template is run through Hostinger's
+> Docker manager instead; see [deploy/hostinger/README.md](../deploy/hostinger/README.md). The SSH-based setup below
+> remains the option for a plain Ubuntu server.
+
 The VPS only runs containers; it never builds the app. GitHub Actions builds the images on every push to
 `main` (workflow **Release**), stores them privately in GitHub Container Registry, then copies the
 deployment files to the VPS over SSH and restarts the app. Day-to-day tasks (status, logs, restart, backup,
@@ -85,7 +89,7 @@ To deploy automatically on every push to `main`, add the repository variable `AU
 | Action | What it does |
 | --- | --- |
 | `status` | Container status, health, disk, memory, latest backups |
-| `logs` | Last 200 lines of the app log (sign-in codes appear here until email is set up) |
+| `logs` | Last 200 lines of the app log (with `EMAIL_TO_LOG=true` in `.env.selfhost`, sign-in codes and reset links appear here until SMTP is set up) |
 | `restart` | Restart all services (app, HTTPS proxy, database, storage) |
 | `backup` | Database dump now, into `backups/` on the server |
 | `seed` | Load the curriculum and content again (resets seeded lessons) |

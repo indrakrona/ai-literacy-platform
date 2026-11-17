@@ -27,8 +27,8 @@ const consoleAdapter: EmailAdapter = ({ payload }) => ({
 
 /**
  * Email delivery: SMTP when SMTP_HOST is set (any provider: Google Workspace, Mailgun, SES SMTP…);
- * otherwise the console printer in development. In production without SMTP, Payload's default applies
- * and nothing is sent — schools can then share consent links by WhatsApp from the platform.
+ * otherwise the console printer in development (or with EMAIL_TO_LOG=true). In production without SMTP, Payload's
+ * default applies and nothing is sent — schools can then share consent links by WhatsApp from the platform.
  */
 export function emailAdapter(): EmailAdapter | Promise<EmailAdapter> | undefined {
   if (process.env.SMTP_HOST) {
@@ -43,5 +43,7 @@ export function emailAdapter(): EmailAdapter | Promise<EmailAdapter> | undefined
       },
     })
   }
-  return process.env.NODE_ENV === 'production' ? undefined : consoleAdapter
+  // EMAIL_TO_LOG=true prints emails (including sign-in and reset links) to the app log in production too: for a
+  // staging server before a mail provider is set up. Never use it with real students' accounts.
+  return process.env.NODE_ENV !== 'production' || process.env.EMAIL_TO_LOG === 'true' ? consoleAdapter : undefined
 }
